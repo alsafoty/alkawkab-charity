@@ -6,28 +6,32 @@
     <!-- Page content -->
     <div class="content-wrapper position-relative d-flex flex-column min-vh-100">
       <nav class="navbar navbar-expand-lg bg-white bg-opacity-75 shadow px-4 py-3">
-        <div class="container-fluid d-flex justify-content-between align-items-center">
-          <div class="d-flex align-items-center gap-3">
-            <img src="/images/logo.png" alt="Logo" style="height: 70px;" />
-            <h1 class="navbar-brand fw-bold text-dark m-0" style="font-size: 2rem;">جمعية الكوكب الدري الخيرية</h1>
-          </div>
+  <div class="container-fluid d-flex flex-wrap justify-content-between align-items-center">
+    
+    <!-- شعار وعنوان الجمعية -->
+    <div class="d-flex align-items-center gap-3 flex-grow-1 flex-md-grow-0 justify-content-center justify-content-md-start text-center w-100 w-md-auto mb-3 mb-md-0">
+      <img src="/images/logo.png" alt="Logo" class="logo-img" />
+      <h1 class="navbar-brand fw-bold text-dark m-0 fs-5 fs-md-4">جمعية الكوكب الدري الخيرية</h1>
+    </div>
 
-          <ul class="navbar-nav d-flex flex-row gap-4 fs-5 fw-bold">
-            <li class="nav-item">
-              <router-link class="nav-link text-dark" to="/admin">الدخول للنظام</router-link>
-            </li>
-            <li class="nav-item">
-              <router-link class="nav-link text-dark" to="/contact-us">تواصل معنا</router-link>
-            </li>
-            <li class="nav-item">
-              <router-link class="nav-link text-dark" to="/about">عن الجمعية</router-link>
-            </li>
-            <li class="nav-item">
-              <router-link class="nav-link text-dark" to="/">الرئيسية</router-link>
-            </li>
-          </ul>
-        </div>
-      </nav>
+    <!-- روابط التنقل -->
+    <ul class="navbar-nav d-flex flex-row gap-3 fs-6 fs-md-5 fw-bold">
+      <li class="nav-item">
+        <router-link class="nav-link text-dark" to="/admin">الدخول للنظام</router-link>
+      </li>
+      <li class="nav-item">
+        <router-link class="nav-link text-dark" to="/contact-us">تواصل معنا</router-link>
+      </li>
+      <li class="nav-item">
+        <router-link class="nav-link text-dark" to="/about">عن الجمعية</router-link>
+      </li>
+      <li class="nav-item">
+        <router-link class="nav-link text-dark" to="/">الرئيسية</router-link>
+      </li>
+    </ul>
+  </div>
+</nav>
+
 
       <!-- Transition effect for page content -->
       <transition name="fade-slide" mode="out-in">
@@ -60,6 +64,17 @@ body {
 
 .content-wrapper {
   z-index: 1;
+}
+
+/* الشعار – استجابة تلقائية */
+.logo-img {
+  height: 50px;
+}
+
+@media (min-width: 768px) {
+  .logo-img {
+    height: 70px;
+  }
 }
 
 /* Transition Styles */
