@@ -8,11 +8,22 @@
     <div class="position-relative w-100 text-end" style="z-index: 1;">
       <h2 class="display-3 fw-bold mb-3 text-shadow">معًا يمكننا<br />أن نُحدث فرقًا</h2>
       <p class="lead fs-4 mb-4 text-shadow-light">انضم إلينا في رسالتنا لمساعدة المحتاجين وخدمة المجتمع</p>
-      <button class="btn donate-button fs-5 px-4 py-2">تبرع الآن</button>
+      <button @click="goToContact" class="btn donate-button fs-5 px-4 py-2">تبرع الآن</button>
     </div>
   </div>
 </template>
-
+<script>
+export default {
+  methods: {
+    goToContact() {
+      this.$router.push('/contact-us');
+    }
+  },
+  components:{
+    
+  }
+}
+</script>
 <style scoped>
 .text-shadow {
   text-shadow: 0 3px 6px rgba(0, 0, 0, 0.6);

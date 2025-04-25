@@ -1,49 +1,110 @@
+<!-- src/components/LoginBox.vue -->
 <template>
-  <div class="d-flex flex-column justify-content-center align-items-center" style="min-height: 80vh;">
-    <div class="bg-white bg-opacity-75 p-5 rounded-4 shadow-lg text-center" style="max-width: 500px;" v-if="!selected">
-      <h2 class="fs-1 fw-bold mb-4">الدخول لقاعدة البيانات</h2>
-      <div class="d-flex flex-column justify-content-around mb-3 gap-3">
-        <button @click="selected = 'individual'" class="btn btn-success donate-button  fs-3 px-5 py-2">
-          أفراد
-        </button>
-        <button @click="selected = 'family'" class=" btn btn-success donate-button fs-3 px-5 py-2">
-          عائلات
-        </button>
-      </div>
-    </div>
+  <div class="login-container d-flex justify-content-center align-items-center" dir="rtl">
+    <div class="login-box p-4 rounded shadow">
+      <h3 class="text-center mb-4">تسجيل الدخول</h3>
+      <form @submit.prevent="handleLogin">
+        <div class="mb-3">
+          <label for="username" class="form-label">اسم المستخدم</label>
+          <input
+            v-model="username"
+            type="text"
+            id="username"
+            class="form-control"
+            placeholder="أدخل اسم المستخدم"
+            required
+          />
+        </div>
+        <div class="mb-3">
+          <label for="password" class="form-label">كلمة المرور</label>
+          <input
+            v-model="password"
+            type="password"
+            id="password"
+            class="form-control"
+            placeholder="أدخل كلمة المرور"
+            required
+          />
+        </div>
+        <div v-if="errorMessage" class="alert alert-danger" role="alert">
+          {{ errorMessage }}
+        </div>
+        <button type="submit" class="btn btn-primary w-100">تسجيل دخول</button>
 
-    <div class="w-100 mt-3">
-      <IndividualView v-if="selected === 'individual'" />
-      <FamilyView v-else-if="selected === 'family'" />
+      </form>
     </div>
   </div>
 </template>
 
-
-
 <script setup>
-import { ref } from 'vue'
-import IndividualView from '@/views/IndividualView.vue'
-import FamilyView from '@/views/FamilyView.vue'
+import { ref } from 'vue';
+import { useRouter } from 'vue-router';
+// الحقول المتفاعلة
+const username = ref('');
+const password = ref('');
+const errorMessage = ref('');
 
-const selected = ref(null)
+const router = useRouter();
+
+
+// التعامل مع تسجيل الدخول
+const handleLogin = () => {
+  if (username.value !='admin' || password.value != '12345') {
+    errorMessage.value = 'هناك خطأ في اسم المستخدم أو كلمة المرور';
+    return;
+  }
+
+  // هنا بتقدر تضيف منطق تسجيل الدخول (مثل طلب API)
+  errorMessage.value = '';
+  alert(`تسجيل دخول: ${username.value}`);
+  // مثال: توجيه لصفحة أخرى بعد تسجيل الدخول بـ Vue Router
+  // router.push('/dashboard');
+  router.push('/enterdb');
+};
 </script>
 
 <style scoped>
-.donate-button {
-
-  color: white;
-  font-weight: 600;
-  padding: 0.75rem 1.5rem;
-  border: none;
-  border-radius: 6px;
-  font-size: 1rem;
-  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.2);
-  cursor: pointer;
-  transition: background-color 0.3s ease;
+.login-container {
+  min-height: 88vh;
+  /* background: linear-gradient(135deg, #42b983, #3498db); خلفية متدرجة */
+  display: flex;
+  justify-content: center;
+  align-items: center;
 }
 
-.donate-button:hover {
-  background-color: #c2410c;
+.login-box {
+  background: rgba(255, 255, 255, 0.95); /* أبيض بشفافية */
+  width: 100%;
+  max-width: 400px;
+  border-radius: 10px;
+  box-shadow: 0 4px 15px rgba(0, 0, 0, 0.2);
+  padding: 20px;
+}
+
+.form-label {
+  font-weight: bold;
+}
+
+.form-control {
+  text-align: right;
+}
+
+.form-control::placeholder {
+  text-align: right;
+}
+
+.btn-primary {
+  background-color: #42b983;
+  border-color: #42b983;
+}
+
+.btn-primary:hover {
+  background-color: #3aa876;
+  border-color: #3aa876;
+}
+
+/* لتعديل مظهر النصوص والحقول في الـ RTL */
+.alert {
+  text-align: right;
 }
 </style>
