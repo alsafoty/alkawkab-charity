@@ -1,24 +1,47 @@
 <template>
-  <div class="d-flex flex-column justify-content-center align-items-center" style="min-height: 80vh;">
-    <div class="container py-5 text-center text-md-end bg-white bg-opacity-75 p-5 rounded-4 shadow-lg">
+  <div
+    class="d-flex flex-column justify-content-center align-items-center"
+    style="min-height: 80vh"
+  >
+    <div
+      class="container py-5 text-center text-md-end bg-white bg-opacity-75 p-5 rounded-4 shadow-lg"
+    >
       <h1 class="mb-4 fw-bold text-success">تواصل معنا</h1>
 
       <p class="lead mb-5 fw-bold">
-        يسعدنا تواصلك معنا. يمكنك إرسال استفساراتك أو ملاحظاتك من خلال النموذج أدناه وسنقوم بالرد عليك في أقرب وقت ممكن.
+        يسعدنا تواصلك معنا. يمكنك إرسال استفساراتك أو ملاحظاتك من خلال النموذج
+        أدناه وسنقوم بالرد عليك في أقرب وقت ممكن.
       </p>
 
       <form class="text-end">
         <div class="mb-3">
           <label for="name" class="form-label fw-bold">الاسم الكامل</label>
-          <input type="text" class="form-control" id="name" placeholder="أدخل اسمك">
+          <input
+            type="text"
+            class="form-control"
+            id="name"
+            placeholder="أدخل اسمك"
+          />
         </div>
         <div class="mb-3">
-          <label for="email" class="form-label fw-bold">البريد الإلكتروني</label>
-          <input type="email" class="form-control" id="email" placeholder="example@example.com">
+          <label for="email" class="form-label fw-bold"
+            >البريد الإلكتروني</label
+          >
+          <input
+            type="email"
+            class="form-control"
+            id="email"
+            placeholder="example@example.com"
+          />
         </div>
         <div class="mb-3">
           <label for="message" class="form-label fw-bold">رسالتك</label>
-          <textarea class="form-control" id="message" rows="5" placeholder="اكتب رسالتك هنا"></textarea>
+          <textarea
+            class="form-control"
+            id="message"
+            rows="5"
+            placeholder="اكتب رسالتك هنا"
+          ></textarea>
         </div>
         <button type="submit" class="donate-button">إرسال</button>
       </form>
