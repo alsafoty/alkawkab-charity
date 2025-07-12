@@ -858,7 +858,6 @@ const submitForm = async () => {
       isPartOfFamily: formData.isPartOfFamily,
       numberOfFamilyMembers: formData.numberOfFamilyMembers,
       isHouseOwned: formData.isHouseOwned,
-      assistances: formData.assistances,
     };
 
     // Add family ID if part of family

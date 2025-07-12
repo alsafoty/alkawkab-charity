@@ -104,15 +104,35 @@
                       </li>
                     </ul>
                   </div>
+
                   <!-- إضافة أعضاء جدد -->
                   <div class="mt-4">
                     <div class="fw-bold mb-2">إضافة أشخاص للعائلة:</div>
+
+                    <!-- Search Bar -->
+                    <div class="mb-3">
+                      <div class="input-group">
+                        <input
+                          v-model="searchTerm"
+                          type="text"
+                          class="form-control search-input"
+                          placeholder="البحث في الأشخاص المتاحين..."
+                        />
+                        <span class="input-group-text">
+                          <i class="bi bi-search"></i>
+                        </span>
+                      </div>
+                      <small class="text-muted">
+                        يمكنك البحث بالاسم الأول أو الأخير أو رقم الهوية
+                      </small>
+                    </div>
+
                     <div
-                      class="list-group"
-                      style="max-height: 200px; overflow-y: auto"
+                      class="list-group persons-list"
+                      style="max-height: 250px; overflow-y: auto"
                     >
                       <div
-                        v-for="person in personsWithoutFamily"
+                        v-for="person in filteredPersonsWithoutFamily"
                         :key="person.id"
                         class="list-group-item"
                       >
@@ -134,13 +154,23 @@
                         </div>
                       </div>
                       <div
+                        v-if="
+                          filteredPersonsWithoutFamily.length === 0 &&
+                          personsWithoutFamily.length > 0
+                        "
+                        class="text-muted p-2 text-center"
+                      >
+                        لا توجد نتائج تطابق البحث
+                      </div>
+                      <div
                         v-if="personsWithoutFamily.length === 0"
-                        class="text-danger p-2"
+                        class="text-danger p-2 text-center"
                       >
                         لا يوجد أشخاص متاحون للإضافة.
                       </div>
                     </div>
                   </div>
+
                   <div
                     v-if="selectedToAdd.length > 0"
                     class="alert alert-success p-2 mt-2"
@@ -174,7 +204,7 @@
 </template>
 
 <script setup>
-import { ref, onMounted } from "vue";
+import { ref, onMounted, computed } from "vue";
 import { useRoute, useRouter } from "vue-router";
 import axios from "axios";
 
@@ -193,6 +223,28 @@ const personsWithoutFamily = ref([]);
 const selectedToAdd = ref([]);
 const removingIds = ref([]);
 const loading = ref(false);
+const searchTerm = ref("");
+
+// Helper function to exclude assistances from person object
+const getPersonWithoutAssistances = (person) => {
+  const { assistances, ...personWithoutAssistances } = person;
+  return personWithoutAssistances;
+};
+
+// Computed property for filtered persons based on search
+const filteredPersonsWithoutFamily = computed(() => {
+  if (!searchTerm.value.trim()) {
+    return personsWithoutFamily.value;
+  }
+
+  const search = searchTerm.value.toLowerCase().trim();
+  return personsWithoutFamily.value.filter((person) => {
+    const fullName = `${person.firstName} ${person.lastName}`.toLowerCase();
+    const personId = person.id.toString();
+
+    return fullName.includes(search) || personId.includes(search);
+  });
+});
 
 const fetchFamilyAndMembers = async () => {
   try {
@@ -243,13 +295,16 @@ const removeMember = async (person) => {
     )
   )
     return;
+
   removingIds.value.push(person.id);
   try {
+    // استخدام البيانات بدون المساعدات
     const updatedPerson = {
-      ...person,
+      ...getPersonWithoutAssistances(person),
       familyId: null,
       isPartOfFamily: false,
     };
+
     await axios.put(
       `https://charityapp.runasp.net/api/Person/${person.id}`,
       updatedPerson,
@@ -263,6 +318,7 @@ const removeMember = async (person) => {
     // حدث القوائم
     await fetchFamilyAndMembers();
   } catch (error) {
+    console.error("Error removing member:", error);
     alert("حدث خطأ أثناء إزالة العضو");
   } finally {
     removingIds.value = removingIds.value.filter((id) => id !== person.id);
@@ -288,15 +344,18 @@ const submitForm = async () => {
         },
       }
     );
+
     // إضافة الأعضاء الجدد
     for (const personId of selectedToAdd.value) {
       const person = allPersons.value.find((p) => p.id === personId);
       if (person) {
+        // استخدام البيانات بدون المساعدات
         const updatedPerson = {
-          ...person,
-          familyId: route.params.id,
+          ...getPersonWithoutAssistances(person),
+          familyId: parseInt(route.params.id),
           isPartOfFamily: true,
         };
+
         await axios.put(
           `https://charityapp.runasp.net/api/Person/${personId}`,
           updatedPerson,
@@ -309,8 +368,10 @@ const submitForm = async () => {
         );
       }
     }
+
     alert("تم حفظ التعديلات بنجاح");
     selectedToAdd.value = [];
+    searchTerm.value = "";
     await fetchFamilyAndMembers();
     router.push("/family");
   } catch (error) {
@@ -394,6 +455,69 @@ const submitForm = async () => {
 .text-muted {
   font-size: 0.85rem;
   color: #6c757d !important;
+}
+
+/* Search input styles */
+.search-input {
+  text-align: right;
+  direction: rtl;
+}
+
+.input-group-text {
+  background-color: #f8f9fa;
+  border-color: #dee2e6;
+}
+
+.search-input:focus {
+  border-color: #42b983;
+  box-shadow: 0 0 0 0.2rem rgba(66, 185, 131, 0.25);
+}
+
+.search-input:focus + .input-group-text {
+  border-color: #42b983;
+}
+
+/* Persons list styling */
+.persons-list {
+  border: 1px solid #dee2e6;
+  border-radius: 0.375rem;
+  background-color: #fff;
+}
+
+.persons-list .list-group-item {
+  border-left: none;
+  border-right: none;
+  border-top: none;
+}
+
+.persons-list .list-group-item:first-child {
+  border-top: none;
+  border-top-left-radius: 0.375rem;
+  border-top-right-radius: 0.375rem;
+}
+
+.persons-list .list-group-item:last-child {
+  border-bottom: none;
+  border-bottom-left-radius: 0.375rem;
+  border-bottom-right-radius: 0.375rem;
+}
+
+.persons-list::-webkit-scrollbar {
+  width: 8px;
+}
+
+.persons-list::-webkit-scrollbar-track {
+  background: #f1f1f1;
+  border-radius: 4px;
+}
+
+.persons-list::-webkit-scrollbar-thumb {
+  background: #888;
+  border-radius: 4px;
+}
+
+.persons-list::-webkit-scrollbar-thumb:hover {
+  background: #555;
 }
 
 /* Font family */

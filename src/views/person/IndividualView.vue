@@ -1,22 +1,25 @@
 <template>
   <div
-    class="families-table container my-4 bg-white bg-opacity-50 p-5 rounded-4 shadow-lg text-center"
+    class="persons-table container my-4 bg-white bg-opacity-50 p-5 rounded-4 shadow-lg"
     dir="rtl"
   >
     <h2 class="text-center mb-4 fw-bold">جدول الأفراد</h2>
 
     <div class="d-flex justify-content-between align-items-center mb-4">
-      <router-link to="/add-person" class="btn btn-success custom-btn">
-        <i class="bi bi-plus-circle me-1"></i>
-        إضافة شخص جديد
-      </router-link>
+      <div class="d-flex gap-2">
+        <!-- زر إضافة شخص جديد مع تأثير التوسع -->
+        <router-link to="/add-person" class="btn btn-success expandable-btn">
+          <i class="bi bi-plus-circle icon"></i>
+          <span class="btn-text">إضافة شخص جديد</span>
+        </router-link>
+      </div>
 
       <div class="flex-grow-1 mx-3">
         <input
           v-model="searchQuery"
           type="text"
           class="form-control custom-input"
-          placeholder="ابحث باسم الشخص..."
+          placeholder="ابحث بالاسم أو الرقم التعريفي أو المستوى التعليمي..."
         />
       </div>
     </div>
@@ -48,24 +51,30 @@
             <td>{{ person.lastName }}</td>
             <td>{{ person.phoneNumber }}</td>
             <td>{{ person.educationalLevel }}</td>
-            <td class="d-flex gap-3">
+            <td class="d-flex gap-2 justify-content-center">
               <button
                 @click="viewDetails(person.id)"
-                class="btn btn-primary btn-sm me-1 custom-btn"
+                class="btn btn-primary btn-sm expandable-action-btn"
+                title="عرض التفاصيل"
               >
-                عرض
+                <i class="bi bi-eye icon"></i>
+                <span class="btn-text"></span>
               </button>
               <button
                 @click="editPerson(person.id)"
-                class="btn btn-warning btn-sm me-1 custom-btn"
+                class="btn btn-warning btn-sm expandable-action-btn"
+                title="تعديل"
               >
-                تعديل
+                <i class="bi bi-pencil icon"></i>
+                <span class="btn-text"></span>
               </button>
               <button
                 @click="deletePerson(person.id)"
-                class="btn btn-danger btn-sm custom-btn"
+                class="btn btn-danger btn-sm expandable-action-btn"
+                title="حذف"
               >
-                حذف
+                <i class="bi bi-trash icon"></i>
+                <span class="btn-text"></span>
               </button>
             </td>
           </tr>
@@ -77,69 +86,71 @@
       v-if="!filteredPersons.length"
       class="alert alert-warning text-center mt-3"
     >
-      لا يوجد معلومات مطابقة!
+      لا يوجد أشخاص مطابقون للبحث المحدد
     </div>
   </div>
 </template>
 
 <script setup>
-import { ref, computed } from "vue";
+import { ref, computed, onMounted } from "vue";
 import axios from "axios";
-import { useRouter, useRoute } from "vue-router";
+import { useRouter } from "vue-router";
 
+const API_BASE_URL = "https://charityapp.runasp.net/api";
 const router = useRouter();
-const route = useRoute();
+const AUTH_TOKEN = localStorage.getItem("token");
 
 const persons = ref([]);
-
-// Set up interceptor
-// axios.interceptors.request.use(
-//   (config) => {
-//     const token = localStorage.getItem("token");
-//     if (token) {
-//       config.headers.Authorization = `Bearer ${token}`;
-//     }
-//     return config;
-//   },
-//   (error) => {
-//     return Promise.reject(error);
-//   }
-// );
-const AUTH_TOKEN = localStorage.getItem("token");
-axios
-  .get("https://charityapp.runasp.net/api/Person", {
-    headers: {
-      Authorization: `Bearer ${AUTH_TOKEN}`,
-    },
-  })
-  .then((res) => {
-    persons.value = res.data;
-  })
-  .catch((error) => console.log(error));
-
 const searchQuery = ref("");
 
+// Fetch persons data
+const fetchPersons = async () => {
+  try {
+    const response = await axios.get(`${API_BASE_URL}/Person`, {
+      headers: {
+        Authorization: `Bearer ${AUTH_TOKEN}`,
+      },
+    });
+    persons.value = response.data;
+  } catch (error) {
+    console.error("Error fetching persons:", error);
+    alert("حدث خطأ أثناء جلب بيانات الأشخاص");
+  }
+};
+
+// Enhanced search functionality - searches across multiple fields
 const filteredPersons = computed(() => {
-  return persons.value.filter((person) =>
-    person.firstName.toLowerCase().includes(searchQuery.value.toLowerCase())
-  );
+  if (!searchQuery.value) {
+    return persons.value;
+  }
+
+  const query = searchQuery.value.toLowerCase().trim();
+
+  return persons.value.filter((person) => {
+    // Search in all name fields
+    const fullName =
+      `${person.firstName} ${person.secondName} ${person.thirdName} ${person.lastName}`.toLowerCase();
+
+    // Search criteria
+    const matchesName = fullName.includes(query);
+    const matchesId = person.id.toString().includes(query);
+    const matchesEducation = person.educationalLevel
+      ?.toLowerCase()
+      .includes(query);
+    const matchesPhone = person.phoneNumber?.includes(query);
+    const matchesGender = person.gender?.toLowerCase().includes(query);
+
+    return (
+      matchesName ||
+      matchesId ||
+      matchesEducation ||
+      matchesPhone ||
+      matchesGender
+    );
+  });
 });
 
-const formatDate = (date) => {
-  return new Date(date).toLocaleDateString("ar-JO", {
-    year: "numeric",
-    month: "long",
-    day: "numeric",
-  });
-};
-
-const getStatusClass = (status) => {
-  return {
-    "text-danger fw-bold": status === "بحاجة لمساعدة",
-    "text-success fw-bold": status === "تمت المساعدة",
-  };
-};
-
+// Navigation functions
 const viewDetails = (id) => {
   router.push(`/view-person/${id}`);
 };
@@ -148,46 +159,44 @@ const editPerson = (id) => {
   router.push(`/edit-person/${id}`);
 };
 
-const deletePerson = (id) => {
+const deletePerson = async (id) => {
   if (confirm("هل أنت متأكد من عملية الحذف؟")) {
-    axios
-      .delete(`https://charityapp.runasp.net/api/Person/${id}`, {
+    try {
+      await axios.delete(`${API_BASE_URL}/Person/${id}`, {
         headers: {
           Authorization: `Bearer ${AUTH_TOKEN}`,
         },
-      })
-      .then((res) => {
-        console.log(res);
-      })
-      .catch((error) => console.log(error));
+      });
 
-    // Refresh the current page
-    router.replace({ path: "/redirect" }).then(() => {
-      router.replace({ path: "/individual" });
-    });
-    alert(`تم حذف الشخص رقم: ${id}`);
+      // Refresh data after deletion
+      await fetchPersons();
+      alert(`تم حذف الشخص رقم: ${id} بنجاح`);
+    } catch (error) {
+      console.error("Error deleting person:", error);
+      alert("حدث خطأ أثناء حذف الشخص");
+    }
   }
 };
+
+// Initialize data on component mount
+onMounted(fetchPersons);
 </script>
 
 <style scoped>
-.families-table {
+.persons-table {
   font-family: "Tajawal", sans-serif;
 }
 
-/* Theme-aligned table header */
 .table-header {
   background-color: #42b983 !important;
 }
 
-/* Align table text to right */
 .table th,
 .table td {
-  text-align: right;
+  text-align: center;
   vertical-align: middle;
 }
 
-/* Input styling aligned with login theme */
 .custom-input {
   text-align: right;
   padding: 0.6rem 0.75rem;
@@ -207,39 +216,92 @@ const deletePerson = (id) => {
   font-size: 0.9rem;
 }
 
-/* Button styling matching login page */
-.custom-btn {
-  font-weight: 600;
-  letter-spacing: 0.3px;
-  transition: all 0.3s ease;
-  border-radius: 8px;
-  padding: 0.25rem 0.6rem;
+/* تأثيرات التوسع للأزرار الرئيسية */
+.expandable-btn {
+  position: relative;
+  overflow: hidden;
+  white-space: nowrap;
+  transition: all 0.4s cubic-bezier(0.25, 0.46, 0.45, 0.94);
+  min-width: 45px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
 }
 
-.btn-primary.custom-btn {
+.expandable-btn .icon {
+  transition: margin 0.4s ease;
+  font-size: 1.1rem;
+}
+
+.expandable-btn .btn-text {
+  opacity: 0;
+  max-width: 0;
+  overflow: hidden;
+  transition: all 0.4s ease;
+  margin-right: 0;
+  font-weight: 600;
+}
+
+.expandable-btn:hover {
+  min-width: auto;
+  padding-left: 1rem;
+  padding-right: 1rem;
+}
+
+.expandable-btn:hover .icon {
+  margin-left: 0.5rem;
+}
+
+.expandable-btn:hover .btn-text {
+  opacity: 1;
+  max-width: 150px;
+  margin-right: 0.5rem;
+}
+
+/* تنسيق خاص لأزرار الإجراءات */
+.btn-primary.expandable-action-btn {
   background-color: #42b983;
   border-color: #42b983;
 }
 
-.btn-primary.custom-btn:hover {
+.btn-primary.expandable-action-btn:hover {
   background-color: #3aa876;
   border-color: #3aa876;
-  transform: translateY(-1px);
   box-shadow: 0 4px 8px rgba(66, 185, 131, 0.3);
-}
-
-.btn-warning.custom-btn:hover,
-.btn-danger.custom-btn:hover {
   transform: translateY(-1px);
-  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
 }
 
-.btn:active {
+.btn-warning.expandable-action-btn:hover {
+  box-shadow: 0 4px 8px rgba(255, 193, 7, 0.3);
+  transform: translateY(-1px);
+}
+
+.btn-danger.expandable-action-btn:hover {
+  box-shadow: 0 4px 8px rgba(220, 53, 69, 0.3);
+  transform: translateY(-1px);
+}
+
+.expandable-action-btn:active {
   transform: translateY(0) !important;
 }
 
 /* Placeholder RTL fix */
 .form-control::placeholder {
   text-align: right;
+}
+
+/* تحسينات للشاشات الصغيرة */
+@media (max-width: 768px) {
+  .expandable-btn:hover .btn-text {
+    max-width: 120px;
+  }
+
+  .expandable-action-btn:hover .btn-text {
+    max-width: 50px;
+  }
+
+  .table-responsive {
+    font-size: 0.9rem;
+  }
 }
 </style>

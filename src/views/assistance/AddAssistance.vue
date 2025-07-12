@@ -49,7 +49,22 @@
                         class="dropdown-menu w-100 families-dropdown rtl-dropdown"
                         :aria-labelledby="`familiesDropdown${index}`"
                       >
-                        <li v-for="family in families" :key="family.familyId">
+                        <li class="dropdown-item-search">
+                          <input
+                            type="text"
+                            class="form-control search-input"
+                            placeholder="البحث في العائلات..."
+                            v-model="row.familySearchTerm"
+                            @click.stop
+                          />
+                        </li>
+                        <li class="dropdown-divider"></li>
+                        <li
+                          v-for="family in getFilteredFamilies(
+                            row.familySearchTerm
+                          )"
+                          :key="family.familyId"
+                        >
                           <div
                             class="form-check dropdown-item-check rtl-check clickable-item"
                             @click.stop="
@@ -72,10 +87,19 @@
                             </label>
                           </div>
                         </li>
-                        <li v-if="families.length === 0">
-                          <span class="dropdown-item text-muted text-end"
-                            >لا توجد عائلات</span
-                          >
+                        <li
+                          v-if="
+                            getFilteredFamilies(row.familySearchTerm).length ===
+                            0
+                          "
+                        >
+                          <span class="dropdown-item text-muted text-end">
+                            {{
+                              row.familySearchTerm
+                                ? "لا توجد نتائج"
+                                : "لا توجد عائلات"
+                            }}
+                          </span>
                         </li>
                       </ul>
                     </div>
@@ -98,7 +122,22 @@
                         class="dropdown-menu w-100 persons-dropdown rtl-dropdown"
                         :aria-labelledby="`personsDropdown${index}`"
                       >
-                        <li v-for="person in allPersons" :key="person.id">
+                        <li class="dropdown-item-search">
+                          <input
+                            type="text"
+                            class="form-control search-input"
+                            placeholder="البحث في الأشخاص..."
+                            v-model="row.personSearchTerm"
+                            @click.stop
+                          />
+                        </li>
+                        <li class="dropdown-divider"></li>
+                        <li
+                          v-for="person in getFilteredPersons(
+                            row.personSearchTerm
+                          )"
+                          :key="person.id"
+                        >
                           <div
                             class="form-check dropdown-item-check rtl-check clickable-item"
                             @click.stop="togglePersonSelection(row, person.id)"
@@ -119,10 +158,19 @@
                             </label>
                           </div>
                         </li>
-                        <li v-if="allPersons.length === 0">
-                          <span class="dropdown-item text-muted text-end"
-                            >لا يوجد أشخاص</span
-                          >
+                        <li
+                          v-if="
+                            getFilteredPersons(row.personSearchTerm).length ===
+                            0
+                          "
+                        >
+                          <span class="dropdown-item text-muted text-end">
+                            {{
+                              row.personSearchTerm
+                                ? "لا توجد نتائج"
+                                : "لا يوجد أشخاص"
+                            }}
+                          </span>
                         </li>
                       </ul>
                     </div>
@@ -130,20 +178,67 @@
 
                   <!-- Assistance Type Column -->
                   <td>
-                    <select
-                      v-model="row.assistanceTypeId"
-                      class="form-select"
-                      required
-                    >
-                      <option value="">اختر نوع المساعدة</option>
-                      <option
-                        v-for="type in assistanceTypes"
-                        :key="type.assistanceTypeId"
-                        :value="type.assistanceTypeId"
+                    <div class="dropdown">
+                      <button
+                        class="btn btn-outline-secondary dropdown-toggle w-100 text-end"
+                        type="button"
+                        :id="`assistanceTypeDropdown${index}`"
+                        data-bs-toggle="dropdown"
+                        aria-expanded="false"
+                        data-bs-auto-close="outside"
                       >
-                        {{ type.assistanceTypeName }}
-                      </option>
-                    </select>
+                        {{
+                          getSelectedAssistanceTypeText(row.assistanceTypeId)
+                        }}
+                      </button>
+                      <ul
+                        class="dropdown-menu w-100 assistance-type-dropdown rtl-dropdown"
+                        :aria-labelledby="`assistanceTypeDropdown${index}`"
+                      >
+                        <li class="dropdown-item-search">
+                          <input
+                            type="text"
+                            class="form-control search-input"
+                            placeholder="البحث في أنواع المساعدات..."
+                            v-model="row.assistanceTypeSearchTerm"
+                            @click.stop
+                          />
+                        </li>
+                        <li class="dropdown-divider"></li>
+                        <li
+                          v-for="type in getFilteredAssistanceTypes(
+                            row.assistanceTypeSearchTerm
+                          )"
+                          :key="type.assistanceTypeId"
+                        >
+                          <div
+                            class="dropdown-item rtl-check clickable-item"
+                            @click.stop="
+                              selectAssistanceType(row, type.assistanceTypeId)
+                            "
+                          >
+                            <span class="rtl-label">{{
+                              type.assistanceTypeName
+                            }}</span>
+                          </div>
+                        </li>
+                        <li
+                          v-if="
+                            getFilteredAssistanceTypes(
+                              row.assistanceTypeSearchTerm
+                            ).length === 0
+                          "
+                        >
+                          <span class="dropdown-item text-muted text-end">
+                            {{
+                              row.assistanceTypeSearchTerm
+                                ? "لا توجد نتائج"
+                                : "لا توجد أنواع مساعدات"
+                            }}
+                          </span>
+                        </li>
+                      </ul>
+                    </div>
                   </td>
 
                   <!-- Number Column -->
@@ -256,6 +351,9 @@ const assistanceRows = ref([
     assistanceTypeId: "",
     numberOfAssistance: 1,
     note: "",
+    familySearchTerm: "",
+    personSearchTerm: "",
+    assistanceTypeSearchTerm: "",
   },
 ]);
 
@@ -298,6 +396,9 @@ const addRow = () => {
     assistanceTypeId: "",
     numberOfAssistance: 1,
     note: "",
+    familySearchTerm: "",
+    personSearchTerm: "",
+    assistanceTypeSearchTerm: "",
   });
 };
 
@@ -305,6 +406,30 @@ const removeRow = (index) => {
   if (assistanceRows.value.length > 1) {
     assistanceRows.value.splice(index, 1);
   }
+};
+
+// Search filter functions
+const getFilteredFamilies = (searchTerm) => {
+  if (!searchTerm) return families.value;
+  return families.value.filter((family) =>
+    family.name.toLowerCase().includes(searchTerm.toLowerCase())
+  );
+};
+
+const getFilteredPersons = (searchTerm) => {
+  if (!searchTerm) return allPersons.value;
+  return allPersons.value.filter((person) =>
+    `${person.firstName} ${person.lastName}`
+      .toLowerCase()
+      .includes(searchTerm.toLowerCase())
+  );
+};
+
+const getFilteredAssistanceTypes = (searchTerm) => {
+  if (!searchTerm) return assistanceTypes.value;
+  return assistanceTypes.value.filter((type) =>
+    type.assistanceTypeName.toLowerCase().includes(searchTerm.toLowerCase())
+  );
 };
 
 // Toggle family selection
@@ -327,6 +452,21 @@ const togglePersonSelection = (row, personId) => {
   }
 };
 
+// Select assistance type
+const selectAssistanceType = (row, typeId) => {
+  row.assistanceTypeId = typeId;
+  // Close dropdown after selection
+  const dropdown = document.querySelector(
+    `#assistanceTypeDropdown${assistanceRows.value.indexOf(row)}`
+  );
+  if (dropdown) {
+    const bsDropdown = bootstrap.Dropdown.getInstance(dropdown);
+    if (bsDropdown) {
+      bsDropdown.hide();
+    }
+  }
+};
+
 const getSelectedFamiliesText = (selectedFamilies) => {
   if (selectedFamilies.length === 0) return "اختر العائلات";
   if (selectedFamilies.length === 1) {
@@ -345,6 +485,12 @@ const getSelectedPersonsText = (selectedPersons) => {
     return person ? `${person.firstName} ${person.lastName}` : "شخص غير معروف";
   }
   return `${selectedPersons.length} شخص مختار`;
+};
+
+const getSelectedAssistanceTypeText = (typeId) => {
+  if (!typeId) return "اختر نوع المساعدة";
+  const type = assistanceTypes.value.find((t) => t.assistanceTypeId === typeId);
+  return type ? type.assistanceTypeName : "نوع غير معروف";
 };
 
 const getAssistanceTypeName = (typeId) => {
@@ -480,7 +626,7 @@ const submitForm = async () => {
 
 /* RTL Dropdown Styles */
 .rtl-dropdown {
-  max-height: 250px;
+  max-height: 300px;
   overflow-y: auto;
   direction: rtl;
   text-align: right;
@@ -520,6 +666,29 @@ const submitForm = async () => {
   margin-left: 0;
   cursor: pointer;
   user-select: none;
+}
+
+/* Search input styles */
+.dropdown-item-search {
+  padding: 0.5rem 1rem;
+  margin: 0;
+}
+
+.search-input {
+  text-align: right;
+  direction: rtl;
+  border: 1px solid #dee2e6;
+  border-radius: 0.375rem;
+  font-size: 0.9rem;
+}
+
+.search-input:focus {
+  border-color: #42b983;
+  box-shadow: 0 0 0 0.2rem rgba(66, 185, 131, 0.25);
+}
+
+.dropdown-divider {
+  margin: 0.5rem 0;
 }
 
 /* Notes textarea styling */

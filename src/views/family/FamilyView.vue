@@ -1,22 +1,25 @@
 <template>
   <div
-    class="families-table container my-4 bg-white bg-opacity-50 p-5 rounded-4 shadow-lg text-center"
+    class="families-table container my-4 bg-white bg-opacity-50 p-5 rounded-4 shadow-lg"
     dir="rtl"
   >
     <h2 class="text-center mb-4 fw-bold">جدول العائلات</h2>
 
     <div class="d-flex justify-content-between align-items-center mb-4">
-      <router-link to="/add-family" class="btn btn-success">
-        <i class="bi bi-plus-circle me-1"></i>
-        إضافة عائلة
-      </router-link>
+      <div class="d-flex gap-2">
+        <!-- زر إضافة عائلة مع تأثير التوسع -->
+        <router-link to="/add-family" class="btn btn-success expandable-btn">
+          <i class="bi bi-plus-circle icon"></i>
+          <span class="btn-text">إضافة عائلة</span>
+        </router-link>
+      </div>
 
       <div class="flex-grow-1 mx-3">
         <input
           v-model="searchQuery"
           type="text"
           class="form-control custom-input"
-          placeholder="ابحث باسم العائلة..."
+          placeholder="ابحث باسم العائلة أو رقم العائلة..."
         />
       </div>
     </div>
@@ -56,21 +59,27 @@
             <td class="d-flex gap-2 justify-content-center">
               <button
                 @click="viewDetails(family.familyId)"
-                class="btn btn-primary btn-sm custom-btn"
+                class="btn btn-primary btn-sm expandable-action-btn"
+                title="عرض التفاصيل"
               >
-                عرض
+                <i class="bi bi-eye icon"></i>
+                <span class="btn-text"></span>
               </button>
               <button
                 @click="editFamily(family.familyId)"
-                class="btn btn-warning btn-sm custom-btn"
+                class="btn btn-warning btn-sm expandable-action-btn"
+                title="تعديل"
               >
-                تعديل
+                <i class="bi bi-pencil icon"></i>
+                <span class="btn-text"></span>
               </button>
               <button
                 @click="deleteFamily(family.familyId)"
-                class="btn btn-danger btn-sm custom-btn"
+                class="btn btn-danger btn-sm expandable-action-btn"
+                title="حذف"
               >
-                حذف
+                <i class="bi bi-trash icon"></i>
+                <span class="btn-text"></span>
               </button>
             </td>
           </tr>
@@ -82,7 +91,7 @@
       v-if="!loading && !filteredFamilies.length"
       class="alert alert-warning text-center mt-3"
     >
-      لا يوجد عائلات مطابقة للبحث
+      لا يوجد عائلات مطابقة للبحث المحدد
     </div>
   </div>
 </template>
@@ -92,6 +101,7 @@ import { ref, computed, onMounted } from "vue";
 import { useRouter } from "vue-router";
 import axios from "axios";
 
+const API_BASE_URL = "https://charityapp.runasp.net/api";
 const router = useRouter();
 const families = ref([]);
 const searchQuery = ref("");
@@ -109,21 +119,18 @@ const getActualMemberCount = (family) => {
 const fetchFamilies = async () => {
   loading.value = true;
   try {
-    const response = await axios.get(
-      "https://charityapp.runasp.net/api/Family",
-      {
-        headers: {
-          Authorization: `Bearer ${AUTH_TOKEN}`,
-        },
-      }
-    );
+    const response = await axios.get(`${API_BASE_URL}/Family`, {
+      headers: {
+        Authorization: `Bearer ${AUTH_TOKEN}`,
+      },
+    });
 
     // جلب تفاصيل كل عائلة مع أعضائها
     const familiesWithMembers = await Promise.all(
       response.data.map(async (family) => {
         try {
           const detailResponse = await axios.get(
-            `https://charityapp.runasp.net/api/Family/${family.familyId}`,
+            `${API_BASE_URL}/Family/${family.familyId}`,
             {
               headers: {
                 Authorization: `Bearer ${AUTH_TOKEN}`,
@@ -155,12 +162,24 @@ const fetchFamilies = async () => {
   }
 };
 
-onMounted(fetchFamilies);
-
+// Enhanced search functionality - searches across multiple fields
 const filteredFamilies = computed(() => {
-  return families.value.filter((family) =>
-    family.name.toLowerCase().includes(searchQuery.value.toLowerCase())
-  );
+  if (!searchQuery.value) {
+    return families.value;
+  }
+
+  const query = searchQuery.value.toLowerCase().trim();
+
+  return families.value.filter((family) => {
+    // Search criteria
+    const matchesName = family.name?.toLowerCase().includes(query);
+    const matchesId = family.familyId?.toString().includes(query);
+    const matchesHouseStatus = family.isHouseOwned
+      ? "ملك".includes(query)
+      : "إيجار".includes(query);
+
+    return matchesName || matchesId || matchesHouseStatus;
+  });
 });
 
 const viewDetails = (id) => {
@@ -174,21 +193,14 @@ const editFamily = (id) => {
 const deleteFamily = async (id) => {
   if (confirm("هل أنت متأكد من عملية الحذف؟")) {
     try {
-      console.log("ID to delete:", id);
-      console.log("Token:", AUTH_TOKEN);
+      await axios.delete(`${API_BASE_URL}/Family/${id}`, {
+        headers: {
+          Authorization: `Bearer ${AUTH_TOKEN}`,
+          "Content-Type": "application/json",
+        },
+      });
 
-      const response = await axios.delete(
-        `https://charityapp.runasp.net/api/Family/${id}`,
-        {
-          headers: {
-            Authorization: `Bearer ${AUTH_TOKEN}`,
-          },
-        }
-      );
-
-      console.log(response);
-      alert(`تم حذف العائلة رقم: ${id}`);
-
+      alert(`تم حذف العائلة رقم: ${id} بنجاح`);
       // إعادة تحميل البيانات بدلاً من إعادة التوجيه
       await fetchFamilies();
     } catch (error) {
@@ -197,6 +209,9 @@ const deleteFamily = async (id) => {
     }
   }
 };
+
+// Initialize data on component mount
+onMounted(fetchFamilies);
 </script>
 
 <style scoped>
@@ -233,38 +248,93 @@ const deleteFamily = async (id) => {
   font-size: 0.9rem;
 }
 
-.custom-btn {
-  font-weight: 600;
-  letter-spacing: 0.3px;
-  transition: all 0.3s ease;
-  border-radius: 8px;
-  padding: 0.25rem 0.6rem;
+/* تأثيرات التوسع للأزرار الرئيسية */
+.expandable-btn {
+  position: relative;
+  overflow: hidden;
+  white-space: nowrap;
+  transition: all 0.4s cubic-bezier(0.25, 0.46, 0.45, 0.94);
+  min-width: 45px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
 }
 
-.btn-primary.custom-btn {
+.expandable-btn .icon {
+  transition: margin 0.4s ease;
+  font-size: 1.1rem;
+}
+
+.expandable-btn .btn-text {
+  opacity: 0;
+  max-width: 0;
+  overflow: hidden;
+  transition: all 0.4s ease;
+  margin-right: 0;
+  font-weight: 600;
+}
+
+.expandable-btn:hover {
+  min-width: auto;
+  padding-left: 1rem;
+  padding-right: 1rem;
+}
+
+.expandable-btn:hover .icon {
+  margin-left: 0.5rem;
+}
+
+.expandable-btn:hover .btn-text {
+  opacity: 1;
+  max-width: 150px;
+  margin-right: 0.5rem;
+}
+
+/* تنسيق خاص لأزرار الإجراءات */
+.btn-primary.expandable-action-btn {
   background-color: #42b983;
   border-color: #42b983;
 }
 
-.btn-primary.custom-btn:hover {
+.btn-primary.expandable-action-btn:hover {
   background-color: #3aa876;
   border-color: #3aa876;
-  transform: translateY(-1px);
   box-shadow: 0 4px 8px rgba(66, 185, 131, 0.3);
-}
-
-.btn-warning.custom-btn:hover,
-.btn-danger.custom-btn:hover {
   transform: translateY(-1px);
-  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
 }
 
-.btn:active {
+.btn-warning.expandable-action-btn:hover {
+  box-shadow: 0 4px 8px rgba(255, 193, 7, 0.3);
+  transform: translateY(-1px);
+}
+
+.btn-danger.expandable-action-btn:hover {
+  box-shadow: 0 4px 8px rgba(220, 53, 69, 0.3);
+  transform: translateY(-1px);
+}
+
+.expandable-action-btn:active {
   transform: translateY(0) !important;
 }
 
+/* Placeholder RTL fix */
 .form-control::placeholder {
   text-align: right;
+}
+
+/* تحسينات للشاشات الصغيرة */
+@media (max-width: 768px) {
+  .expandable-btn:hover .btn-text {
+    max-width: 120px;
+  }
+
+  .expandable-action-btn:hover .btn-text {
+    max-width: 50px;
+  }
+
+  .table-responsive {
+    font-size: 0.9rem;
+  }
 }
 
 .spinner-border {

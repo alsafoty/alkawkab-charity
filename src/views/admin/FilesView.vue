@@ -29,28 +29,46 @@
                   <div class="mb-3">
                     <label class="form-label fw-bold">السنة</label>
                     <input
-                      type="text"
+                      type="number"
                       required
-                      v-model="uploadData.year"
+                      v-model.number="uploadData.year"
                       placeholder="ادخل السنة"
                       class="form-control"
+                      :min="2020"
+                      :max="2030"
                     />
                   </div>
 
                   <div class="mb-3">
                     <label class="form-label fw-bold">اختر الملف</label>
                     <input
+                      ref="fileInput"
                       type="file"
                       class="form-control"
                       @change="handleFileSelect"
+                      accept=".pdf,.doc,.docx,.xls,.xlsx"
                       required
                     />
+                  </div>
+
+                  <!-- File Preview -->
+                  <div v-if="uploadData.file" class="mb-3 p-3 bg-light rounded">
+                    <div class="d-flex align-items-center">
+                      <i class="bi bi-file-earmark text-success me-2"></i>
+                      <div>
+                        <strong>{{ uploadData.file.name }}</strong>
+                        <br />
+                        <small class="text-muted">{{
+                          formatFileSize(uploadData.file.size)
+                        }}</small>
+                      </div>
+                    </div>
                   </div>
 
                   <button
                     type="submit"
                     class="btn btn-success w-100"
-                    :disabled="uploading"
+                    :disabled="uploading || !canUpload"
                   >
                     <span
                       v-if="uploading"
@@ -81,18 +99,20 @@
                   <div class="mb-3">
                     <label class="form-label fw-bold">السنة</label>
                     <input
-                      type="text"
+                      type="number"
                       required
-                      v-model="downloadData.year"
+                      v-model.number="downloadData.year"
                       placeholder="ادخل السنة"
                       class="form-control"
+                      :min="2020"
+                      :max="2030"
                     />
                   </div>
 
                   <button
                     type="submit"
                     class="btn btn-primary w-100"
-                    :disabled="downloading"
+                    :disabled="downloading || !downloadData.year"
                   >
                     <span
                       v-if="downloading"
@@ -112,6 +132,9 @@
           <div
             :class="[
               'alert',
+              'alert-dismissible',
+              'fade',
+              'show',
               statusType === 'success' ? 'alert-success' : 'alert-danger',
             ]"
             role="alert"
@@ -119,11 +142,17 @@
             <i
               :class="
                 statusType === 'success'
-                  ? 'bi bi-check-circle'
-                  : 'bi bi-exclamation-triangle'
+                  ? 'bi bi-check-circle me-2'
+                  : 'bi bi-exclamation-triangle me-2'
               "
             ></i>
             {{ statusMessage }}
+            <button
+              type="button"
+              class="btn-close"
+              @click="clearMessage"
+              aria-label="Close"
+            ></button>
           </div>
         </div>
       </div>
@@ -132,64 +161,103 @@
 </template>
 
 <script setup>
-import { ref } from "vue";
+import { ref, computed } from "vue";
 import axios from "axios";
 
 const API_BASE_URL = "https://charityapp.runasp.net/api";
-const AUTH_TOKEN = localStorage.getItem("token");
 
 // Reactive data
 const uploading = ref(false);
 const downloading = ref(false);
 const statusMessage = ref("");
 const statusType = ref("success");
+const fileInput = ref(null);
 
 // Form data
 const uploadData = ref({
-  year: "",
+  year: new Date().getFullYear(),
   file: null,
 });
 
 const downloadData = ref({
-  year: "",
+  year: new Date().getFullYear(),
 });
+
+// Computed properties
+const canUpload = computed(() => {
+  return uploadData.value.year && uploadData.value.file && !uploading.value;
+});
+
+// Get auth token
+const getAuthToken = () => {
+  return localStorage.getItem("token") || localStorage.getItem("authToken");
+};
 
 // Handle file selection
 const handleFileSelect = (event) => {
-  uploadData.value.file = event.target.files[0];
+  const file = event.target.files[0];
+  if (file) {
+    // Validate file size (max 10MB)
+    if (file.size > 10 * 1024 * 1024) {
+      showMessage("حجم الملف كبير جداً. الحد الأقصى 10 ميجابايت", "error");
+      return;
+    }
+    uploadData.value.file = file;
+    clearMessage();
+  }
+};
+
+// Format file size
+const formatFileSize = (bytes) => {
+  if (bytes === 0) return "0 بايت";
+  const k = 1024;
+  const sizes = ["بايت", "كيلوبايت", "ميجابايت", "جيجابايت"];
+  const i = Math.floor(Math.log(bytes) / Math.log(k));
+  return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + " " + sizes[i];
 };
 
 // Upload file function
 const uploadFile = async () => {
-  if (!uploadData.value.file || !uploadData.value.year) {
+  if (!canUpload.value) {
     showMessage("يرجى اختيار الملف والسنة", "error");
     return;
   }
 
+  const authToken = getAuthToken();
+  if (!authToken) {
+    showMessage("يرجى تسجيل الدخول أولاً", "error");
+    return;
+  }
+
   uploading.value = true;
-  const formData = new FormData();
-  formData.append("file", uploadData.value.file);
+  clearMessage();
 
   try {
-    await axios.post(`${API_BASE_URL}/UploadFiles`, formData, {
-      headers: {
-        Authorization: `Bearer ${AUTH_TOKEN}`,
-        "Content-Type": "multipart/form-data",
-      },
-      params: {
-        year: uploadData.value.year,
-      },
-    });
+    const formData = new FormData();
+    formData.append("file", uploadData.value.file);
+
+    // Send year as query parameter, not in FormData
+    const response = await axios.post(
+      `${API_BASE_URL}/UploadFiles?year=${uploadData.value.year}`,
+      formData,
+      {
+        headers: {
+          Authorization: `Bearer ${authToken}`,
+          // Don't set Content-Type manually for FormData
+        },
+      }
+    );
 
     showMessage("تم رفع الملف بنجاح", "success");
 
     // Reset form
-    uploadData.value = { year: "", file: null };
-    // Reset file input
-    document.querySelector('input[type="file"]').value = "";
+    uploadData.value.file = null;
+    if (fileInput.value) {
+      fileInput.value.value = "";
+    }
   } catch (error) {
     console.error("Error uploading file:", error);
-    showMessage("حدث خطأ أثناء رفع الملف", "error");
+    handleApiError(error, "رفع الملف");
   } finally {
     uploading.value = false;
   }
@@ -198,39 +266,108 @@ const uploadFile = async () => {
 // Download file function
 const downloadFile = async () => {
   if (!downloadData.value.year) {
-    showMessage("يرجى اختيار السنة", "error");
+    showMessage("يرجى إدخال السنة", "error");
+    return;
+  }
+
+  const authToken = getAuthToken();
+  if (!authToken) {
+    showMessage("يرجى تسجيل الدخول أولاً", "error");
     return;
   }
 
   downloading.value = true;
+  clearMessage();
 
   try {
-    const response = await axios.get(`${API_BASE_URL}/UploadFiles`, {
-      headers: {
-        Authorization: `Bearer ${AUTH_TOKEN}`,
-      },
-      params: {
-        year: downloadData.value.year,
-      },
-      responseType: "blob",
-    });
+    const response = await axios.get(
+      `${API_BASE_URL}/UploadFiles?year=${downloadData.value.year}`,
+      {
+        headers: {
+          Authorization: `Bearer ${authToken}`,
+        },
+        responseType: "blob",
+      }
+    );
+
+    // Check if response has data
+    if (response.data.size === 0) {
+      showMessage("لا توجد ملفات للسنة المحددة", "error");
+      return;
+    }
 
     // Create download link
-    const url = window.URL.createObjectURL(new Blob([response.data]));
+    const blob = new Blob([response.data]);
+    const url = window.URL.createObjectURL(blob);
     const link = document.createElement("a");
     link.href = url;
-    link.setAttribute("download", `files_${downloadData.value.year}.pdf`);
+
+    // Extract filename from response headers or use default
+    let fileName = `Budget_${downloadData.value.year}`;
+    const contentDisposition = response.headers["content-disposition"];
+    if (contentDisposition) {
+      const filenameMatch = contentDisposition.match(/filename="(.+)"/);
+      if (filenameMatch) {
+        fileName = filenameMatch[1];
+      }
+    } else {
+      // Add extension based on content type
+      const contentType = response.headers["content-type"];
+      if (contentType?.includes("pdf")) fileName += ".pdf";
+      else if (contentType?.includes("word")) fileName += ".docx";
+      else if (contentType?.includes("excel")) fileName += ".xlsx";
+    }
+
+    link.download = fileName;
     document.body.appendChild(link);
     link.click();
-    link.remove();
+
+    // Cleanup
+    document.body.removeChild(link);
     window.URL.revokeObjectURL(url);
 
-    showMessage("تم تنزيل الملفات بنجاح", "success");
+    showMessage("تم تنزيل الملف بنجاح", "success");
   } catch (error) {
-    console.error("Error downloading files:", error);
-    showMessage("حدث خطأ أثناء تنزيل الملفات", "error");
+    console.error("Error downloading file:", error);
+    handleApiError(error, "تنزيل الملف");
   } finally {
     downloading.value = false;
+  }
+};
+
+// Handle API errors
+const handleApiError = (error, operation) => {
+  if (error.response) {
+    const status = error.response.status;
+    const data = error.response.data;
+
+    switch (status) {
+      case 400:
+        if (typeof data === "string") {
+          showMessage(data, "error");
+        } else {
+          showMessage("طلب غير صحيح", "error");
+        }
+        break;
+      case 401:
+        showMessage("غير مصرح لك بالوصول. يرجى تسجيل الدخول", "error");
+        break;
+      case 403:
+        showMessage("ليس لديك صلاحية لهذه العملية", "error");
+        break;
+      case 404:
+        showMessage("لا توجد ملفات للسنة المحددة", "error");
+        break;
+      case 500:
+        showMessage("خطأ في الخادم. يرجى المحاولة لاحقاً", "error");
+        break;
+      default:
+        showMessage(`خطأ في ${operation}: ${status}`, "error");
+    }
+  } else if (error.request) {
+    showMessage("لا يمكن الوصول إلى الخادم. تحقق من الاتصال", "error");
+  } else {
+    showMessage(`حدث خطأ في ${operation}`, "error");
   }
 };
 
@@ -239,10 +376,17 @@ const showMessage = (message, type) => {
   statusMessage.value = message;
   statusType.value = type;
 
-  // Clear message after 5 seconds
-  setTimeout(() => {
-    statusMessage.value = "";
-  }, 5000);
+  // Auto clear success messages after 5 seconds
+  if (type === "success") {
+    setTimeout(() => {
+      clearMessage();
+    }, 5000);
+  }
+};
+
+// Clear message
+const clearMessage = () => {
+  statusMessage.value = "";
 };
 </script>
 
@@ -310,5 +454,10 @@ const showMessage = (message, type) => {
 
 .file-operation-card:hover .operation-icon {
   animation: pulse 2s infinite;
+}
+
+/* File preview styling */
+.bg-light {
+  background-color: #f8f9fa !important;
 }
 </style>
