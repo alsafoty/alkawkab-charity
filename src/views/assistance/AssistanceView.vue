@@ -192,7 +192,7 @@
             <th>نوع المساعدة</th>
             <th>عدد المساعدات</th>
             <th>تاريخ المساعدة</th>
-            <th>ملاحظات</th>
+            <th>التوقيع</th>
           </tr>
         </thead>
         <tbody>
@@ -210,7 +210,7 @@
             <td>{{ getAssistanceTypeName(assistance.assistanceTypeId) }}</td>
             <td>{{ assistance.numberOfAssistance }}</td>
             <td>{{ formatDate(assistance.date) }}</td>
-            <td>{{ assistance.note || "-" }}</td>
+            <td>{{ " " }}</td>
           </tr>
         </tbody>
       </table>
