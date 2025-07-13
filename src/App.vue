@@ -23,9 +23,19 @@
             </h1>
           </div>
 
-          <!-- روابط التنقل (absolutely centered) -->
+          <!-- زر القائمة المنسدلة للجوال -->
+          <button
+            class="navbar-toggler d-lg-none"
+            type="button"
+            @click="toggleMobileMenu"
+            aria-label="Toggle navigation"
+          >
+            <i class="bi bi-list fs-4"></i>
+          </button>
+
+          <!-- روابط التنقل (desktop) -->
           <ul
-            class="navbar-nav d-flex flex-row fs-6 fs-md-3 fw-bold position-absolute start-50 translate-middle-x"
+            class="navbar-nav d-none d-lg-flex flex-row fs-6 fs-md-3 fw-bold position-absolute start-50 translate-middle-x"
           >
             <li class="nav-item">
               <router-link class="nav-link text-dark" to="/contact-us"
@@ -44,8 +54,8 @@
             </li>
           </ul>
 
-          <!-- زر الدخول للنظام (right side) -->
-          <div class="login-button-container flex-shrink-0">
+          <!-- زر الدخول للنظام (desktop) -->
+          <div class="login-button-container flex-shrink-0 d-none d-lg-block">
             <router-link
               class="btn btn-success btn-sm rounded-pill shadow-sm"
               to="/admin"
@@ -53,6 +63,51 @@
               <i class="bi bi-person-fill me-1"></i>
               الدخول للنظام
             </router-link>
+          </div>
+        </div>
+
+        <!-- القائمة المنسدلة للجوال -->
+        <div class="mobile-menu d-lg-none" :class="{ show: showMobileMenu }">
+          <div class="mobile-menu-content">
+            <ul class="navbar-nav">
+              <li class="nav-item">
+                <router-link
+                  class="nav-link text-dark"
+                  to="/"
+                  @click="closeMobileMenu"
+                >
+                  الرئيسية
+                </router-link>
+              </li>
+              <li class="nav-item">
+                <router-link
+                  class="nav-link text-dark"
+                  to="/about"
+                  @click="closeMobileMenu"
+                >
+                  عن الجمعية
+                </router-link>
+              </li>
+              <li class="nav-item">
+                <router-link
+                  class="nav-link text-dark"
+                  to="/contact-us"
+                  @click="closeMobileMenu"
+                >
+                  تواصل معنا
+                </router-link>
+              </li>
+              <li class="nav-item mt-3">
+                <router-link
+                  class="btn btn-success btn-sm rounded-pill shadow-sm w-100"
+                  to="/admin"
+                  @click="closeMobileMenu"
+                >
+                  <i class="bi bi-person-fill me-1"></i>
+                  الدخول للنظام
+                </router-link>
+              </li>
+            </ul>
           </div>
         </div>
       </nav>
@@ -72,6 +127,7 @@ import { useRouter, useRoute } from "vue-router";
 const router = useRouter();
 const route = useRoute();
 const isLoggedIn = ref(false);
+const showMobileMenu = ref(false);
 
 // التحقق من حالة تسجيل الدخول عند تحميل الصفحة
 onMounted(() => {
@@ -83,6 +139,7 @@ watch(
   () => route.path,
   () => {
     checkLoginStatus();
+    closeMobileMenu(); // إغلاق القائمة عند تغيير المسار
   }
 );
 
@@ -113,6 +170,16 @@ const logout = () => {
   }
   isLoggedIn.value = false;
   router.push("/admin");
+};
+
+// تبديل القائمة المنسدلة للجوال
+const toggleMobileMenu = () => {
+  showMobileMenu.value = !showMobileMenu.value;
+};
+
+// إغلاق القائمة المنسدلة للجوال
+const closeMobileMenu = () => {
+  showMobileMenu.value = false;
 };
 </script>
 
@@ -164,7 +231,7 @@ body {
   transform: translateY(0);
 }
 
-/* Tajawal Regular */
+/* خطوط Tajawal */
 @font-face {
   font-family: "Tajawal";
   src: url("@/assets/fonts/Tajawal-ExtraLight.ttf") format("truetype");
@@ -218,8 +285,8 @@ body {
 .logout-button-container {
   position: fixed;
   top: 15px;
-  right: 15px; /* في اليمين للتخطيط RTL */
-  z-index: 1030; /* أعلى من شريط التنقل */
+  right: 15px;
+  z-index: 1030;
 }
 
 .logout-button-container .btn {
@@ -245,8 +312,107 @@ body {
   box-shadow: 0 4px 8px rgba(25, 135, 84, 0.3);
 }
 
+/* زر القائمة المنسدلة للجوال */
+.navbar-toggler {
+  border: none;
+  background: none;
+  color: #198754;
+  padding: 0.5rem;
+  border-radius: 0.375rem;
+  transition: all 0.3s ease;
+}
+
+.navbar-toggler:hover {
+  background-color: rgba(25, 135, 84, 0.1);
+}
+
+.navbar-toggler:focus {
+  box-shadow: 0 0 0 0.2rem rgba(25, 135, 84, 0.25);
+}
+
+/* القائمة المنسدلة للجوال */
+.mobile-menu {
+  position: absolute;
+  top: 100%;
+  left: 0;
+  right: 0;
+  background: rgba(255, 255, 255, 0.95);
+  backdrop-filter: blur(10px);
+  border-top: 1px solid rgba(0, 0, 0, 0.1);
+  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+  max-height: 0;
+  overflow: hidden;
+  transition: max-height 0.3s ease;
+  z-index: 1000;
+}
+
+.mobile-menu.show {
+  max-height: 300px;
+}
+
+.mobile-menu-content {
+  padding: 1rem;
+}
+
+.mobile-menu .navbar-nav {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+}
+
+.mobile-menu .nav-item {
+  margin-bottom: 0.5rem;
+}
+
+.mobile-menu .nav-link {
+  display: block;
+  padding: 0.75rem 1rem;
+  text-decoration: none;
+  color: #333;
+  border-radius: 0.375rem;
+  transition: all 0.3s ease;
+  text-align: center;
+  font-weight: 500;
+}
+
+.mobile-menu .nav-link:hover {
+  background-color: rgba(25, 135, 84, 0.1);
+  color: #198754;
+}
+
+.mobile-menu .nav-link.router-link-active {
+  background-color: rgba(25, 135, 84, 0.2);
+  color: #198754;
+  font-weight: 600;
+}
+
 /* تطبيق الخط على الجسم كامل */
 body {
   font-family: "Tajawal", sans-serif;
+}
+
+/* تحسينات إضافية للجوال */
+@media (max-width: 991px) {
+  .navbar .container-fluid {
+    position: relative;
+  }
+
+  .logo-img {
+    height: 40px;
+  }
+
+  .navbar-brand {
+    font-size: 1.1rem !important;
+  }
+}
+
+@media (max-width: 480px) {
+  .navbar-brand {
+    font-size: 1rem !important;
+  }
+
+  .logo-img {
+    height: 35px;
+  }
 }
 </style>
