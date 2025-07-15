@@ -116,6 +116,7 @@
                 </button>
               </div>
             </th>
+            <th>الاستلام</th>
             <th>ملاحظات</th>
             <th>الإجراءات</th>
           </tr>
@@ -135,6 +136,15 @@
             <td>{{ getAssistanceTypeName(assistance.assistanceTypeId) }}</td>
             <td>{{ assistance.numberOfAssistance }}</td>
             <td>{{ formatDate(assistance.date) }}</td>
+            <td>
+              <i
+                :class="
+                  assistance.received
+                    ? 'bi bi-check-circle-fill text-success'
+                    : 'bi bi-x-circle-fill text-danger'
+                "
+              ></i>
+            </td>
             <td>{{ assistance.note || "-" }}</td>
             <td class="d-flex gap-2 justify-content-center">
               <button
@@ -192,6 +202,7 @@
             <th>نوع المساعدة</th>
             <th>عدد المساعدات</th>
             <th>تاريخ المساعدة</th>
+            <th>حالة الاستلام</th>
             <th>التوقيع</th>
           </tr>
         </thead>
@@ -210,6 +221,9 @@
             <td>{{ getAssistanceTypeName(assistance.assistanceTypeId) }}</td>
             <td>{{ assistance.numberOfAssistance }}</td>
             <td>{{ formatDate(assistance.date) }}</td>
+            <td>
+              {{ assistance.received ? "تم الاستلام" : "لم يتم الاستلام" }}
+            </td>
             <td>{{ " " }}</td>
           </tr>
         </tbody>
@@ -223,11 +237,15 @@
     </div>
   </div>
 </template>
-
 <script setup>
 import { ref, computed, onMounted } from "vue";
 import { useRouter } from "vue-router";
 import axios from "axios";
+import alertify from "alertifyjs";
+
+// Configure alertify for this component
+alertify.set("notifier", "position", "bottom-right");
+alertify.set("notifier", "delay", 5);
 
 const API_BASE_URL = "https://charityapp.runasp.net/api";
 const router = useRouter();
@@ -299,16 +317,25 @@ const applyDateFilter = () => {
       from: filterDateFrom.value,
       to: filterDateTo.value,
     };
+    alertify.success("تم تطبيق فلتر التاريخ بنجاح");
   } else if (filterDateFrom.value) {
     activeDateFilter.value = {
       from: filterDateFrom.value,
       to: null,
     };
+    alertify.success(
+      "تم تطبيق فلتر التاريخ من: " + formatDate(filterDateFrom.value)
+    );
   } else if (filterDateTo.value) {
     activeDateFilter.value = {
       from: null,
       to: filterDateTo.value,
     };
+    alertify.success(
+      "تم تطبيق فلتر التاريخ إلى: " + formatDate(filterDateTo.value)
+    );
+  } else {
+    alertify.warning("يرجى اختيار تاريخ واحد على الأقل");
   }
 };
 
@@ -316,16 +343,20 @@ const clearDateFilter = () => {
   filterDateFrom.value = "";
   filterDateTo.value = "";
   activeDateFilter.value = null;
+  alertify.message("تم مسح فلتر التاريخ");
 };
 
 // دوال ترتيب التاريخ
 const toggleDateSort = () => {
   if (dateSortOrder.value === "none") {
     dateSortOrder.value = "asc";
+    alertify.message("تم ترتيب التواريخ تصاعدياً");
   } else if (dateSortOrder.value === "asc") {
     dateSortOrder.value = "desc";
+    alertify.message("تم ترتيب التواريخ تنازلياً");
   } else {
     dateSortOrder.value = "none";
+    alertify.message("تم إلغاء ترتيب التواريخ");
   }
 };
 
@@ -352,6 +383,8 @@ const fetchData = async () => {
   const headers = { Authorization: `Bearer ${AUTH_TOKEN}` };
 
   try {
+    alertify.message("جاري تحميل بيانات المساعدات...");
+
     const [assistanceTypesRes, familiesRes, personsRes, assistancesRes] =
       await Promise.all([
         axios.get(`${API_BASE_URL}/AssistanceType`, { headers }),
@@ -364,9 +397,20 @@ const fetchData = async () => {
     families.value = familiesRes.data;
     persons.value = personsRes.data;
     assistances.value = assistancesRes.data;
+
+    alertify.success("تم تحميل جميع البيانات بنجاح");
   } catch (error) {
     console.error("Error fetching data:", error);
-    alert("حدث خطأ أثناء جلب البيانات");
+
+    if (error.response) {
+      const errorMessage =
+        error.response.data.message || error.response.statusText;
+      alertify.error(`حدث خطأ أثناء جلب البيانات: ${errorMessage}`);
+    } else if (error.request) {
+      alertify.error("لا يمكن الاتصال بالخادم. يرجى التحقق من اتصال الإنترنت");
+    } else {
+      alertify.error("حدث خطأ أثناء جلب البيانات");
+    }
   }
 };
 
@@ -432,7 +476,14 @@ const sortedAndFilteredAssistances = computed(() => {
   return result;
 });
 
+// Helper function to format received status for printing
+const getReceivedStatusText = (received) => {
+  return received ? "تم الاستلام" : "لم يتم الاستلام";
+};
+
 const directPrint = () => {
+  alertify.message("جاري تحضير الطباعة...");
+
   const printContent = document.getElementById("printableContent").innerHTML;
   const printWindow = window.open("", "_blank");
 
@@ -443,15 +494,61 @@ const directPrint = () => {
       <title>طباعة جدول المساعدات</title>
       <meta charset="utf-8">
       <style>
-        body { font-family: 'Tajawal', Arial, sans-serif; direction: rtl; margin: 20px; color: #333; }
-        .print-header { text-align: center; margin-bottom: 30px; border-bottom: 2px solid #42b983; padding-bottom: 15px; }
-        .print-header h2 { color: #42b983; margin-bottom: 10px; }
-        .print-table { width: 100%; border-collapse: collapse; margin: 20px 0; font-size: 12px; }
-        .print-table th, .print-table td { border: 1px solid #ddd; padding: 8px; text-align: center; }
-        .print-table th { background-color: #42b983; color: white; font-weight: bold; }
-        .print-table tr:nth-child(even) { background-color: #f9f9f9; }
-        .print-footer { margin-top: 30px; text-align: center; border-top: 1px solid #ddd; padding-top: 15px; color: #666; }
-        @media print { body { margin: 0; } .print-table { font-size: 10px; } }
+        body { 
+          font-family: 'Tajawal', Arial, sans-serif; 
+          direction: rtl; 
+          margin: 20px; 
+          color: #333; 
+        }
+        .print-header { 
+          text-align: center; 
+          margin-bottom: 30px; 
+          border-bottom: 2px solid #42b983; 
+          padding-bottom: 15px; 
+        }
+        .print-header h2 { 
+          color: #42b983; 
+          margin-bottom: 10px; 
+        }
+        .print-table { 
+          width: 100%; 
+          border-collapse: collapse; 
+          margin: 20px 0; 
+          font-size: 11px; 
+        }
+        .print-table th, .print-table td { 
+          border: 1px solid #ddd; 
+          padding: 6px; 
+          text-align: center; 
+          vertical-align: middle;
+        }
+        .print-table th { 
+          background-color: #42b983; 
+          color: white; 
+          font-weight: bold; 
+          font-size: 10px;
+        }
+        .print-table tr:nth-child(even) { 
+          background-color: #f9f9f9; 
+        }
+        .print-footer { 
+          margin-top: 30px; 
+          text-align: center; 
+          border-top: 1px solid #ddd; 
+          padding-top: 15px; 
+          color: #666; 
+        }
+        /* Specific styling for received status column */
+        .print-table td:nth-child(6) {
+          font-weight: bold;
+          font-size: 10px;
+        }
+        @media print { 
+          body { margin: 0; } 
+          .print-table { font-size: 9px; }
+          .print-table th { font-size: 8px; }
+          .print-table td:nth-child(6) { font-size: 8px; }
+        }
       </style>
     </head>
     <body>${printContent}</body>
@@ -463,6 +560,7 @@ const directPrint = () => {
   setTimeout(() => {
     printWindow.print();
     printWindow.close();
+    alertify.success("تم فتح نافذة الطباعة");
   }, 250);
 };
 
@@ -472,18 +570,51 @@ const editAssistance = (assistanceId) =>
   router.push(`/edit-assistance/${assistanceId}`);
 
 const deleteAssistance = async (assistanceId) => {
-  if (confirm("هل أنت متأكد من حذف هذه المساعدة؟")) {
-    try {
-      await axios.delete(`${API_BASE_URL}/Assistance/${assistanceId}`, {
-        headers: { Authorization: `Bearer ${AUTH_TOKEN}` },
-      });
-      await fetchData();
-      alert("تم حذف المساعدة بنجاح");
-    } catch (error) {
-      console.error("Error deleting assistance:", error);
-      alert("حدث خطأ أثناء حذف المساعدة");
+  // Get assistance details for better confirmation message
+  const assistance = assistances.value.find(
+    (a) => a.assistanceId === assistanceId
+  );
+  const assistanceInfo = assistance
+    ? `المساعدة رقم ${assistanceId} (${getAssistanceTypeName(
+        assistance.assistanceTypeId
+      )})`
+    : `المساعدة رقم ${assistanceId}`;
+
+  alertify.confirm(
+    "تأكيد الحذف",
+    `هل أنت متأكد من حذف ${assistanceInfo}؟`,
+    async function () {
+      // User clicked OK
+      try {
+        alertify.message("جاري حذف المساعدة...");
+
+        await axios.delete(`${API_BASE_URL}/Assistance/${assistanceId}`, {
+          headers: { Authorization: `Bearer ${AUTH_TOKEN}` },
+        });
+
+        await fetchData();
+        alertify.success(`تم حذف ${assistanceInfo} بنجاح`);
+      } catch (error) {
+        console.error("Error deleting assistance:", error);
+
+        if (error.response) {
+          const errorMessage =
+            error.response.data.message || error.response.statusText;
+          alertify.error(`حدث خطأ أثناء حذف المساعدة: ${errorMessage}`);
+        } else if (error.request) {
+          alertify.error(
+            "لا يمكن الاتصال بالخادم. يرجى التحقق من اتصال الإنترنت"
+          );
+        } else {
+          alertify.error("حدث خطأ أثناء حذف المساعدة");
+        }
+      }
+    },
+    function () {
+      // User clicked Cancel
+      alertify.message("تم إلغاء عملية الحذف");
     }
-  }
+  );
 };
 
 onMounted(fetchData);

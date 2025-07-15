@@ -380,11 +380,15 @@
     </div>
   </div>
 </template>
-
 <script setup>
 import { ref, reactive, watch, onMounted } from "vue";
 import { useRouter } from "vue-router";
 import axios from "axios";
+import alertify from "alertifyjs";
+
+// Configure alertify for this component
+alertify.set("notifier", "position", "bottom-right");
+alertify.set("notifier", "delay", 5);
 
 const router = useRouter();
 const AddAPI = ref("https://charityapp.runasp.net/api/Person/AddPerson");
@@ -436,15 +440,28 @@ onMounted(async () => {
 
 const fetchExistingFamilies = async () => {
   try {
+    alertify.message("جاري تحميل قائمة العائلات...");
+
     const response = await axios.get(FamilyAPI.value, {
       headers: {
         Authorization: `Bearer ${AUTH_TOKEN}`,
       },
     });
     existingFamilies.value = response.data;
+
+    alertify.success("تم تحميل قائمة العائلات بنجاح");
   } catch (error) {
     console.error("Error fetching families:", error);
-    alert("حدث خطأ أثناء جلب قائمة العائلات");
+
+    if (error.response) {
+      const errorMessage =
+        error.response.data.message || error.response.statusText;
+      alertify.error(`حدث خطأ أثناء جلب قائمة العائلات: ${errorMessage}`);
+    } else if (error.request) {
+      alertify.error("لا يمكن الاتصال بالخادم. يرجى التحقق من اتصال الإنترنت");
+    } else {
+      alertify.error("حدث خطأ أثناء جلب قائمة العائلات");
+    }
   }
 };
 
@@ -459,6 +476,8 @@ const onFamilySelect = () => {
       formData.numberOfFamilyMembers =
         selectedFamilyInfo.value.numberOfFamilyMembers;
       formData.isHouseOwned = selectedFamilyInfo.value.isHouseOwned;
+
+      alertify.success(`تم اختيار العائلة: ${selectedFamilyInfo.value.name}`);
     }
   } else {
     selectedFamilyInfo.value = null;
@@ -524,195 +543,272 @@ watch(
 
 const submitForm = async () => {
   if (!AUTH_TOKEN) {
-    alert("الرجاء تسجيل الدخول أولاً.");
+    alertify.error("الرجاء تسجيل الدخول أولاً.");
     return;
   }
 
-  try {
-    // التحقق من أن الرقم التعريفي تم إدخاله
-    if (!formData.id.trim()) {
-      alert("يرجى إدخال الرقم التعريفي");
-      return;
-    }
+  // Form validation
+  if (!formData.id.trim()) {
+    alertify.warning("يرجى إدخال الرقم التعريفي");
+    return;
+  }
 
-    let guardianId = null;
+  if (!formData.firstName.trim()) {
+    alertify.warning("يرجى إدخال الاسم الأول");
+    return;
+  }
 
-    // Step 1 & 2: إضافة الوصي أولاً إذا كان الشخص يتيماً
-    if (formData.isOrphan) {
+  if (!formData.lastName.trim()) {
+    alertify.warning("يرجى إدخال اسم العائلة");
+    return;
+  }
+
+  if (!formData.gender) {
+    alertify.warning("يرجى اختيار الجنس");
+    return;
+  }
+
+  if (formData.isOrphan && !formData.guardian.firstName.trim()) {
+    alertify.warning("يرجى إدخال بيانات الوصي للشخص اليتيم");
+    return;
+  }
+
+  if (
+    formData.isPartOfFamily &&
+    formData.isNewFamily &&
+    !formData.newFamilyName.trim()
+  ) {
+    alertify.warning("يرجى إدخال اسم العائلة الجديدة");
+    return;
+  }
+
+  alertify.confirm(
+    "تأكيد الإضافة",
+    "هل أنت متأكد من إضافة هذا الشخص؟",
+    async function () {
+      // User clicked OK
       try {
-        // إنشاء payload للوصي بناءً على الـ schema المُقدم
-        const guardianPayload = {
-          guardianId: formData.guardian.guardianId,
-          firstName: formData.guardian.firstName,
-          secondName: formData.guardian.secondName,
-          thirdName: formData.guardian.thirdName,
-          lastName: formData.guardian.lastName,
-          relationship: formData.guardian.relationship,
-          guardianJob: formData.guardian.guardianJob,
-          guardianPhoneNumber: formData.guardian.guardianPhoneNumber,
-        };
+        alertify.message("جاري إضافة الشخص...");
 
-        console.log("Adding guardian first:", guardianPayload);
+        let guardianId = null;
 
-        // إرسال طلب إضافة الوصي
-        const guardianResponse = await axios.post(
-          GuardianAPI.value,
-          guardianPayload,
-          {
-            headers: {
-              Authorization: `Bearer ${AUTH_TOKEN}`,
-              "Content-Type": "application/json",
-            },
+        // Step 1 & 2: إضافة الوصي أولاً إذا كان الشخص يتيماً
+        if (formData.isOrphan) {
+          try {
+            alertify.message("جاري إضافة بيانات الوصي...");
+
+            // إنشاء payload للوصي بناءً على الـ schema المُقدم
+            const guardianPayload = {
+              guardianId: formData.guardian.guardianId,
+              firstName: formData.guardian.firstName,
+              secondName: formData.guardian.secondName,
+              thirdName: formData.guardian.thirdName,
+              lastName: formData.guardian.lastName,
+              relationship: formData.guardian.relationship,
+              guardianJob: formData.guardian.guardianJob,
+              guardianPhoneNumber: formData.guardian.guardianPhoneNumber,
+            };
+
+            console.log("Adding guardian first:", guardianPayload);
+
+            // إرسال طلب إضافة الوصي
+            const guardianResponse = await axios.post(
+              GuardianAPI.value,
+              guardianPayload,
+              {
+                headers: {
+                  Authorization: `Bearer ${AUTH_TOKEN}`,
+                  "Content-Type": "application/json",
+                },
+              }
+            );
+
+            // Step 3: الحصول على guardianId من الاستجابة
+            guardianId =
+              guardianResponse.data.guardianId ||
+              guardianResponse.data.id ||
+              guardianPayload.guardianId;
+
+            console.log("Guardian added successfully with ID:", guardianId);
+            alertify.success("تم إضافة بيانات الوصي بنجاح");
+          } catch (guardianError) {
+            console.error("Error adding guardian:", guardianError);
+
+            if (guardianError.response) {
+              const errorMessage =
+                guardianError.response.data.message ||
+                guardianError.response.statusText;
+              alertify.error(
+                `حدث خطأ أثناء إضافة بيانات الوصي: ${errorMessage}`
+              );
+            } else {
+              alertify.error("حدث خطأ أثناء إضافة بيانات الوصي");
+            }
+            return; // إيقاف العملية إذا فشل إضافة الوصي
           }
-        );
+        }
 
-        // Step 3: الحصول على guardianId من الاستجابة
-        guardianId =
-          guardianResponse.data.guardianId ||
-          guardianResponse.data.id ||
-          guardianPayload.guardianId;
+        let familyId = 0;
 
-        console.log("Guardian added successfully with ID:", guardianId);
-      } catch (guardianError) {
-        console.error("Error adding guardian:", guardianError);
-        alert("حدث خطأ أثناء إضافة بيانات الوصي");
-        return; // إيقاف العملية إذا فشل إضافة الوصي
-      }
-    }
+        // Handle family creation/selection
+        if (formData.isPartOfFamily) {
+          if (formData.isNewFamily) {
+            alertify.message("جاري إنشاء عائلة جديدة...");
 
-    let familyId = 0;
+            // Create new family first
+            const newFamilyData = {
+              name: formData.newFamilyName,
+              numberOfFamilyMembers: formData.numberOfFamilyMembers,
+              isHouseOwned: formData.familyHouseOwned,
+            };
 
-    // Handle family creation/selection
-    if (formData.isPartOfFamily) {
-      if (formData.isNewFamily) {
-        // Create new family first
-        const newFamilyData = {
-          name: formData.newFamilyName,
+            const familyResponse = await axios.post(
+              FamilyAPI.value,
+              newFamilyData,
+              {
+                headers: {
+                  Authorization: `Bearer ${AUTH_TOKEN}`,
+                  "Content-Type": "application/json",
+                },
+              }
+            );
+
+            // جلب جميع العائلات للحصول على ID آخر عائلة
+            const allFamiliesResponse = await axios.get(FamilyAPI.value, {
+              headers: {
+                Authorization: `Bearer ${AUTH_TOKEN}`,
+              },
+            });
+
+            const allFamilies = allFamiliesResponse.data;
+
+            // الحصول على ID آخر عائلة (أحدث عائلة مُضافة)
+            if (allFamilies && allFamilies.length > 0) {
+              const sortedFamilies = allFamilies.sort(
+                (a, b) => b.familyId - a.familyId
+              );
+              familyId = sortedFamilies[0].familyId;
+            } else {
+              familyId = familyResponse.data.familyId || familyResponse.data.id;
+            }
+
+            console.log("New family created with ID:", familyId);
+            alertify.success(
+              `تم إنشاء العائلة الجديدة: ${formData.newFamilyName}`
+            );
+          } else {
+            alertify.message("جاري تحديث بيانات العائلة المختارة...");
+
+            // Use existing family
+            familyId = formData.selectedFamilyId;
+
+            // Update the existing family's member count and house ownership
+            const selectedFamily = selectedFamilyInfo.value;
+            if (selectedFamily) {
+              const updatedFamilyData = {
+                name: selectedFamily.name,
+                numberOfFamilyMembers: selectedFamily.numberOfFamilyMembers + 1,
+                isHouseOwned:
+                  selectedFamily.isHouseOwned || formData.isHouseOwned,
+              };
+
+              await axios.put(
+                `${FamilyAPI.value}/${familyId}`,
+                updatedFamilyData,
+                {
+                  headers: {
+                    Authorization: `Bearer ${AUTH_TOKEN}`,
+                    "Content-Type": "application/json",
+                  },
+                }
+              );
+
+              formData.numberOfFamilyMembers =
+                updatedFamilyData.numberOfFamilyMembers;
+
+              alertify.success("تم تحديث بيانات العائلة بنجاح");
+            }
+          }
+        }
+
+        // Step 4: Create person payload
+        const payload = {
+          id: formData.id.trim(),
+          gender: formData.gender,
+          firstName: formData.firstName,
+          secondName: formData.secondName,
+          thirdName: formData.thirdName,
+          lastName: formData.lastName,
+          phoneNumber: formData.phoneNumber,
+          educationalLevel: formData.educationalLevel,
+          isWidow: formData.isWidow,
+          isOrphan: formData.isOrphan,
+          job: formData.job,
+          isPartOfFamily: formData.isPartOfFamily,
           numberOfFamilyMembers: formData.numberOfFamilyMembers,
-          isHouseOwned: formData.familyHouseOwned,
+          isHouseOwned: formData.isHouseOwned,
+          assistances: formData.assistances,
         };
 
-        const familyResponse = await axios.post(
-          FamilyAPI.value,
-          newFamilyData,
-          {
-            headers: {
-              Authorization: `Bearer ${AUTH_TOKEN}`,
-              "Content-Type": "application/json",
-            },
-          }
-        );
+        // Add family ID if part of family
+        if (formData.isPartOfFamily) {
+          payload.familyId = familyId;
+        }
 
-        // جلب جميع العائلات للحصول على ID آخر عائلة
-        const allFamiliesResponse = await axios.get(FamilyAPI.value, {
+        // Step 3: Add guardian ID if orphan
+        if (formData.isOrphan && guardianId) {
+          payload.guardianId = guardianId;
+        }
+
+        console.log("Adding person with payload:", payload);
+
+        // Step 4: إرسال طلب إضافة الشخص
+        const personResponse = await axios.post(AddAPI.value, payload, {
           headers: {
             Authorization: `Bearer ${AUTH_TOKEN}`,
+            "Content-Type": "application/json",
           },
         });
 
-        const allFamilies = allFamiliesResponse.data;
+        console.log("Person added successfully:", personResponse.data);
+        alertify.success("تم إضافة الشخص بنجاح");
 
-        // الحصول على ID آخر عائلة (أحدث عائلة مُضافة)
-        if (allFamilies && allFamilies.length > 0) {
-          const sortedFamilies = allFamilies.sort(
-            (a, b) => b.familyId - a.familyId
+        // Navigate after a short delay to show success message
+        setTimeout(() => {
+          router.push("/individual");
+        }, 1500);
+      } catch (err) {
+        console.error("Error:", err);
+        console.log("Form data:", formData);
+
+        if (err.response) {
+          if (
+            err.response.status === 409 ||
+            err.response.data.message?.includes("duplicate") ||
+            err.response.data.message?.includes("exists")
+          ) {
+            alertify.error(
+              "الرقم التعريفي موجود مسبقاً. يرجى إدخال رقم مختلف."
+            );
+          } else {
+            const errorMessage =
+              err.response.data.message || err.response.statusText;
+            alertify.error(`فشل في إضافة الشخص: ${errorMessage}`);
+          }
+        } else if (err.request) {
+          alertify.error(
+            "لا يمكن الاتصال بالخادم. يرجى التحقق من اتصال الإنترنت"
           );
-          familyId = sortedFamilies[0].familyId;
         } else {
-          familyId = familyResponse.data.familyId || familyResponse.data.id;
-        }
-
-        console.log("New family created with ID:", familyId);
-      } else {
-        // Use existing family
-        familyId = formData.selectedFamilyId;
-
-        // Update the existing family's member count and house ownership
-        const selectedFamily = selectedFamilyInfo.value;
-        if (selectedFamily) {
-          const updatedFamilyData = {
-            name: selectedFamily.name,
-            numberOfFamilyMembers: selectedFamily.numberOfFamilyMembers + 1,
-            isHouseOwned: selectedFamily.isHouseOwned || formData.isHouseOwned,
-          };
-
-          await axios.put(`${FamilyAPI.value}/${familyId}`, updatedFamilyData, {
-            headers: {
-              Authorization: `Bearer ${AUTH_TOKEN}`,
-              "Content-Type": "application/json",
-            },
-          });
-
-          formData.numberOfFamilyMembers =
-            updatedFamilyData.numberOfFamilyMembers;
+          alertify.error("فشل في إرسال البيانات، تحقق من الاتصال أو التوكن.");
         }
       }
+    },
+    function () {
+      // User clicked Cancel
+      alertify.message("تم إلغاء عملية الإضافة");
     }
-
-    // Step 4: Create person payload
-    const payload = {
-      id: formData.id.trim(),
-      gender: formData.gender,
-      firstName: formData.firstName,
-      secondName: formData.secondName,
-      thirdName: formData.thirdName,
-      lastName: formData.lastName,
-      phoneNumber: formData.phoneNumber,
-      educationalLevel: formData.educationalLevel,
-      isWidow: formData.isWidow,
-      isOrphan: formData.isOrphan,
-      job: formData.job,
-      isPartOfFamily: formData.isPartOfFamily,
-      numberOfFamilyMembers: formData.numberOfFamilyMembers,
-      isHouseOwned: formData.isHouseOwned,
-      assistances: formData.assistances,
-    };
-
-    // Add family ID if part of family
-    if (formData.isPartOfFamily) {
-      payload.familyId = familyId;
-    }
-
-    // Step 3: Add guardian ID if orphan
-    if (formData.isOrphan && guardianId) {
-      payload.guardianId = guardianId;
-    }
-
-    console.log("Adding person with payload:", payload);
-
-    // Step 4: إرسال طلب إضافة الشخص
-    const personResponse = await axios.post(AddAPI.value, payload, {
-      headers: {
-        Authorization: `Bearer ${AUTH_TOKEN}`,
-        "Content-Type": "application/json",
-      },
-    });
-
-    console.log("Person added successfully:", personResponse.data);
-    alert("تم إضافة الشخص بنجاح");
-    router.push("/individual");
-  } catch (err) {
-    console.error("Error:", err);
-    console.log("Form data:", formData);
-
-    if (err.response) {
-      if (
-        err.response.status === 409 ||
-        err.response.data.message?.includes("duplicate") ||
-        err.response.data.message?.includes("exists")
-      ) {
-        alert("الرقم التعريفي موجود مسبقاً. يرجى إدخال رقم مختلف.");
-      } else {
-        alert(
-          `فشل في إضافة الشخص: ${
-            err.response.data.message || err.response.statusText
-          }`
-        );
-      }
-    } else {
-      alert("فشل في إرسال البيانات، تحقق من الاتصال أو التوكن.");
-    }
-  }
+  );
 };
 </script>
 

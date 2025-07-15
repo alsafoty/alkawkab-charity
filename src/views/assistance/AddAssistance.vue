@@ -22,6 +22,7 @@
                   <th width="25%">الأفراد</th>
                   <th width="20%">نوع المساعدة</th>
                   <th width="10%">العدد</th>
+                  <th width="10%">الاستلام</th>
                   <th width="15%">ملاحظات</th>
                   <th width="5%">إجراءات</th>
                 </tr>
@@ -252,6 +253,25 @@
                     />
                   </td>
 
+                  <!-- Received Column -->
+                  <td>
+                    <div class="form-check">
+                      <input
+                        v-model="row.received"
+                        class="form-check-input"
+                        type="checkbox"
+                        role="switch"
+                        id="received-{{ index }}"
+                      />
+                      <label
+                        class="form-check-label"
+                        for="received-{{ index }}"
+                      >
+                        {{ row.received ? "نعم" : "لا" }}
+                      </label>
+                    </div>
+                  </td>
+
                   <!-- Notes Column -->
                   <td>
                     <textarea
@@ -328,11 +348,15 @@
     </div>
   </div>
 </template>
-
 <script setup>
 import { ref, onMounted, computed } from "vue";
 import { useRouter } from "vue-router";
 import axios from "axios";
+import alertify from "alertifyjs";
+
+// Configure alertify for this component
+alertify.set("notifier", "position", "bottom-right");
+alertify.set("notifier", "delay", 5);
 
 const API_BASE_URL = "https://charityapp.runasp.net/api";
 const router = useRouter();
@@ -354,6 +378,7 @@ const assistanceRows = ref([
     familySearchTerm: "",
     personSearchTerm: "",
     assistanceTypeSearchTerm: "",
+    received: false,
   },
 ]);
 
@@ -363,6 +388,8 @@ onMounted(async () => {
 
 const loadInitialData = async () => {
   try {
+    alertify.message("جاري تحميل البيانات الأولية...");
+
     // جلب العائلات
     const familyResponse = await axios.get(`${API_BASE_URL}/Family`, {
       headers: { Authorization: `Bearer ${AUTH_TOKEN}` },
@@ -383,9 +410,11 @@ const loadInitialData = async () => {
       headers: { Authorization: `Bearer ${AUTH_TOKEN}` },
     });
     allPersons.value = personsResponse.data;
+
+    alertify.success("تم تحميل البيانات بنجاح");
   } catch (error) {
     console.error("Error fetching initial data:", error);
-    alert("حدث خطأ أثناء جلب البيانات الأولية");
+    alertify.error("حدث خطأ أثناء جلب البيانات الأولية");
   }
 };
 
@@ -399,12 +428,28 @@ const addRow = () => {
     familySearchTerm: "",
     personSearchTerm: "",
     assistanceTypeSearchTerm: "",
+    received: false,
   });
+  alertify.success("تم إضافة صف جديد");
 };
 
 const removeRow = (index) => {
   if (assistanceRows.value.length > 1) {
-    assistanceRows.value.splice(index, 1);
+    alertify.confirm(
+      "تأكيد الحذف",
+      "هل أنت متأكد من حذف هذا الصف؟",
+      function () {
+        // User clicked OK
+        assistanceRows.value.splice(index, 1);
+        alertify.success("تم حذف الصف بنجاح");
+      },
+      function () {
+        // User clicked Cancel
+        alertify.message("تم إلغاء عملية الحذف");
+      }
+    );
+  } else {
+    alertify.warning("لا يمكن حذف الصف الأخير");
   }
 };
 
@@ -521,7 +566,7 @@ const getTotalAssistances = () => {
 
 const submitForm = async () => {
   if (!AUTH_TOKEN) {
-    alert("الرجاء تسجيل الدخول أولاً.");
+    alertify.error("الرجاء تسجيل الدخول أولاً.");
     return;
   }
 
@@ -530,73 +575,103 @@ const submitForm = async () => {
     const row = assistanceRows.value[i];
 
     if (row.selectedFamilies.length === 0 && row.selectedPersons.length === 0) {
-      alert(`يرجى اختيار عائلة أو شخص واحد على الأقل في الصف ${i + 1}`);
+      alertify.warning(
+        `يرجى اختيار عائلة أو شخص واحد على الأقل في الصف ${i + 1}`
+      );
       return;
     }
 
     if (!row.assistanceTypeId) {
-      alert(`يرجى اختيار نوع المساعدة في الصف ${i + 1}`);
+      alertify.warning(`يرجى اختيار نوع المساعدة في الصف ${i + 1}`);
       return;
     }
 
     if (!row.numberOfAssistance || row.numberOfAssistance < 1) {
-      alert(`يرجى إدخال عدد صحيح للمساعدات في الصف ${i + 1}`);
+      alertify.warning(`يرجى إدخال عدد صحيح للمساعدات في الصف ${i + 1}`);
       return;
     }
   }
 
-  isSubmitting.value = true;
+  // Show confirmation dialog before submitting
+  const totalAssistances = getTotalAssistances();
+  alertify.confirm(
+    "تأكيد الإرسال",
+    `هل أنت متأكد من إضافة ${totalAssistances} مساعدة؟`,
+    async function () {
+      // User clicked OK
+      isSubmitting.value = true;
+      alertify.message("جاري إضافة المساعدات...");
 
-  try {
-    const assistancesToSubmit = [];
+      try {
+        const assistancesToSubmit = [];
 
-    // Process each row
-    for (const row of assistanceRows.value) {
-      // Add assistances for selected families
-      for (const familyId of row.selectedFamilies) {
-        assistancesToSubmit.push({
-          numberOfAssistance: Number(row.numberOfAssistance),
-          familyId: Number(familyId),
-          personId: null,
-          assistanceTypeId: Number(row.assistanceTypeId),
-          note: row.note || "",
-        });
+        // Process each row
+        for (const row of assistanceRows.value) {
+          // Add assistances for selected families
+          for (const familyId of row.selectedFamilies) {
+            assistancesToSubmit.push({
+              numberOfAssistance: Number(row.numberOfAssistance),
+              familyId: Number(familyId),
+              personId: null,
+              assistanceTypeId: Number(row.assistanceTypeId),
+              note: row.note || "",
+              received: row.received,
+            });
+          }
+
+          // Add assistances for selected persons
+          for (const personId of row.selectedPersons) {
+            assistancesToSubmit.push({
+              numberOfAssistance: Number(row.numberOfAssistance),
+              familyId: null,
+              personId: personId,
+              assistanceTypeId: Number(row.assistanceTypeId),
+              note: row.note || "",
+              received: row.received,
+            });
+          }
+        }
+
+        console.log("Assistances to submit:", assistancesToSubmit);
+
+        // Submit all assistances
+        const promises = assistancesToSubmit.map((assistance) =>
+          axios.post(`${API_BASE_URL}/Assistance`, assistance, {
+            headers: {
+              Authorization: `Bearer ${AUTH_TOKEN}`,
+              "Content-Type": "application/json",
+            },
+          })
+        );
+
+        await Promise.all(promises);
+
+        alertify.success(
+          `تم إضافة ${assistancesToSubmit.length} مساعدة بنجاح!`
+        );
+
+        // Navigate after a short delay to show success message
+        setTimeout(() => {
+          router.push("/assistance");
+        }, 1500);
+      } catch (error) {
+        console.error("Error adding assistances:", error);
+        if (error.response) {
+          const errorMessage =
+            error.response.data.message || error.response.statusText;
+          alertify.error(`حدث خطأ أثناء إضافة المساعدات: ${errorMessage}`);
+        } else {
+          alertify.error("حدث خطأ أثناء إضافة المساعدات");
+        }
+      } finally {
+        isSubmitting.value = false;
       }
-
-      // Add assistances for selected persons
-      for (const personId of row.selectedPersons) {
-        assistancesToSubmit.push({
-          numberOfAssistance: Number(row.numberOfAssistance),
-          familyId: null,
-          personId: personId,
-          assistanceTypeId: Number(row.assistanceTypeId),
-          note: row.note || "",
-        });
-      }
+    },
+    function () {
+      // User clicked Cancel
+      alertify.message("تم إلغاء عملية الإرسال");
     }
-
-    console.log("Assistances to submit:", assistancesToSubmit);
-
-    // Submit all assistances
-    const promises = assistancesToSubmit.map((assistance) =>
-      axios.post(`${API_BASE_URL}/Assistance`, assistance, {
-        headers: {
-          Authorization: `Bearer ${AUTH_TOKEN}`,
-          "Content-Type": "application/json",
-        },
-      })
-    );
-
-    await Promise.all(promises);
-
-    alert(`تم إضافة ${assistancesToSubmit.length} مساعدة بنجاح!`);
-    router.push("/assistance");
-  } catch (error) {
-    console.error("Error adding assistances:", error);
-    alert("حدث خطأ أثناء إضافة المساعدات");
-  } finally {
-    isSubmitting.value = false;
-  }
+  );
 };
 </script>
 

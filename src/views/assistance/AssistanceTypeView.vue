@@ -88,11 +88,15 @@
     </div>
   </div>
 </template>
-
 <script setup>
 import { ref, computed, onMounted } from "vue";
 import { useRouter } from "vue-router";
 import axios from "axios";
+import alertify from "alertifyjs";
+
+// Configure alertify for this component
+alertify.set("notifier", "position", "bottom-right");
+alertify.set("notifier", "delay", 5);
 
 const API_BASE_URL = "https://charityapp.runasp.net/api";
 const AUTH_TOKEN = localStorage.getItem("token");
@@ -115,13 +119,26 @@ const filteredTypes = computed(() => {
 // Methods
 const fetchAssistanceTypes = async () => {
   try {
+    alertify.message("جاري تحميل أنواع المساعدات...");
+
     const response = await axios.get(`${API_BASE_URL}/AssistanceType`, {
       headers: { Authorization: `Bearer ${AUTH_TOKEN}` },
     });
+
     assistanceTypes.value = response.data;
+    alertify.success("تم تحميل أنواع المساعدات بنجاح");
   } catch (error) {
     console.error("Error fetching assistance types:", error);
-    alert("حدث خطأ أثناء جلب أنواع المساعدات");
+
+    if (error.response) {
+      const errorMessage =
+        error.response.data.message || error.response.statusText;
+      alertify.error(`حدث خطأ أثناء جلب أنواع المساعدات: ${errorMessage}`);
+    } else if (error.request) {
+      alertify.error("لا يمكن الاتصال بالخادم. يرجى التحقق من اتصال الإنترنت");
+    } else {
+      alertify.error("حدث خطأ أثناء جلب أنواع المساعدات");
+    }
   }
 };
 
@@ -130,18 +147,49 @@ const viewDetails = (assistanceTypeId) => {
 };
 
 const deleteType = async (id) => {
-  if (confirm("هل أنت متأكد من حذف هذا النوع؟")) {
-    try {
-      await axios.delete(`${API_BASE_URL}/AssistanceType/${id}`, {
-        headers: { Authorization: `Bearer ${AUTH_TOKEN}` },
-      });
-      await fetchAssistanceTypes();
-      alert("تم حذف نوع المساعدة بنجاح");
-    } catch (error) {
-      console.error("Error deleting assistance type:", error);
-      alert("حدث خطأ أثناء حذف نوع المساعدة");
+  // Get the assistance type name for better confirmation message
+  const assistanceType = assistanceTypes.value.find(
+    (type) => type.assistanceTypeId === id
+  );
+  const typeName = assistanceType
+    ? assistanceType.assistanceTypeName
+    : "هذا النوع";
+
+  alertify.confirm(
+    "تأكيد الحذف",
+    `هل أنت متأكد من حذف "${typeName}"؟`,
+    async function () {
+      // User clicked OK
+      try {
+        alertify.message("جاري حذف نوع المساعدة...");
+
+        await axios.delete(`${API_BASE_URL}/AssistanceType/${id}`, {
+          headers: { Authorization: `Bearer ${AUTH_TOKEN}` },
+        });
+
+        await fetchAssistanceTypes();
+        alertify.success(`تم حذف "${typeName}" بنجاح`);
+      } catch (error) {
+        console.error("Error deleting assistance type:", error);
+
+        if (error.response) {
+          const errorMessage =
+            error.response.data.message || error.response.statusText;
+          alertify.error(`حدث خطأ أثناء حذف نوع المساعدة: ${errorMessage}`);
+        } else if (error.request) {
+          alertify.error(
+            "لا يمكن الاتصال بالخادم. يرجى التحقق من اتصال الإنترنت"
+          );
+        } else {
+          alertify.error("حدث خطأ أثناء حذف نوع المساعدة");
+        }
+      }
+    },
+    function () {
+      // User clicked Cancel
+      alertify.message("تم إلغاء عملية الحذف");
     }
-  }
+  );
 };
 
 // Lifecycle

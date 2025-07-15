@@ -95,11 +95,11 @@
     </div>
   </div>
 </template>
-
 <script setup>
 import { ref, computed, onMounted } from "vue";
 import { useRouter } from "vue-router";
 import axios from "axios";
+import alertify from "alertifyjs";
 
 const API_BASE_URL = "https://charityapp.runasp.net/api";
 const router = useRouter();
@@ -156,7 +156,7 @@ const fetchFamilies = async () => {
     console.log("Families with members:", familiesWithMembers);
   } catch (error) {
     console.error("Error fetching families:", error);
-    alert("حدث خطأ أثناء جلب بيانات العائلات");
+    alertify.error("حدث خطأ أثناء جلب بيانات العائلات");
   } finally {
     loading.value = false;
   }
@@ -191,23 +191,38 @@ const editFamily = (id) => {
 };
 
 const deleteFamily = async (id) => {
-  if (confirm("هل أنت متأكد من عملية الحذف؟")) {
-    try {
-      await axios.delete(`${API_BASE_URL}/Family/${id}`, {
-        headers: {
-          Authorization: `Bearer ${AUTH_TOKEN}`,
-          "Content-Type": "application/json",
-        },
-      });
+  // Create a custom confirmation dialog using AlertifyJS
+  alertify.confirm(
+    "تأكيد الحذف",
+    "هل أنت متأكد من عملية الحذف؟",
+    async function () {
+      // User clicked OK
+      try {
+        alertify.message("جاري حذف العائلة...");
 
-      alert(`تم حذف العائلة رقم: ${id} بنجاح`);
-      // إعادة تحميل البيانات بدلاً من إعادة التوجيه
-      await fetchFamilies();
-    } catch (error) {
-      console.error("خطأ أثناء الحذف:", error.response?.data || error.message);
-      alert("حدث خطأ أثناء حذف العائلة");
+        await axios.delete(`${API_BASE_URL}/Family/${id}`, {
+          headers: {
+            Authorization: `Bearer ${AUTH_TOKEN}`,
+            "Content-Type": "application/json",
+          },
+        });
+
+        alertify.success(`تم حذف العائلة رقم: ${id} بنجاح`);
+        // إعادة تحميل البيانات بدلاً من إعادة التوجيه
+        await fetchFamilies();
+      } catch (error) {
+        console.error(
+          "خطأ أثناء الحذف:",
+          error.response?.data || error.message
+        );
+        alertify.error("حدث خطأ أثناء حذف العائلة");
+      }
+    },
+    function () {
+      // User clicked Cancel
+      alertify.message("تم إلغاء عملية الحذف");
     }
-  }
+  );
 };
 
 // Initialize data on component mount

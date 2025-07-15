@@ -165,6 +165,7 @@
 import { ref, computed, onMounted } from "vue";
 import { useRoute, useRouter } from "vue-router";
 import axios from "axios";
+import alertify from "alertifyjs";
 
 const API_BASE_URL = "https://charityapp.runasp.net/api";
 const route = useRoute();
@@ -235,7 +236,7 @@ const fetchAssistanceTypeDetails = async () => {
     console.log("Assistance Type details:", response.data);
   } catch (error) {
     console.error("Error fetching assistance type details:", error);
-    alert("حدث خطأ أثناء جلب بيانات نوع المساعدة");
+    alertify.error("حدث خطأ أثناء جلب بيانات نوع المساعدة");
   }
 };
 

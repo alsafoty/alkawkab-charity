@@ -66,11 +66,15 @@
     </div>
   </div>
 </template>
-
 <script setup>
 import { ref } from "vue";
 import { useRouter } from "vue-router";
 import axios from "axios";
+import alertify from "alertifyjs";
+
+// Configure alertify for this component
+alertify.set("notifier", "position", "bottom-right");
+alertify.set("notifier", "delay", 5);
 
 const API_BASE_URL = "https://charityapp.runasp.net/api";
 const router = useRouter();
@@ -82,7 +86,17 @@ const formData = ref({
 });
 
 const submitForm = async () => {
+  // Validate form data
+  if (!formData.value.assistanceTypeName.trim()) {
+    alertify.warning("يرجى إدخال اسم نوع المساعدة");
+    return;
+  }
+
+  // Show loading notification
+  alertify.message("جاري إضافة نوع المساعدة...");
+
   console.log(formData.value);
+
   try {
     const response = await axios.post(
       `${API_BASE_URL}/AssistanceType`,
@@ -95,12 +109,25 @@ const submitForm = async () => {
     );
 
     if (response.status === 201 || response.status === 200) {
-      alert("تمت إضافة نوع المساعدة بنجاح");
-      router.push("/assistance-types");
+      alertify.success("تمت إضافة نوع المساعدة بنجاح");
+
+      // Navigate after a short delay to show success message
+      setTimeout(() => {
+        router.push("/assistance-types");
+      }, 1500);
     }
   } catch (error) {
     console.error("Error adding assistance type:", error);
-    alert("حدث خطأ أثناء إضافة نوع المساعدة");
+
+    if (error.response) {
+      const errorMessage =
+        error.response.data.message || error.response.statusText;
+      alertify.error(`حدث خطأ أثناء إضافة نوع المساعدة: ${errorMessage}`);
+    } else if (error.request) {
+      alertify.error("لا يمكن الاتصال بالخادم. يرجى التحقق من اتصال الإنترنت");
+    } else {
+      alertify.error("حدث خطأ أثناء إضافة نوع المساعدة");
+    }
   }
 };
 </script>

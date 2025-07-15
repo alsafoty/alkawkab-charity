@@ -117,6 +117,24 @@
             </div>
           </div>
 
+          <div class="col-md-6">
+            <div class="form-group mb-3">
+              <label class="form-label fw-bold">حالة الاستلام</label>
+              <div class="form-check form-switch">
+                <input
+                  v-model="formData.received"
+                  class="form-check-input"
+                  type="checkbox"
+                  role="switch"
+                  id="isReceived"
+                />
+                <label class="form-check-label" for="isReceived">
+                  {{ formData.received ? "نعم" : "لا" }}
+                </label>
+              </div>
+            </div>
+          </div>
+
           <!-- Notes -->
           <div class="col-12">
             <div class="form-group mb-3">
@@ -141,11 +159,15 @@
     </div>
   </div>
 </template>
-
 <script setup>
 import { ref, onMounted } from "vue";
 import { useRoute, useRouter } from "vue-router";
 import axios from "axios";
+import alertify from "alertifyjs";
+
+// Configure alertify for this component
+alertify.set("notifier", "position", "bottom-right");
+alertify.set("notifier", "delay", 5);
 
 const API_BASE_URL = "https://charityapp.runasp.net/api";
 const route = useRoute();
@@ -173,6 +195,8 @@ onMounted(async () => {
 
 const loadInitialData = async () => {
   try {
+    alertify.message("جاري تحميل البيانات الأولية...");
+
     // جلب العائلات
     const familyResponse = await axios.get(`${API_BASE_URL}/Family`, {
       headers: {
@@ -199,14 +223,27 @@ const loadInitialData = async () => {
       },
     });
     allPersons.value = personsResponse.data;
+
+    alertify.success("تم تحميل البيانات الأولية بنجاح");
   } catch (error) {
     console.error("Error fetching initial data:", error);
-    alert("حدث خطأ أثناء جلب البيانات الأولية");
+
+    if (error.response) {
+      const errorMessage =
+        error.response.data.message || error.response.statusText;
+      alertify.error(`حدث خطأ أثناء جلب البيانات الأولية: ${errorMessage}`);
+    } else if (error.request) {
+      alertify.error("لا يمكن الاتصال بالخادم. يرجى التحقق من اتصال الإنترنت");
+    } else {
+      alertify.error("حدث خطأ أثناء جلب البيانات الأولية");
+    }
   }
 };
 
 const loadAssistanceData = async () => {
   try {
+    alertify.message("جاري تحميل بيانات المساعدة...");
+
     // جلب بيانات المساعدة الحالية
     const assistanceResponse = await axios.get(
       `${API_BASE_URL}/Assistance/${route.params.id}`,
@@ -232,15 +269,27 @@ const loadAssistanceData = async () => {
       personId: assistanceData.personId || "",
       assistanceTypeId: assistanceData.assistanceTypeId,
       note: assistanceData.note || "",
+      received: assistanceData.received || false,
     };
 
     // تحميل أعضاء العائلة إذا كانت المساعدة للعائلة
     if (formData.value.familyId && selectionMode.value === "family") {
       await loadFamilyMembers();
     }
+
+    alertify.success("تم تحميل بيانات المساعدة بنجاح");
   } catch (error) {
     console.error("Error fetching assistance data:", error);
-    alert("حدث خطأ أثناء جلب بيانات المساعدة");
+
+    if (error.response) {
+      const errorMessage =
+        error.response.data.message || error.response.statusText;
+      alertify.error(`حدث خطأ أثناء جلب بيانات المساعدة: ${errorMessage}`);
+    } else if (error.request) {
+      alertify.error("لا يمكن الاتصال بالخادم. يرجى التحقق من اتصال الإنترنت");
+    } else {
+      alertify.error("حدث خطأ أثناء جلب بيانات المساعدة");
+    }
   }
 };
 
@@ -251,6 +300,8 @@ const loadFamilyMembers = async () => {
   }
 
   try {
+    alertify.message("جاري تحميل أعضاء العائلة...");
+
     const response = await axios.get(
       `${API_BASE_URL}/Family/${formData.value.familyId}`,
       {
@@ -260,9 +311,24 @@ const loadFamilyMembers = async () => {
       }
     );
     familyMembers.value = response.data.familyMembers || [];
+
+    if (familyMembers.value.length > 0) {
+      alertify.success(`تم تحميل ${familyMembers.value.length} عضو من العائلة`);
+    } else {
+      alertify.message("لا يوجد أعضاء في هذه العائلة");
+    }
   } catch (error) {
     console.error("Error fetching family members:", error);
-    alert("حدث خطأ أثناء جلب بيانات أفراد العائلة");
+
+    if (error.response) {
+      const errorMessage =
+        error.response.data.message || error.response.statusText;
+      alertify.error(`حدث خطأ أثناء جلب بيانات أفراد العائلة: ${errorMessage}`);
+    } else if (error.request) {
+      alertify.error("لا يمكن الاتصال بالخادم. يرجى التحقق من اتصال الإنترنت");
+    } else {
+      alertify.error("حدث خطأ أثناء جلب بيانات أفراد العائلة");
+    }
   }
 };
 
@@ -278,45 +344,95 @@ const resetSelection = () => {
 };
 
 const submitForm = async () => {
-  try {
-    // التحقق من صحة البيانات
-    if (!formData.value.assistanceTypeId) {
-      alert("يرجى اختيار نوع المساعدة");
-      return;
-    }
-
-    const dataToSend = {
-      numberOfAssistance: Number(formData.value.numberOfAssistance),
-      familyId:
-        selectionMode.value === "family"
-          ? Number(formData.value.familyId)
-          : null,
-      personId: formData.value.personId || null,
-      assistanceTypeId: Number(formData.value.assistanceTypeId),
-      note: String(formData.value.note || ""),
-    };
-
-    console.log("Data to send:", dataToSend);
-
-    const response = await axios.put(
-      `${API_BASE_URL}/Assistance/${route.params.id}`,
-      dataToSend,
-      {
-        headers: {
-          Authorization: `Bearer ${AUTH_TOKEN}`,
-          "Content-Type": "application/json",
-        },
-      }
-    );
-
-    if (response.status === 200) {
-      alert("تم تحديث المساعدة بنجاح");
-      router.push("/assistance");
-    }
-  } catch (error) {
-    console.error("Error updating assistance:", error);
-    alert("حدث خطأ أثناء تحديث المساعدة");
+  // التحقق من صحة البيانات
+  if (!formData.value.assistanceTypeId) {
+    alertify.warning("يرجى اختيار نوع المساعدة");
+    return;
   }
+
+  if (
+    !formData.value.numberOfAssistance ||
+    formData.value.numberOfAssistance < 1
+  ) {
+    alertify.warning("يرجى إدخال عدد صحيح للمساعدات");
+    return;
+  }
+
+  if (
+    selectionMode.value === "family" &&
+    (!formData.value.familyId || formData.value.familyId === 0)
+  ) {
+    alertify.warning("يرجى اختيار عائلة");
+    return;
+  }
+
+  if (selectionMode.value === "person" && !formData.value.personId) {
+    alertify.warning("يرجى اختيار شخص");
+    return;
+  }
+
+  alertify.confirm(
+    "تأكيد التحديث",
+    "هل أنت متأكد من تحديث بيانات المساعدة؟",
+    async function () {
+      // User clicked OK
+      try {
+        alertify.message("جاري تحديث المساعدة...");
+
+        const dataToSend = {
+          numberOfAssistance: Number(formData.value.numberOfAssistance),
+          familyId:
+            selectionMode.value === "family"
+              ? Number(formData.value.familyId)
+              : null,
+          personId: formData.value.personId || null,
+          assistanceTypeId: Number(formData.value.assistanceTypeId),
+          note: String(formData.value.note || ""),
+          received: formData.value.received,
+        };
+
+        console.log("Data to send:", dataToSend);
+
+        const response = await axios.put(
+          `${API_BASE_URL}/Assistance/${route.params.id}`,
+          dataToSend,
+          {
+            headers: {
+              Authorization: `Bearer ${AUTH_TOKEN}`,
+              "Content-Type": "application/json",
+            },
+          }
+        );
+
+        if (response.status === 200) {
+          alertify.success("تم تحديث المساعدة بنجاح");
+
+          // Navigate after a short delay to show success message
+          setTimeout(() => {
+            router.push("/assistance");
+          }, 1500);
+        }
+      } catch (error) {
+        console.error("Error updating assistance:", error);
+
+        if (error.response) {
+          const errorMessage =
+            error.response.data.message || error.response.statusText;
+          alertify.error(`حدث خطأ أثناء تحديث المساعدة: ${errorMessage}`);
+        } else if (error.request) {
+          alertify.error(
+            "لا يمكن الاتصال بالخادم. يرجى التحقق من اتصال الإنترنت"
+          );
+        } else {
+          alertify.error("حدث خطأ أثناء تحديث المساعدة");
+        }
+      }
+    },
+    function () {
+      // User clicked Cancel
+      alertify.message("تم إلغاء عملية التحديث");
+    }
+  );
 };
 </script>
 

@@ -207,6 +207,11 @@
 import { ref, onMounted, computed } from "vue";
 import { useRoute, useRouter } from "vue-router";
 import axios from "axios";
+import alertify from "alertifyjs";
+
+// Configure alertify for this component
+alertify.set("notifier", "position", "bottom-right");
+alertify.set("notifier", "delay", 5);
 
 const route = useRoute();
 const router = useRouter();
@@ -280,7 +285,7 @@ const fetchFamilyAndMembers = async () => {
     );
   } catch (error) {
     console.error("Error fetching data:", error);
-    alert("حدث خطأ أثناء جلب بيانات العائلة أو الأعضاء");
+    alertify.error("حدث خطأ أثناء جلب بيانات العائلة أو الأعضاء");
     router.push("/family");
   }
 };
@@ -289,45 +294,59 @@ onMounted(fetchFamilyAndMembers);
 
 // إزالة عضو من العائلة
 const removeMember = async (person) => {
-  if (
-    !confirm(
-      `هل أنت متأكد من إزالة ${person.firstName} ${person.lastName} من العائلة؟`
-    )
-  )
-    return;
+  alertify.confirm(
+    "تأكيد الإزالة",
+    `هل أنت متأكد من إزالة ${person.firstName} ${person.lastName} من العائلة؟`,
+    async function () {
+      // User clicked OK
+      removingIds.value.push(person.id);
+      try {
+        alertify.message("جاري إزالة العضو...");
 
-  removingIds.value.push(person.id);
-  try {
-    // استخدام البيانات بدون المساعدات
-    const updatedPerson = {
-      ...getPersonWithoutAssistances(person),
-      familyId: null,
-      isPartOfFamily: false,
-    };
+        // استخدام البيانات بدون المساعدات
+        const updatedPerson = {
+          ...getPersonWithoutAssistances(person),
+          familyId: null,
+          isPartOfFamily: false,
+        };
 
-    await axios.put(
-      `https://charityapp.runasp.net/api/Person/${person.id}`,
-      updatedPerson,
-      {
-        headers: {
-          Authorization: `Bearer ${AUTH_TOKEN}`,
-          "Content-Type": "application/json",
-        },
+        await axios.put(
+          `https://charityapp.runasp.net/api/Person/${person.id}`,
+          updatedPerson,
+          {
+            headers: {
+              Authorization: `Bearer ${AUTH_TOKEN}`,
+              "Content-Type": "application/json",
+            },
+          }
+        );
+
+        alertify.success(
+          `تم إزالة ${person.firstName} ${person.lastName} من العائلة بنجاح`
+        );
+        // حدث القوائم
+        await fetchFamilyAndMembers();
+      } catch (error) {
+        console.error("Error removing member:", error);
+        alertify.error("حدث خطأ أثناء إزالة العضو");
+      } finally {
+        removingIds.value = removingIds.value.filter((id) => id !== person.id);
       }
-    );
-    // حدث القوائم
-    await fetchFamilyAndMembers();
-  } catch (error) {
-    console.error("Error removing member:", error);
-    alert("حدث خطأ أثناء إزالة العضو");
-  } finally {
-    removingIds.value = removingIds.value.filter((id) => id !== person.id);
-  }
+    },
+    function () {
+      // User clicked Cancel
+      alertify.message("تم إلغاء عملية الإزالة");
+    }
+  );
 };
 
 // حفظ التعديلات
 const submitForm = async () => {
   loading.value = true;
+
+  // Show loading notification
+  alertify.message("جاري حفظ التعديلات...");
+
   try {
     // تحديث بيانات العائلة
     await axios.put(
@@ -369,14 +388,24 @@ const submitForm = async () => {
       }
     }
 
-    alert("تم حفظ التعديلات بنجاح");
+    alertify.success("تم حفظ التعديلات بنجاح");
     selectedToAdd.value = [];
     searchTerm.value = "";
     await fetchFamilyAndMembers();
-    router.push("/family");
+
+    // Navigate after a short delay to show success message
+    setTimeout(() => {
+      router.push("/family");
+    }, 1500);
   } catch (error) {
     console.error("Error updating family:", error);
-    alert("حدث خطأ أثناء حفظ التعديلات");
+    if (error.response) {
+      const errorMessage =
+        error.response.data.message || error.response.statusText;
+      alertify.error(`حدث خطأ أثناء حفظ التعديلات: ${errorMessage}`);
+    } else {
+      alertify.error("حدث خطأ أثناء حفظ التعديلات");
+    }
   } finally {
     loading.value = false;
   }

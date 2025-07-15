@@ -90,11 +90,15 @@
     </div>
   </div>
 </template>
-
 <script setup>
 import { ref, computed, onMounted } from "vue";
 import axios from "axios";
 import { useRouter } from "vue-router";
+import alertify from "alertifyjs";
+
+// Configure alertify for this component
+alertify.set("notifier", "position", "bottom-right");
+alertify.set("notifier", "delay", 5);
 
 const API_BASE_URL = "https://charityapp.runasp.net/api";
 const router = useRouter();
@@ -102,19 +106,33 @@ const AUTH_TOKEN = localStorage.getItem("token");
 
 const persons = ref([]);
 const searchQuery = ref("");
+const isDeleting = ref(false);
 
 // Fetch persons data
 const fetchPersons = async () => {
   try {
+    alertify.message("جاري تحميل بيانات الأشخاص...");
+
     const response = await axios.get(`${API_BASE_URL}/Person`, {
       headers: {
         Authorization: `Bearer ${AUTH_TOKEN}`,
       },
     });
     persons.value = response.data;
+
+    alertify.success(`تم تحميل ${persons.value.length} شخص بنجاح`);
   } catch (error) {
     console.error("Error fetching persons:", error);
-    alert("حدث خطأ أثناء جلب بيانات الأشخاص");
+
+    if (error.response) {
+      const errorMessage =
+        error.response.data.message || error.response.statusText;
+      alertify.error(`حدث خطأ أثناء جلب بيانات الأشخاص: ${errorMessage}`);
+    } else if (error.request) {
+      alertify.error("لا يمكن الاتصال بالخادم. يرجى التحقق من اتصال الإنترنت");
+    } else {
+      alertify.error("حدث خطأ أثناء جلب بيانات الأشخاص");
+    }
   }
 };
 
@@ -160,22 +178,86 @@ const editPerson = (id) => {
 };
 
 const deletePerson = async (id) => {
-  if (confirm("هل أنت متأكد من عملية الحذف؟")) {
-    try {
-      await axios.delete(`${API_BASE_URL}/Person/${id}`, {
-        headers: {
-          Authorization: `Bearer ${AUTH_TOKEN}`,
-        },
-      });
-
-      // Refresh data after deletion
-      await fetchPersons();
-      alert(`تم حذف الشخص رقم: ${id} بنجاح`);
-    } catch (error) {
-      console.error("Error deleting person:", error);
-      alert("حدث خطأ أثناء حذف الشخص");
-    }
+  // Input validation
+  if (!id || id === "") {
+    alertify.error("معرف الشخص غير صحيح");
+    return;
   }
+
+  // Authentication check
+  if (!AUTH_TOKEN) {
+    alertify.error("الرجاء تسجيل الدخول أولاً");
+    return;
+  }
+
+  // Check if already deleting
+  if (isDeleting.value) {
+    alertify.warning("يتم حذف شخص آخر، يرجى الانتظار");
+    return;
+  }
+
+  // Get person details for better confirmation message
+  const person = persons.value.find((p) => p.id === id);
+  const personName = person
+    ? `${person.firstName} ${person.lastName}`
+    : `الشخص رقم ${id}`;
+
+  alertify.confirm(
+    "تأكيد الحذف",
+    `هل أنت متأكد من حذف ${personName}؟`,
+    async function () {
+      // User clicked OK
+      isDeleting.value = true;
+
+      try {
+        alertify.message("جاري حذف الشخص...");
+
+        await axios.delete(`${API_BASE_URL}/Person/${id}`, {
+          headers: {
+            Authorization: `Bearer ${AUTH_TOKEN}`,
+          },
+        });
+
+        // Remove from local array instead of refetching (optimistic update)
+        const index = persons.value.findIndex((p) => p.id === id);
+        if (index > -1) {
+          persons.value.splice(index, 1);
+        }
+
+        alertify.success(`تم حذف ${personName} بنجاح`);
+      } catch (error) {
+        console.error("Error deleting person:", error);
+
+        if (error.response) {
+          if (error.response.status === 404) {
+            alertify.warning("الشخص غير موجود أو تم حذفه مسبقاً");
+            // Refresh data to sync with server
+            await fetchPersons();
+          } else if (error.response.status === 403) {
+            alertify.error("ليس لديك صلاحية لحذف هذا الشخص");
+          } else if (error.response.status === 409) {
+            alertify.error("لا يمكن حذف هذا الشخص لأنه مرتبط ببيانات أخرى");
+          } else {
+            const errorMessage =
+              error.response.data.message || error.response.statusText;
+            alertify.error(`حدث خطأ أثناء حذف الشخص: ${errorMessage}`);
+          }
+        } else if (error.request) {
+          alertify.error(
+            "لا يمكن الاتصال بالخادم. يرجى التحقق من اتصال الإنترنت"
+          );
+        } else {
+          alertify.error("حدث خطأ أثناء حذف الشخص");
+        }
+      } finally {
+        isDeleting.value = false;
+      }
+    },
+    function () {
+      // User clicked Cancel
+      alertify.message("تم إلغاء عملية الحذف");
+    }
+  );
 };
 
 // Initialize data on component mount

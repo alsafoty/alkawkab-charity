@@ -428,11 +428,15 @@
     </div>
   </div>
 </template>
-
 <script setup>
 import { ref, reactive, watch, onMounted } from "vue";
 import { useRoute, useRouter } from "vue-router";
 import axios from "axios";
+import alertify from "alertifyjs";
+
+// Configure alertify for this component
+alertify.set("notifier", "position", "bottom-right");
+alertify.set("notifier", "delay", 5);
 
 const route = useRoute();
 const router = useRouter();
@@ -488,18 +492,33 @@ onMounted(async () => {
 
 const fetchExistingFamilies = async () => {
   try {
+    alertify.message("جاري تحميل قائمة العائلات...");
+
     const response = await axios.get(FamilyAPI.value, {
       headers: { Authorization: `Bearer ${AUTH_TOKEN}` },
     });
     existingFamilies.value = response.data;
+
+    alertify.success("تم تحميل قائمة العائلات بنجاح");
   } catch (error) {
     console.error("Error fetching families:", error);
-    alert("حدث خطأ أثناء جلب قائمة العائلات");
+
+    if (error.response) {
+      const errorMessage =
+        error.response.data.message || error.response.statusText;
+      alertify.error(`حدث خطأ أثناء جلب قائمة العائلات: ${errorMessage}`);
+    } else if (error.request) {
+      alertify.error("لا يمكن الاتصال بالخادم. يرجى التحقق من اتصال الإنترنت");
+    } else {
+      alertify.error("حدث خطأ أثناء جلب قائمة العائلات");
+    }
   }
 };
 
 const fetchPersonData = async () => {
   try {
+    alertify.message("جاري تحميل بيانات الشخص...");
+
     const response = await axios.get(`${PersonAPI.value}/${route.params.id}`, {
       headers: { Authorization: `Bearer ${AUTH_TOKEN}` },
     });
@@ -548,19 +567,29 @@ const fetchPersonData = async () => {
     if (formData.familyId && formData.isPartOfFamily) {
       await fetchCurrentFamilyInfo();
     }
+
+    alertify.success("تم تحميل بيانات الشخص بنجاح");
   } catch (error) {
     console.error("Error fetching person details:", error);
     if (error.response && error.response.status === 404) {
-      alert("الشخص غير موجود");
+      alertify.error("الشخص غير موجود");
       router.push("/individual");
+    } else if (error.response) {
+      const errorMessage =
+        error.response.data.message || error.response.statusText;
+      alertify.error(`حدث خطأ أثناء جلب بيانات الشخص: ${errorMessage}`);
+    } else if (error.request) {
+      alertify.error("لا يمكن الاتصال بالخادم. يرجى التحقق من اتصال الإنترنت");
     } else {
-      alert("حدث خطأ أثناء جلب بيانات الشخص");
+      alertify.error("حدث خطأ أثناء جلب بيانات الشخص");
     }
   }
 };
 
 const fetchGuardianData = async (guardianId) => {
   try {
+    alertify.message("جاري تحميل بيانات الوصي...");
+
     const response = await axios.get(`${GuardianAPI.value}/${guardianId}`, {
       headers: { Authorization: `Bearer ${AUTH_TOKEN}` },
     });
@@ -576,8 +605,13 @@ const fetchGuardianData = async (guardianId) => {
       guardianJob: guardianData.guardianJob || "",
       guardianPhoneNumber: guardianData.guardianPhoneNumber || "",
     };
+
+    alertify.success("تم تحميل بيانات الوصي بنجاح");
   } catch (error) {
     console.error("Error fetching guardian data:", error);
+
+    alertify.warning("لم يتم العثور على بيانات الوصي، سيتم إنشاء وصي جديد");
+
     // Initialize empty guardian if fetch fails
     formData.guardian = {
       guardianId: "",
@@ -594,6 +628,8 @@ const fetchGuardianData = async (guardianId) => {
 
 const fetchCurrentFamilyInfo = async () => {
   try {
+    alertify.message("جاري تحميل معلومات العائلة الحالية...");
+
     const response = await axios.get(
       `${FamilyAPI.value}/${formData.familyId}`,
       {
@@ -604,9 +640,11 @@ const fetchCurrentFamilyInfo = async () => {
 
     if (currentFamilyInfo.value) {
       formData.isHouseOwned = currentFamilyInfo.value.isHouseOwned;
+      alertify.success("تم تحميل معلومات العائلة الحالية بنجاح");
     }
   } catch (error) {
     console.error("Error fetching current family info:", error);
+    alertify.warning("لم يتم العثور على معلومات العائلة الحالية");
   }
 };
 
@@ -620,6 +658,7 @@ const onFamilySelect = () => {
       formData.numberOfFamilyMembers =
         selectedFamilyInfo.value.numberOfFamilyMembers;
       formData.isHouseOwned = selectedFamilyInfo.value.isHouseOwned;
+      alertify.success(`تم اختيار العائلة: ${selectedFamilyInfo.value.name}`);
     }
   } else {
     selectedFamilyInfo.value = null;
@@ -712,84 +751,210 @@ watch(
 
 const submitForm = async () => {
   if (!AUTH_TOKEN) {
-    alert("الرجاء تسجيل الدخول أولاً.");
+    alertify.error("الرجاء تسجيل الدخول أولاً.");
     return;
   }
 
-  try {
-    let guardianId = formData.guardianId;
+  // Basic validation
+  if (!formData.firstName.trim()) {
+    alertify.warning("يرجى إدخال الاسم الأول");
+    return;
+  }
 
-    // Handle guardian update/creation
-    if (formData.isOrphan) {
+  if (!formData.lastName.trim()) {
+    alertify.warning("يرجى إدخال اسم العائلة");
+    return;
+  }
+
+  if (!formData.gender) {
+    alertify.warning("يرجى اختيار الجنس");
+    return;
+  }
+
+  alertify.confirm(
+    "تأكيد التحديث",
+    "هل أنت متأكد من تحديث بيانات الشخص؟",
+    async function () {
+      // User clicked OK
       try {
-        const guardianPayload = {
-          guardianId:
-            formData.guardian.guardianId ||
-            originalGuardianId.value ||
-            crypto.randomUUID(),
-          firstName: formData.guardian.firstName,
-          secondName: formData.guardian.secondName,
-          thirdName: formData.guardian.thirdName,
-          lastName: formData.guardian.lastName,
-          relationship: formData.guardian.relationship,
-          guardianJob: formData.guardian.guardianJob,
-          guardianPhoneNumber: formData.guardian.guardianPhoneNumber,
-        };
+        alertify.message("جاري تحديث بيانات الشخص...");
 
-        if (originalGuardianId.value) {
-          // Update existing guardian
-          await axios.put(
-            `${GuardianAPI.value}/${originalGuardianId.value}`,
-            guardianPayload,
-            {
-              headers: {
-                Authorization: `Bearer ${AUTH_TOKEN}`,
-                "Content-Type": "application/json",
-              },
+        let guardianId = formData.guardianId;
+
+        // Handle guardian update/creation
+        if (formData.isOrphan) {
+          try {
+            alertify.message("جاري تحديث بيانات الوصي...");
+
+            const guardianPayload = {
+              guardianId:
+                formData.guardian.guardianId ||
+                originalGuardianId.value ||
+                crypto.randomUUID(),
+              firstName: formData.guardian.firstName,
+              secondName: formData.guardian.secondName,
+              thirdName: formData.guardian.thirdName,
+              lastName: formData.guardian.lastName,
+              relationship: formData.guardian.relationship,
+              guardianJob: formData.guardian.guardianJob,
+              guardianPhoneNumber: formData.guardian.guardianPhoneNumber,
+            };
+
+            if (originalGuardianId.value) {
+              // Update existing guardian
+              await axios.put(
+                `${GuardianAPI.value}/${originalGuardianId.value}`,
+                guardianPayload,
+                {
+                  headers: {
+                    Authorization: `Bearer ${AUTH_TOKEN}`,
+                    "Content-Type": "application/json",
+                  },
+                }
+              );
+              guardianId = originalGuardianId.value;
+              alertify.success("تم تحديث بيانات الوصي بنجاح");
+            } else {
+              // Create new guardian
+              const guardianResponse = await axios.post(
+                GuardianAPI.value,
+                guardianPayload,
+                {
+                  headers: {
+                    Authorization: `Bearer ${AUTH_TOKEN}`,
+                    "Content-Type": "application/json",
+                  },
+                }
+              );
+              guardianId =
+                guardianResponse.data.guardianId ||
+                guardianResponse.data.id ||
+                guardianPayload.guardianId;
+              alertify.success("تم إنشاء وصي جديد بنجاح");
             }
-          );
-          guardianId = originalGuardianId.value;
-        } else {
-          // Create new guardian
-          const guardianResponse = await axios.post(
-            GuardianAPI.value,
-            guardianPayload,
-            {
-              headers: {
-                Authorization: `Bearer ${AUTH_TOKEN}`,
-                "Content-Type": "application/json",
-              },
-            }
-          );
-          guardianId =
-            guardianResponse.data.guardianId ||
-            guardianResponse.data.id ||
-            guardianPayload.guardianId;
+
+            console.log("Guardian updated/created with ID:", guardianId);
+          } catch (guardianError) {
+            console.error("Error updating/creating guardian:", guardianError);
+            alertify.error("حدث خطأ أثناء تحديث بيانات الوصي");
+            return;
+          }
         }
 
-        console.log("Guardian updated/created with ID:", guardianId);
-      } catch (guardianError) {
-        console.error("Error updating/creating guardian:", guardianError);
-        alert("حدث خطأ أثناء تحديث بيانات الوصي");
-        return;
-      }
-    }
+        let familyId = formData.familyId;
 
-    let familyId = formData.familyId;
+        // Handle family creation/selection
+        if (formData.isPartOfFamily && formData.changeFamily) {
+          if (formData.isNewFamily) {
+            alertify.message("جاري إنشاء عائلة جديدة...");
 
-    // Handle family creation/selection
-    if (formData.isPartOfFamily && formData.changeFamily) {
-      if (formData.isNewFamily) {
-        // Create new family first
-        const newFamilyData = {
-          name: formData.newFamilyName,
+            // Create new family first
+            const newFamilyData = {
+              name: formData.newFamilyName,
+              numberOfFamilyMembers: formData.numberOfFamilyMembers,
+              isHouseOwned: formData.familyHouseOwned,
+            };
+
+            const familyResponse = await axios.post(
+              FamilyAPI.value,
+              newFamilyData,
+              {
+                headers: {
+                  Authorization: `Bearer ${AUTH_TOKEN}`,
+                  "Content-Type": "application/json",
+                },
+              }
+            );
+
+            // Get latest family ID
+            const allFamiliesResponse = await axios.get(FamilyAPI.value, {
+              headers: {
+                Authorization: `Bearer ${AUTH_TOKEN}`,
+              },
+            });
+
+            const allFamilies = allFamiliesResponse.data;
+
+            if (allFamilies && allFamilies.length > 0) {
+              const sortedFamilies = allFamilies.sort(
+                (a, b) => b.familyId - a.familyId
+              );
+              familyId = sortedFamilies[0].familyId;
+            } else {
+              familyId = familyResponse.data.familyId || familyResponse.data.id;
+            }
+
+            alertify.success(
+              `تم إنشاء العائلة الجديدة: ${formData.newFamilyName}`
+            );
+            console.log("New family created with ID:", familyId);
+          } else {
+            alertify.message("جاري تحديث بيانات العائلة المختارة...");
+
+            // Use existing family
+            familyId = formData.selectedFamilyId;
+
+            const selectedFamily = selectedFamilyInfo.value;
+            if (selectedFamily) {
+              const updatedFamilyData = {
+                name: selectedFamily.name,
+                numberOfFamilyMembers: selectedFamily.numberOfFamilyMembers + 1,
+                isHouseOwned:
+                  selectedFamily.isHouseOwned || formData.isHouseOwned,
+              };
+
+              await axios.put(
+                `${FamilyAPI.value}/${familyId}`,
+                updatedFamilyData,
+                {
+                  headers: {
+                    Authorization: `Bearer ${AUTH_TOKEN}`,
+                    "Content-Type": "application/json",
+                  },
+                }
+              );
+
+              formData.numberOfFamilyMembers =
+                updatedFamilyData.numberOfFamilyMembers;
+
+              alertify.success("تم تحديث بيانات العائلة بنجاح");
+            }
+          }
+        }
+
+        // Create person update payload
+        const payload = {
+          id: formData.id,
+          gender: formData.gender,
+          firstName: formData.firstName,
+          secondName: formData.secondName,
+          thirdName: formData.thirdName,
+          lastName: formData.lastName,
+          phoneNumber: formData.phoneNumber,
+          educationalLevel: formData.educationalLevel,
+          isWidow: formData.isWidow,
+          isOrphan: formData.isOrphan,
+          job: formData.job,
+          isPartOfFamily: formData.isPartOfFamily,
           numberOfFamilyMembers: formData.numberOfFamilyMembers,
-          isHouseOwned: formData.familyHouseOwned,
+          isHouseOwned: formData.isHouseOwned,
         };
 
-        const familyResponse = await axios.post(
-          FamilyAPI.value,
-          newFamilyData,
+        // Add family ID if part of family
+        if (formData.isPartOfFamily) {
+          payload.familyId = familyId;
+        }
+
+        // Add guardian ID if orphan
+        if (formData.isOrphan && guardianId) {
+          payload.guardianId = guardianId;
+        }
+
+        console.log("Updating person with payload:", payload);
+
+        const response = await axios.put(
+          `${PersonAPI.value}/${route.params.id}`,
+          payload,
           {
             headers: {
               Authorization: `Bearer ${AUTH_TOKEN}`,
@@ -798,106 +963,33 @@ const submitForm = async () => {
           }
         );
 
-        // Get latest family ID
-        const allFamiliesResponse = await axios.get(FamilyAPI.value, {
-          headers: {
-            Authorization: `Bearer ${AUTH_TOKEN}`,
-          },
-        });
+        console.log("Person updated successfully:", response.data);
+        alertify.success("تم تحديث بيانات الشخص بنجاح");
 
-        const allFamilies = allFamiliesResponse.data;
-
-        if (allFamilies && allFamilies.length > 0) {
-          const sortedFamilies = allFamilies.sort(
-            (a, b) => b.familyId - a.familyId
+        // Navigate after a short delay to show success message
+        setTimeout(() => {
+          router.push("/individual");
+        }, 1500);
+      } catch (error) {
+        console.error("Error updating person:", error);
+        if (error.response) {
+          const errorMessage =
+            error.response.data.message || error.response.statusText;
+          alertify.error(`حدث خطأ أثناء تحديث بيانات الشخص: ${errorMessage}`);
+        } else if (error.request) {
+          alertify.error(
+            "لا يمكن الاتصال بالخادم. يرجى التحقق من اتصال الإنترنت"
           );
-          familyId = sortedFamilies[0].familyId;
         } else {
-          familyId = familyResponse.data.familyId || familyResponse.data.id;
-        }
-
-        console.log("New family created with ID:", familyId);
-      } else {
-        // Use existing family
-        familyId = formData.selectedFamilyId;
-
-        const selectedFamily = selectedFamilyInfo.value;
-        if (selectedFamily) {
-          const updatedFamilyData = {
-            name: selectedFamily.name,
-            numberOfFamilyMembers: selectedFamily.numberOfFamilyMembers + 1,
-            isHouseOwned: selectedFamily.isHouseOwned || formData.isHouseOwned,
-          };
-
-          await axios.put(`${FamilyAPI.value}/${familyId}`, updatedFamilyData, {
-            headers: {
-              Authorization: `Bearer ${AUTH_TOKEN}`,
-              "Content-Type": "application/json",
-            },
-          });
-
-          formData.numberOfFamilyMembers =
-            updatedFamilyData.numberOfFamilyMembers;
+          alertify.error("حدث خطأ أثناء تحديث بيانات الشخص");
         }
       }
+    },
+    function () {
+      // User clicked Cancel
+      alertify.message("تم إلغاء عملية التحديث");
     }
-
-    // Create person update payload
-    const payload = {
-      id: formData.id,
-      gender: formData.gender,
-      firstName: formData.firstName,
-      secondName: formData.secondName,
-      thirdName: formData.thirdName,
-      lastName: formData.lastName,
-      phoneNumber: formData.phoneNumber,
-      educationalLevel: formData.educationalLevel,
-      isWidow: formData.isWidow,
-      isOrphan: formData.isOrphan,
-      job: formData.job,
-      isPartOfFamily: formData.isPartOfFamily,
-      numberOfFamilyMembers: formData.numberOfFamilyMembers,
-      isHouseOwned: formData.isHouseOwned,
-    };
-
-    // Add family ID if part of family
-    if (formData.isPartOfFamily) {
-      payload.familyId = familyId;
-    }
-
-    // Add guardian ID if orphan
-    if (formData.isOrphan && guardianId) {
-      payload.guardianId = guardianId;
-    }
-
-    console.log("Updating person with payload:", payload);
-
-    const response = await axios.put(
-      `${PersonAPI.value}/${route.params.id}`,
-      payload,
-      {
-        headers: {
-          Authorization: `Bearer ${AUTH_TOKEN}`,
-          "Content-Type": "application/json",
-        },
-      }
-    );
-
-    console.log("Person updated successfully:", response.data);
-    alert("تم تحديث بيانات الشخص بنجاح");
-    router.push("/individual");
-  } catch (error) {
-    console.error("Error updating person:", error);
-    if (error.response) {
-      alert(
-        `حدث خطأ أثناء تحديث بيانات الشخص: ${
-          error.response.data.message || error.response.statusText
-        }`
-      );
-    } else {
-      alert("حدث خطأ أثناء تحديث بيانات الشخص");
-    }
-  }
+  );
 };
 </script>
 

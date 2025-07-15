@@ -71,6 +71,11 @@
 import { ref, onMounted } from "vue";
 import { useRouter, useRoute } from "vue-router";
 import axios from "axios";
+import alertify from "alertifyjs";
+
+// Configure alertify for this component
+alertify.set("notifier", "position", "bottom-right");
+alertify.set("notifier", "delay", 5);
 
 const API_BASE_URL = "https://charityapp.runasp.net/api";
 const router = useRouter();
@@ -85,6 +90,8 @@ const formData = ref({
 
 onMounted(async () => {
   try {
+    alertify.message("جاري تحميل بيانات نوع المساعدة...");
+
     const response = await axios.get(
       `${API_BASE_URL}/AssistanceType/${route.params.id}`,
       {
@@ -99,32 +106,85 @@ onMounted(async () => {
       isFinancial: response.data.isFinancial,
       assistanceValue: response.data.assistanceValue,
     };
+
+    alertify.success("تم تحميل بيانات نوع المساعدة بنجاح");
   } catch (error) {
     console.error("Error fetching assistance type:", error);
-    alert("حدث خطأ أثناء جلب بيانات نوع المساعدة");
+
+    if (error.response) {
+      const errorMessage =
+        error.response.data.message || error.response.statusText;
+      alertify.error(`حدث خطأ أثناء جلب بيانات نوع المساعدة: ${errorMessage}`);
+    } else if (error.request) {
+      alertify.error("لا يمكن الاتصال بالخادم. يرجى التحقق من اتصال الإنترنت");
+    } else {
+      alertify.error("حدث خطأ أثناء جلب بيانات نوع المساعدة");
+    }
   }
 });
 
 const submitForm = async () => {
-  try {
-    const response = await axios.put(
-      `${API_BASE_URL}/AssistanceType/${route.params.id}`,
-      formData.value,
-      {
-        headers: {
-          Authorization: `Bearer ${AUTH_TOKEN}`,
-        },
-      }
-    );
-
-    if (response.status === 200) {
-      alert("تم تحديث نوع المساعدة بنجاح");
-      router.push("/assistance-types");
-    }
-  } catch (error) {
-    console.error("Error updating assistance type:", error);
-    alert("حدث خطأ أثناء تحديث نوع المساعدة");
+  // Form validation
+  if (!formData.value.assistanceTypeName.trim()) {
+    alertify.warning("يرجى إدخال اسم نوع المساعدة");
+    return;
   }
+
+  if (
+    formData.value.isFinancial &&
+    (!formData.value.assistanceValue || formData.value.assistanceValue <= 0)
+  ) {
+    alertify.warning("يرجى إدخال قيمة صحيحة للمساعدة المالية");
+    return;
+  }
+
+  alertify.confirm(
+    "تأكيد التحديث",
+    "هل أنت متأكد من تحديث بيانات نوع المساعدة؟",
+    async function () {
+      // User clicked OK
+      try {
+        alertify.message("جاري تحديث نوع المساعدة...");
+
+        const response = await axios.put(
+          `${API_BASE_URL}/AssistanceType/${route.params.id}`,
+          formData.value,
+          {
+            headers: {
+              Authorization: `Bearer ${AUTH_TOKEN}`,
+            },
+          }
+        );
+
+        if (response.status === 200) {
+          alertify.success("تم تحديث نوع المساعدة بنجاح");
+
+          // Navigate after a short delay to show success message
+          setTimeout(() => {
+            router.push("/assistance-types");
+          }, 1500);
+        }
+      } catch (error) {
+        console.error("Error updating assistance type:", error);
+
+        if (error.response) {
+          const errorMessage =
+            error.response.data.message || error.response.statusText;
+          alertify.error(`حدث خطأ أثناء تحديث نوع المساعدة: ${errorMessage}`);
+        } else if (error.request) {
+          alertify.error(
+            "لا يمكن الاتصال بالخادم. يرجى التحقق من اتصال الإنترنت"
+          );
+        } else {
+          alertify.error("حدث خطأ أثناء تحديث نوع المساعدة");
+        }
+      }
+    },
+    function () {
+      // User clicked Cancel
+      alertify.message("تم إلغاء عملية التحديث");
+    }
+  );
 };
 </script>
 

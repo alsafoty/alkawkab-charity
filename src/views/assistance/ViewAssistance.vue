@@ -42,6 +42,12 @@
                 assistanceTypeDetails.isFinancial ? "مالية" : "عينية"
               }}</span>
             </div>
+            <div class="info-item">
+              <strong>حالة الاستلام:</strong>
+              <span>{{
+                assistanceData.received ? "تم استلامها" : "لم يتم استلامها"
+              }}</span>
+            </div>
           </div>
         </div>
 
@@ -109,6 +115,7 @@
 import { ref, computed, onMounted } from "vue";
 import { useRoute, useRouter } from "vue-router";
 import axios from "axios";
+import alertify from "alertifyjs";
 
 const API_BASE_URL = "https://charityapp.runasp.net/api";
 const route = useRoute();
@@ -206,7 +213,7 @@ const fetchAssistanceDetails = async () => {
     console.log("Assistance details:", response.data);
   } catch (error) {
     console.error("Error fetching assistance details:", error);
-    alert("حدث خطأ أثناء جلب بيانات المساعدة");
+    alertify.error("حدث خطأ أثناء جلب بيانات المساعدة");
   }
 };
 

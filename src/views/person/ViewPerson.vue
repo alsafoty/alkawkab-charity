@@ -359,6 +359,11 @@
 import { ref, onMounted, computed } from "vue";
 import { useRoute, useRouter } from "vue-router";
 import axios from "axios";
+import alertify from "alertifyjs";
+
+// Configure alertify for this component
+alertify.set("notifier", "position", "bottom-right");
+alertify.set("notifier", "delay", 5);
 
 const route = useRoute();
 const router = useRouter();
@@ -592,7 +597,7 @@ onMounted(async () => {
     }
   } catch (error) {
     console.error("Error fetching person details:", error);
-    alert("حدث خطأ أثناء جلب بيانات الشخص");
+    alertify.error("حدث خطأ أثناء جلب بيانات الشخص");
   }
 });
 

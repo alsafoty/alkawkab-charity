@@ -72,12 +72,31 @@
               <div class="mb-2 text-muted">
                 اختر الأشخاص الذين تريد إضافتهم لهذه العائلة:
               </div>
+
+              <!-- Search Bar -->
+              <div class="mb-3">
+                <div class="input-group">
+                  <input
+                    v-model="searchTerm"
+                    type="text"
+                    class="form-control search-input"
+                    placeholder="البحث في الأشخاص المتاحين..."
+                  />
+                  <span class="input-group-text">
+                    <i class="bi bi-search"></i>
+                  </span>
+                </div>
+                <small class="text-muted">
+                  يمكنك البحث بالاسم الأول أو الأخير أو رقم الهوية
+                </small>
+              </div>
+
               <div
-                class="list-group mb-2"
+                class="list-group persons-list mb-2"
                 style="max-height: 300px; overflow-y: auto"
               >
                 <div
-                  v-for="person in personsWithoutFamily"
+                  v-for="person in filteredPersonsWithoutFamily"
                   :key="person.id"
                   class="list-group-item"
                 >
@@ -99,8 +118,17 @@
                   </div>
                 </div>
                 <div
+                  v-if="
+                    filteredPersonsWithoutFamily.length === 0 &&
+                    personsWithoutFamily.length > 0
+                  "
+                  class="text-muted p-2 text-center"
+                >
+                  لا توجد نتائج تطابق البحث
+                </div>
+                <div
                   v-if="personsWithoutFamily.length === 0"
-                  class="text-danger p-2"
+                  class="text-danger p-2 text-center"
                 >
                   لا يوجد أشخاص متاحون حالياً.
                 </div>
@@ -139,6 +167,11 @@
 import { ref, computed, onMounted } from "vue";
 import { useRouter } from "vue-router";
 import axios from "axios";
+import alertify from "alertifyjs";
+
+// Configure AlertifyJS for RTL and Arabic - Bottom Right positioning
+alertify.set("notifier", "position", "bottom-right");
+alertify.set("notifier", "delay", 5);
 
 const router = useRouter();
 const AUTH_TOKEN = localStorage.getItem("token");
@@ -151,6 +184,7 @@ const formData = ref({
 const allPersons = ref([]);
 const selectedPersons = ref([]);
 const loading = ref(false);
+const searchTerm = ref("");
 
 // جلب جميع الأشخاص
 const fetchAllPersons = async () => {
@@ -166,6 +200,7 @@ const fetchAllPersons = async () => {
     allPersons.value = response.data;
   } catch (error) {
     allPersons.value = [];
+    alertify.error("حدث خطأ أثناء جلب بيانات الأشخاص");
   }
 };
 
@@ -176,6 +211,21 @@ const personsWithoutFamily = computed(() =>
       !person.familyId || person.familyId === 0 || person.familyId === null
   )
 );
+
+// Computed property for filtered persons based on search
+const filteredPersonsWithoutFamily = computed(() => {
+  if (!searchTerm.value.trim()) {
+    return personsWithoutFamily.value;
+  }
+
+  const search = searchTerm.value.toLowerCase().trim();
+  return personsWithoutFamily.value.filter((person) => {
+    const fullName = `${person.firstName} ${person.lastName}`.toLowerCase();
+    const personId = person.id.toString();
+
+    return fullName.includes(search) || personId.includes(search);
+  });
+});
 
 // حساب عدد الأعضاء المختارين
 const calculatedMemberCount = computed(() => selectedPersons.value.length);
@@ -203,15 +253,21 @@ const getLastFamilyId = async () => {
     families[families.length - 1].id || families[families.length - 1].familyId
   );
 };
-
+const getPersonWithoutAssistances = (person) => {
+  const { assistances, ...personWithoutAssistances } = person;
+  return personWithoutAssistances;
+};
 // إرسال البيانات
 const submitForm = async () => {
   if (!formData.value.name.trim()) {
-    alert("يرجى إدخال اسم العائلة");
+    alertify.warning("يرجى إدخال اسم العائلة");
     return;
   }
 
   loading.value = true;
+
+  // Show loading notification
+  alertify.message("جاري إضافة العائلة...");
 
   try {
     // 1. أضف العائلة
@@ -229,14 +285,16 @@ const submitForm = async () => {
 
     // 2. جلب جميع العائلات وأخذ id الأخيرة
     const familyId = await getLastFamilyId();
-    if (!familyId) throw new Error("لم يتم العثور على معرف العائلة الجديدة!");
+    if (!familyId) {
+      throw new Error("لم يتم العثور على معرف العائلة الجديدة!");
+    }
 
     // 3. اربط الأشخاص المختارين بالعائلة الجديدة وعدل isPartOfFamily
     for (const personId of selectedPersons.value) {
       const personData = allPersons.value.find((p) => p.id === personId);
       if (personData) {
         const updatedPerson = {
-          ...personData,
+          ...getPersonWithoutAssistances(personData),
           familyId,
           isPartOfFamily: true, // تحديث الحالة
         };
@@ -253,21 +311,31 @@ const submitForm = async () => {
       }
     }
 
-    alert("تمت إضافة العائلة وربط الأعضاء بنجاح");
+    // Success notification
+    alertify.success("تمت إضافة العائلة وربط الأعضاء بنجاح");
+
+    // Reset form
     formData.value = { name: "", isHouseOwned: false };
     selectedPersons.value = [];
+    searchTerm.value = "";
+
     await fetchAllPersons();
-    router.push("/family");
+
+    // Navigate after a short delay to show success message
+    setTimeout(() => {
+      router.push("/family");
+    }, 1500);
   } catch (error) {
     console.error("Error adding family:", error);
+
     if (error.response) {
-      alert(
-        `حدث خطأ أثناء إضافة العائلة أو ربط الأعضاء: ${
-          error.response.data.message || error.response.statusText
-        }`
-      );
+      const errorMessage =
+        error.response.data.message || error.response.statusText;
+      alertify.error(`حدث خطأ أثناء إضافة العائلة: ${errorMessage}`);
+    } else if (error.message) {
+      alertify.error(error.message);
     } else {
-      alert("حدث خطأ أثناء إضافة العائلة أو ربط الأعضاء");
+      alertify.error("حدث خطأ أثناء إضافة العائلة أو ربط الأعضاء");
     }
   } finally {
     loading.value = false;
@@ -349,8 +417,217 @@ const submitForm = async () => {
   color: #6c757d !important;
 }
 
+/* Search input styles */
+.search-input {
+  text-align: right;
+  direction: rtl;
+}
+
+.input-group-text {
+  background-color: #f8f9fa;
+  border-color: #dee2e6;
+}
+
+.search-input:focus {
+  border-color: #42b983;
+  box-shadow: 0 0 0 0.2rem rgba(66, 185, 131, 0.25);
+}
+
+.search-input:focus + .input-group-text {
+  border-color: #42b983;
+}
+
+/* Persons list styling */
+.persons-list {
+  border: 1px solid #dee2e6;
+  border-radius: 0.375rem;
+  background-color: #fff;
+}
+
+.persons-list .list-group-item {
+  border-left: none;
+  border-right: none;
+  border-top: none;
+}
+
+.persons-list .list-group-item:first-child {
+  border-top: none;
+  border-top-left-radius: 0.375rem;
+  border-top-right-radius: 0.375rem;
+}
+
+.persons-list .list-group-item:last-child {
+  border-bottom: none;
+  border-bottom-left-radius: 0.375rem;
+  border-bottom-right-radius: 0.375rem;
+}
+
+.persons-list::-webkit-scrollbar {
+  width: 8px;
+}
+
+.persons-list::-webkit-scrollbar-track {
+  background: #f1f1f1;
+  border-radius: 4px;
+}
+
+.persons-list::-webkit-scrollbar-thumb {
+  background: #888;
+  border-radius: 4px;
+}
+
+.persons-list::-webkit-scrollbar-thumb:hover {
+  background: #555;
+}
+
 /* Font family */
 * {
   font-family: "Tajawal", sans-serif;
+}
+</style>
+
+<style>
+/* Global AlertifyJS RTL Styling - Bottom Right - Larger Size */
+.alertify-notifier .ajs-message {
+  direction: rtl;
+  text-align: right;
+  font-family: "Tajawal", sans-serif;
+  font-size: 18px; /* increased from 14px */
+  border-radius: 8px;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+  margin-bottom: 10px;
+  padding: 20px 30px; /* increased padding */
+  min-width: 300px; /* increased from 250px */
+  backdrop-filter: blur(10px);
+  border-left: 4px solid rgba(255, 255, 255, 0.3);
+}
+
+.alertify-notifier .ajs-success {
+  background-color: #42b983;
+  color: white;
+  border: none;
+  border-left-color: #2d8f5f;
+}
+
+.alertify-notifier .ajs-error {
+  background-color: #dc3545;
+  color: white;
+  border: none;
+  border-left-color: #a71e2a;
+}
+
+.alertify-notifier .ajs-warning {
+  background-color: #ffc107;
+  color: #212529;
+  border: none;
+  border-left-color: #d39e00;
+}
+
+.alertify-notifier .ajs-message {
+  background-color: #17a2b8;
+  color: white;
+  border: none;
+  border-left-color: #117a8b;
+}
+
+/* Animation improvements for bottom-right */
+.alertify-notifier .ajs-message.ajs-visible {
+  animation: slideInRight 0.4s ease-out;
+}
+
+.alertify-notifier .ajs-message.ajs-hidden {
+  animation: slideOutRight 0.3s ease-in;
+}
+
+@keyframes slideInRight {
+  from {
+    transform: translateX(100%);
+    opacity: 0;
+  }
+  to {
+    transform: translateX(0);
+    opacity: 1;
+  }
+}
+
+@keyframes slideOutRight {
+  from {
+    transform: translateX(0);
+    opacity: 1;
+  }
+  to {
+    transform: translateX(100%);
+    opacity: 0;
+  }
+}
+
+/* Custom positioning for RTL - Bottom Right */
+.alertify-notifier {
+  position: fixed;
+  bottom: 20px;
+  right: 20px;
+  left: auto;
+  top: auto;
+  z-index: 1050;
+  max-width: 400px;
+}
+
+/* Stack notifications properly */
+.alertify-notifier .ajs-message {
+  position: relative;
+  display: block;
+  margin-bottom: 10px;
+}
+
+/* Responsive adjustments */
+@media (max-width: 768px) {
+  .alertify-notifier {
+    right: 10px;
+    left: 10px;
+    bottom: 10px;
+    max-width: none;
+  }
+
+  .alertify-notifier .ajs-message {
+    font-size: 16px; /* increased from 13px */
+    margin-bottom: 8px;
+    padding: 18px 25px; /* increased padding */
+    min-width: 280px;
+  }
+}
+
+@media (max-width: 480px) {
+  .alertify-notifier {
+    right: 5px;
+    left: 5px;
+    bottom: 5px;
+  }
+
+  .alertify-notifier .ajs-message {
+    font-size: 14px; /* increased from 12px */
+    padding: 16px 20px; /* increased padding */
+  }
+}
+
+/* Hover effects */
+.alertify-notifier .ajs-message:hover {
+  transform: translateX(-5px);
+  box-shadow: 0 6px 20px rgba(0, 0, 0, 0.2);
+  transition: all 0.2s ease;
+}
+
+/* Close button styling */
+.alertify-notifier .ajs-message .ajs-close {
+  position: absolute;
+  top: 8px;
+  left: 8px;
+  color: rgba(255, 255, 255, 0.7);
+  font-size: 18px; /* increased from 16px */
+  cursor: pointer;
+  transition: color 0.2s ease;
+}
+
+.alertify-notifier .ajs-message .ajs-close:hover {
+  color: white;
 }
 </style>
