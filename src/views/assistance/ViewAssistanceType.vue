@@ -167,6 +167,10 @@ import { useRoute, useRouter } from "vue-router";
 import axios from "axios";
 import alertify from "alertifyjs";
 
+// Configure alertify for this component
+alertify.set("notifier", "position", "bottom-right");
+alertify.set("notifier", "delay", 5);
+
 const API_BASE_URL = "https://charityapp.runasp.net/api";
 const route = useRoute();
 const router = useRouter();

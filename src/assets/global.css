@@ -1,4 +1,5 @@
-/* Global AlertifyJS RTL Styling - Mobile Optimized */
+
+/* Global AlertifyJS RTL Styling - Bottom Right - Larger Size */
 .alertify-notifier .ajs-message {
     direction: rtl;
     text-align: right;
@@ -11,7 +12,6 @@
     min-width: 300px;
     backdrop-filter: blur(10px);
     border-left: 4px solid rgba(255, 255, 255, 0.3);
-    transition: all 0.3s ease;
 }
 
 .alertify-notifier .ajs-success {
@@ -29,10 +29,10 @@
 }
 
 .alertify-notifier .ajs-warning {
-    background-color: #ffa726;
-    color: white;
+    background-color: #003688;
+    color: #212529;
     border: none;
-    border-left-color: #ff8f00;
+    border-left-color: #003688;
 }
 
 .alertify-notifier .ajs-message {
@@ -42,44 +42,33 @@
     border-left-color: #117a8b;
 }
 
-/* Enhanced mobile-friendly animations */
 .alertify-notifier .ajs-message.ajs-visible {
-    animation: slideInRight 0.4s cubic-bezier(0.25, 0.46, 0.45, 0.94);
+    animation: slideInRight 0.4s ease-out;
 }
 
 .alertify-notifier .ajs-message.ajs-hidden {
-    animation: slideOutRight 0.3s cubic-bezier(0.55, 0.055, 0.675, 0.19);
+    animation: slideOutRight 0.3s ease-in;
 }
 
 @keyframes slideInRight {
-    0% {
+    from {
         transform: translateX(100%);
         opacity: 0;
     }
 
-    60% {
-        transform: translateX(-10px);
-        opacity: 0.8;
-    }
-
-    100% {
+    to {
         transform: translateX(0);
         opacity: 1;
     }
 }
 
 @keyframes slideOutRight {
-    0% {
+    from {
         transform: translateX(0);
         opacity: 1;
     }
 
-    40% {
-        transform: translateX(-10px);
-        opacity: 0.8;
-    }
-
-    100% {
+    to {
         transform: translateX(100%);
         opacity: 0;
     }
@@ -101,102 +90,41 @@
     margin-bottom: 10px;
 }
 
-/* Enhanced tablet responsiveness */
 @media (max-width: 768px) {
     .alertify-notifier {
-        right: 15px;
-        left: 15px;
-        bottom: 15px;
+        right: 10px;
+        left: 10px;
+        bottom: 10px;
         max-width: none;
     }
 
     .alertify-notifier .ajs-message {
         font-size: 16px;
         margin-bottom: 8px;
-        padding: 16px 20px;
-        min-width: auto;
-        border-radius: 10px;
-        box-shadow: 0 3px 10px rgba(0, 0, 0, 0.2);
-    }
-
-    /* Faster animations for mobile */
-    .alertify-notifier .ajs-message.ajs-visible {
-        animation: slideInRightMobile 0.3s ease-out;
-    }
-
-    .alertify-notifier .ajs-message.ajs-hidden {
-        animation: slideOutRightMobile 0.25s ease-in;
+        padding: 18px 25px;
+        min-width: 280px;
     }
 }
 
-/* Enhanced mobile responsiveness */
 @media (max-width: 480px) {
     .alertify-notifier {
-        right: 10px;
-        left: 10px;
-        bottom: 10px;
+        right: 5px;
+        left: 5px;
+        bottom: 5px;
     }
 
     .alertify-notifier .ajs-message {
         font-size: 14px;
-        padding: 14px 16px;
-        border-radius: 8px;
-        min-height: 50px;
-        display: flex;
-        align-items: center;
-        box-shadow: 0 2px 8px rgba(0, 0, 0, 0.25);
-    }
-
-    /* Even faster animations for small screens */
-    .alertify-notifier .ajs-message.ajs-visible {
-        animation: slideInRightMobile 0.25s ease-out;
-    }
-
-    .alertify-notifier .ajs-message.ajs-hidden {
-        animation: slideOutRightMobile 0.2s ease-in;
+        padding: 16px 20px;
     }
 }
 
-/* Mobile-specific animations */
-@keyframes slideInRightMobile {
-    0% {
-        transform: translateX(100%);
-        opacity: 0;
-    }
-
-    100% {
-        transform: translateX(0);
-        opacity: 1;
-    }
-}
-
-@keyframes slideOutRightMobile {
-    0% {
-        transform: translateX(0);
-        opacity: 1;
-    }
-
-    100% {
-        transform: translateX(100%);
-        opacity: 0;
-    }
-}
-
-/* Touch-friendly hover effects */
 .alertify-notifier .ajs-message:hover {
-    transform: translateX(-3px);
-    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.2);
+    transform: translateX(-5px);
+    box-shadow: 0 6px 20px rgba(0, 0, 0, 0.2);
     transition: all 0.2s ease;
 }
 
-@media (max-width: 768px) {
-    .alertify-notifier .ajs-message:hover {
-        transform: none;
-        box-shadow: 0 3px 10px rgba(0, 0, 0, 0.2);
-    }
-}
-
-/* Mobile-optimized close button */
 .alertify-notifier .ajs-message .ajs-close {
     position: absolute;
     top: 8px;
@@ -205,31 +133,13 @@
     font-size: 18px;
     cursor: pointer;
     transition: color 0.2s ease;
-    width: 24px;
-    height: 24px;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    border-radius: 50%;
-    background: rgba(0, 0, 0, 0.1);
-}
-
-@media (max-width: 480px) {
-    .alertify-notifier .ajs-message .ajs-close {
-        width: 28px;
-        height: 28px;
-        font-size: 16px;
-        top: 6px;
-        left: 6px;
-    }
 }
 
 .alertify-notifier .ajs-message .ajs-close:hover {
     color: white;
-    background: rgba(0, 0, 0, 0.2);
 }
 
-/* Enhanced Mobile Dialog Styling */
+/* Enhanced Confirmation Dialog Styling */
 .alertify .ajs-dialog {
     border-radius: 15px;
     box-shadow: 0 8px 25px rgba(0, 0, 0, 0.2);
@@ -237,19 +147,6 @@
     font-family: "Tajawal", sans-serif;
     min-width: 400px;
     max-width: 500px;
-    animation: dialogSlideIn 0.3s cubic-bezier(0.25, 0.46, 0.45, 0.94);
-}
-
-@keyframes dialogSlideIn {
-    0% {
-        opacity: 0;
-        transform: scale(0.9) translateY(-20px);
-    }
-
-    100% {
-        opacity: 1;
-        transform: scale(1) translateY(0);
-    }
 }
 
 .alertify .ajs-header {
@@ -264,7 +161,7 @@
     border-bottom: 1px solid rgba(255, 255, 255, 0.1);
 }
 
-/* Mobile-optimized close button */
+/* Improved Close Button */
 .alertify .ajs-close {
     position: absolute;
     top: 50%;
@@ -320,7 +217,7 @@
     border-top: 1px solid #dee2e6;
 }
 
-/* Mobile-optimized button alignment */
+/* Better Button Alignment */
 .alertify .ajs-buttons {
     display: flex;
     gap: 15px;
@@ -340,20 +237,18 @@
     min-width: 100px;
     position: relative;
     overflow: hidden;
-    color: white !important;
-    min-height: 44px;
-    /* Touch-friendly height */
 }
 
 /* Enhanced OK Button */
 .alertify .ajs-button.ajs-ok {
     background: linear-gradient(135deg, #3aa876 0%, #2d8f5f 100%);
+    color: white;
     box-shadow: 0 2px 4px rgba(58, 168, 118, 0.3);
 }
 
 .alertify .ajs-button.ajs-ok:hover {
     background: linear-gradient(135deg, #2d8f5f 0%, #258a5a 100%);
-    transform: translateY(-1px);
+    transform: translateY(-2px);
     box-shadow: 0 4px 12px rgba(58, 168, 118, 0.4);
 }
 
@@ -365,12 +260,13 @@
 /* Enhanced Cancel Button */
 .alertify .ajs-button.ajs-cancel {
     background: linear-gradient(135deg, #6c757d 0%, #5a6268 100%);
+    color: white;
     box-shadow: 0 2px 4px rgba(108, 117, 125, 0.3);
 }
 
 .alertify .ajs-button.ajs-cancel:hover {
     background: linear-gradient(135deg, #5a6268 0%, #495057 100%);
-    transform: translateY(-1px);
+    transform: translateY(-2px);
     box-shadow: 0 4px 12px rgba(108, 117, 125, 0.4);
 }
 
@@ -379,7 +275,7 @@
     box-shadow: 0 2px 4px rgba(108, 117, 125, 0.3);
 }
 
-/* Mobile-optimized ripple effect */
+/* Button Ripple Effect */
 .alertify .ajs-button::after {
     content: '';
     position: absolute;
@@ -394,11 +290,11 @@
 }
 
 .alertify .ajs-button:active::after {
-    width: 80px;
-    height: 80px;
+    width: 100px;
+    height: 100px;
 }
 
-/* Dialog overlay with mobile optimization */
+/* Dialog overlay */
 .alertify .ajs-dimmer {
     background-color: rgba(0, 0, 0, 0.6);
     backdrop-filter: blur(3px);
@@ -415,19 +311,20 @@
     }
 }
 
-/* Enhanced tablet responsiveness */
+
+
+/* Responsive adjustments for dialog */
 @media (max-width: 768px) {
     .alertify .ajs-dialog {
-        margin: 15px;
+        margin: 20px;
         border-radius: 12px;
         min-width: auto;
         max-width: none;
-        animation: dialogSlideInMobile 0.25s ease-out;
     }
 
     .alertify .ajs-header {
         font-size: 16px;
-        padding: 16px 20px;
+        padding: 18px 20px;
     }
 
     .alertify .ajs-close {
@@ -437,19 +334,18 @@
     }
 
     .alertify .ajs-body {
-        padding: 18px;
+        padding: 20px;
         font-size: 15px;
     }
 
     .alertify .ajs-footer {
-        padding: 16px 20px;
+        padding: 18px 20px;
     }
 
     .alertify .ajs-button {
-        padding: 12px 20px;
+        padding: 10px 20px;
         font-size: 14px;
-        min-width: 80px;
-        min-height: 44px;
+        min-width: 90px;
     }
 
     .alertify .ajs-buttons {
@@ -457,16 +353,14 @@
     }
 }
 
-/* Enhanced mobile responsiveness */
 @media (max-width: 480px) {
     .alertify .ajs-dialog {
-        margin: 10px;
+        margin: 15px;
         border-radius: 10px;
-        animation: dialogSlideInMobile 0.2s ease-out;
     }
 
     .alertify .ajs-header {
-        padding: 14px 16px;
+        padding: 15px 18px;
         font-size: 15px;
     }
 
@@ -477,60 +371,87 @@
     }
 
     .alertify .ajs-body {
-        padding: 16px;
+        padding: 18px;
         font-size: 14px;
-        line-height: 1.5;
     }
 
     .alertify .ajs-footer {
-        padding: 14px 16px;
+        padding: 15px 18px;
     }
 
     .alertify .ajs-buttons {
         flex-direction: row;
-        gap: 8px;
+        gap: 10px;
     }
 
     .alertify .ajs-button {
         flex: 1;
         min-width: auto;
-        padding: 12px 16px;
+        padding: 10px 15px;
         font-size: 13px;
-        min-height: 44px;
-    }
-
-    .alertify .ajs-button::after {
-        width: 60px;
-        height: 60px;
     }
 }
 
-/* Mobile-specific dialog animation */
-@keyframes dialogSlideInMobile {
-    0% {
-        opacity: 0;
-        transform: scale(0.95) translateY(-10px);
-    }
-
-    100% {
-        opacity: 1;
-        transform: scale(1) translateY(0);
-    }
+/* Enhanced OK Button - Explicit White Text */
+.alertify .ajs-button.ajs-ok {
+    background: linear-gradient(135deg, #3aa876 0%, #2d8f5f 100%);
+    color: white !important;
+    box-shadow: 0 2px 4px rgba(58, 168, 118, 0.3);
 }
 
-/* Touch device optimizations */
-@media (hover: none) and (pointer: coarse) {
-    .alertify .ajs-button:hover {
-        transform: none;
-        box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
-    }
+.alertify .ajs-button.ajs-ok:hover {
+    background: linear-gradient(135deg, #2d8f5f 0%, #258a5a 100%);
+    color: white !important;
+    transform: translateY(-2px);
+    box-shadow: 0 4px 12px rgba(58, 168, 118, 0.4);
+}
 
-    .alertify-notifier .ajs-message:hover {
-        transform: none;
-    }
+.alertify .ajs-button.ajs-ok:active {
+    color: white !important;
+    transform: translateY(0);
+    box-shadow: 0 2px 4px rgba(58, 168, 118, 0.3);
+}
 
-    .alertify .ajs-close:hover {
-        transform: translateY(-50%);
-        background: rgba(255, 255, 255, 0.2);
-    }
+/* Enhanced Cancel Button - Explicit White Text */
+.alertify .ajs-button.ajs-cancel {
+    background: linear-gradient(135deg, #6c757d 0%, #5a6268 100%);
+    color: white !important;
+    box-shadow: 0 2px 4px rgba(108, 117, 125, 0.3);
+}
+
+.alertify .ajs-button.ajs-cancel:hover {
+    background: linear-gradient(135deg, #5a6268 0%, #495057 100%);
+    color: white !important;
+    transform: translateY(-2px);
+    box-shadow: 0 4px 12px rgba(108, 117, 125, 0.4);
+}
+
+.alertify .ajs-button.ajs-cancel:active {
+    color: white !important;
+    transform: translateY(0);
+    box-shadow: 0 2px 4px rgba(108, 117, 125, 0.3);
+}
+
+/* Base button styling with white text */
+.alertify .ajs-button {
+    padding: 12px 25px;
+    border: none;
+    border-radius: 8px;
+    font-family: "Tajawal", sans-serif;
+    font-size: 15px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    min-width: 100px;
+    position: relative;
+    overflow: hidden;
+    color: white !important;
+    /* ← Ensures all buttons have white text */
+}
+
+.alertify-notifier .ajs-warning {
+    background-color: #ffa726;
+    color: white;
+    border: none;
+    border-left-color: #ff8f00;
 }
