@@ -285,7 +285,9 @@ const fetchFamilyAndMembers = async () => {
     );
   } catch (error) {
     console.error("Error fetching data:", error);
-    alertify.error("حدث خطأ أثناء جلب بيانات العائلة أو الأعضاء");
+    alertify.error(
+      " يرجى إعادة تسجيل الدخول، حدث خطأ أثناء جلب  بيانات العائلة أو الأعضاء"
+    );
     router.push("/family");
   }
 };

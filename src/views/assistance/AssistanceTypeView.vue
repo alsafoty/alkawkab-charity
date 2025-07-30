@@ -3,7 +3,13 @@
     class="assistance-type-table container my-4 bg-white bg-opacity-50 p-5 rounded-4 shadow-lg text-center"
     dir="rtl"
   >
-    <h2 class="text-center mb-4 fw-bold">أنواع المساعدات</h2>
+    <div class="d-flex justify-content-between align-items-center mb-4">
+      <button @click="goBack" class="btn btn-secondary expandable-btn">
+        <i class="bi bi-arrow-right icon"></i>
+        <span class="btn-text">عودة</span>
+      </button>
+      <h2 class="text-center flex-grow-1 mb-0 fw-bold">أنواع المساعدات</h2>
+    </div>
 
     <!-- Add and Search Section -->
     <div class="d-flex justify-content-between align-items-center mb-4">
@@ -94,6 +100,10 @@ import { useRouter } from "vue-router";
 import axios from "axios";
 import alertify from "alertifyjs";
 
+const goBack = () => {
+  window.history.back();
+};
+
 // Configure alertify for this component
 alertify.set("notifier", "position", "bottom-right");
 alertify.set("notifier", "delay", 5);
@@ -133,11 +143,15 @@ const fetchAssistanceTypes = async () => {
     if (error.response) {
       const errorMessage =
         error.response.data.message || error.response.statusText;
-      alertify.error(`حدث خطأ أثناء جلب أنواع المساعدات: ${errorMessage}`);
+      alertify.error(
+        ` يرجى إعادة تسجيل الدخول، حدث خطأ أثناء جلب  أنواع المساعدات: ${errorMessage}`
+      );
     } else if (error.request) {
       alertify.error("لا يمكن الاتصال بالخادم. يرجى التحقق من اتصال الإنترنت");
     } else {
-      alertify.error("حدث خطأ أثناء جلب أنواع المساعدات");
+      alertify.error(
+        " يرجى إعادة تسجيل الدخول، حدث خطأ أثناء جلب  أنواع المساعدات"
+      );
     }
   }
 };

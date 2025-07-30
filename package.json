@@ -2,6 +2,11 @@
   "name": "charity",
   "version": "0.1.0",
   "private": true,
+  "description": "Charity Management System",
+  "author": {
+    "name": "Al-Kawkab"
+  },
+  "main": "background.js",
   "scripts": {
     "serve": "vue-cli-service serve",
     "build": "vue-cli-service build",
@@ -10,7 +15,6 @@
     "postinstall": "electron-builder install-app-deps",
     "postuninstall": "electron-builder install-app-deps"
   },
-  "main": "background.js",
   "dependencies": {
     "alertifyjs": "^1.14.0",
     "axios": "^1.10.0",
@@ -24,9 +28,10 @@
     "@vue/cli-plugin-babel": "~5.0.0",
     "@vue/cli-plugin-router": "~5.0.0",
     "@vue/cli-service": "~5.0.0",
-    "electron": "^37.2.4",
-    "electron-builder": "^26.0.12",
-    "electron-devtools-installer": "^4.0.0",
-    "vue-cli-plugin-electron-builder": "^2.1.1"
+    "electron": "^13.1.7",
+    "electron-builder": "^22.11.7",
+    "electron-devtools-installer": "^3.1.1",
+    "electron-icon-builder": "^2.0.1",
+    "vue-cli-plugin-electron-builder": "^2.0.0-rc.6"
   }
 }

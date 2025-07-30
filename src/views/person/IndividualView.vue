@@ -3,7 +3,13 @@
     class="persons-table container my-4 bg-white bg-opacity-50 p-5 rounded-4 shadow-lg"
     dir="rtl"
   >
-    <h2 class="text-center mb-4 fw-bold">جدول الأفراد</h2>
+    <div class="d-flex justify-content-between align-items-center mb-4">
+      <button @click="goBack" class="btn btn-secondary expandable-btn">
+        <i class="bi bi-arrow-right icon"></i>
+        <span class="btn-text">عودة</span>
+      </button>
+      <h2 class="text-center flex-grow-1 mb-0 fw-bold">جدول الأفراد</h2>
+    </div>
 
     <div class="d-flex justify-content-between align-items-center mb-4">
       <div class="d-flex gap-2">
@@ -127,11 +133,15 @@ const fetchPersons = async () => {
     if (error.response) {
       const errorMessage =
         error.response.data.message || error.response.statusText;
-      alertify.error(`حدث خطأ أثناء جلب بيانات الأشخاص: ${errorMessage}`);
+      alertify.error(
+        ` يرجى إعادة تسجيل الدخول، حدث خطأ أثناء جلب  بيانات الأشخاص: ${errorMessage}`
+      );
     } else if (error.request) {
       alertify.error("لا يمكن الاتصال بالخادم. يرجى التحقق من اتصال الإنترنت");
     } else {
-      alertify.error("حدث خطأ أثناء جلب بيانات الأشخاص");
+      alertify.error(
+        " يرجى إعادة تسجيل الدخول، حدث خطأ أثناء جلب  بيانات الأشخاص"
+      );
     }
   }
 };
@@ -169,6 +179,10 @@ const filteredPersons = computed(() => {
 });
 
 // Navigation functions
+const goBack = () => {
+  window.history.back();
+};
+
 const viewDetails = (id) => {
   router.push(`/view-person/${id}`);
 };

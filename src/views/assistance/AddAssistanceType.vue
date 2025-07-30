@@ -1,8 +1,21 @@
 <template>
   <div class="container my-4 p-5 rounded-4" dir="rtl">
     <div class="card border-0 shadow">
-      <div class="card-header bg-success text-white py-3">
-        <h3 class="mb-0 fw-bold">إضافة نوع مساعدة جديد</h3>
+      <div
+        class="card-header bg-success text-white py-3 d-flex align-items-center"
+      >
+        <button
+          @click="$router.back()"
+          class="expandable-btn btn btn-link text-white text-decoration-none p-0 border-0"
+        >
+          <span class="icon">
+            <i class="bi bi-arrow-right-short"></i>
+          </span>
+          <span class="btn-text ps-2">عودة </span>
+        </button>
+        <h3 class="mb-0 fw-bold flex-grow-1 text-center">
+          إضافة نوع مساعدة جديد
+        </h3>
       </div>
       <div class="card-body p-4">
         <form @submit.prevent="submitForm" class="row g-4">
@@ -158,6 +171,50 @@ const submitForm = async () => {
 .btn-success:hover {
   background-color: #3aa876;
   border-color: #3aa876;
+}
+
+.expandable-btn {
+  display: flex;
+  align-items: center;
+  transition: all 0.3s ease;
+  background: transparent;
+}
+
+.expandable-btn .icon {
+  font-size: 1.5rem;
+  transition: transform 0.3s ease;
+}
+
+.expandable-btn .btn-text {
+  max-width: 0;
+  opacity: 0;
+  overflow: hidden;
+  white-space: nowrap;
+  transition: all 0.3s ease;
+  margin-right: 0;
+}
+
+.expandable-btn:hover {
+  background: rgba(255, 255, 255, 0.1);
+  border-radius: 20px;
+}
+
+.expandable-btn:hover .icon {
+  transform: translateX(-4px);
+}
+
+.expandable-btn:hover .btn-text {
+  max-width: 100px;
+  opacity: 1;
+  margin-right: 8px;
+}
+
+@media (max-width: 768px) {
+  .expandable-btn:hover .btn-text {
+    max-width: 0;
+    opacity: 0;
+    margin-right: 0;
+  }
 }
 
 /* Font family */

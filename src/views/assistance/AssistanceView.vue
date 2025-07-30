@@ -3,7 +3,13 @@
     class="assistance-table container my-4 bg-white bg-opacity-50 p-5 rounded-4 shadow-lg"
     dir="rtl"
   >
-    <h2 class="text-center mb-4 fw-bold">جدول المساعدات</h2>
+    <div class="d-flex justify-content-between align-items-center mb-4">
+      <button @click="goBack" class="btn btn-secondary expandable-btn">
+        <i class="bi bi-arrow-right icon"></i>
+        <span class="btn-text">عودة</span>
+      </button>
+      <h2 class="text-center flex-grow-1 mb-0 fw-bold">جدول المساعدات</h2>
+    </div>
 
     <div class="d-flex justify-content-between align-items-center mb-4">
       <div class="d-flex gap-2">
@@ -243,6 +249,10 @@ import { useRouter } from "vue-router";
 import axios from "axios";
 import alertify from "alertifyjs";
 
+const goBack = () => {
+  window.history.back();
+};
+
 // Configure alertify for this component
 alertify.set("notifier", "position", "bottom-right");
 alertify.set("notifier", "delay", 5);
@@ -405,11 +415,13 @@ const fetchData = async () => {
     if (error.response) {
       const errorMessage =
         error.response.data.message || error.response.statusText;
-      alertify.error(`حدث خطأ أثناء جلب البيانات: ${errorMessage}`);
+      alertify.error(
+        ` يرجى إعادة تسجيل الدخول، حدث خطأ أثناء جلب  البيانات: ${errorMessage}`
+      );
     } else if (error.request) {
       alertify.error("لا يمكن الاتصال بالخادم. يرجى التحقق من اتصال الإنترنت");
     } else {
-      alertify.error("حدث خطأ أثناء جلب البيانات");
+      alertify.error(" يرجى إعادة تسجيل الدخول، حدث خطأ أثناء جلب  البيانات");
     }
   }
 };
@@ -481,87 +493,105 @@ const getReceivedStatusText = (received) => {
   return received ? "تم الاستلام" : "لم يتم الاستلام";
 };
 
-const directPrint = () => {
-  alertify.message("جاري تحضير الطباعة...");
+const isElectron = () => {
+  return window && window.electronAPI;
+};
 
-  const printContent = document.getElementById("printableContent").innerHTML;
-  const printWindow = window.open("", "_blank");
+const directPrint = async () => {
+  try {
+    alertify.message("جاري تحضير الطباعة...");
 
-  printWindow.document.write(`
-    <!DOCTYPE html>
-    <html dir="rtl">
-    <head>
-      <title>طباعة جدول المساعدات</title>
-      <meta charset="utf-8">
-      <style>
-        body { 
-          font-family: 'Tajawal', Arial, sans-serif; 
-          direction: rtl; 
-          margin: 20px; 
-          color: #333; 
-        }
-        .print-header { 
-          text-align: center; 
-          margin-bottom: 30px; 
-          border-bottom: 2px solid #42b983; 
-          padding-bottom: 15px; 
-        }
-        .print-header h2 { 
-          color: #42b983; 
-          margin-bottom: 10px; 
-        }
-        .print-table { 
-          width: 100%; 
-          border-collapse: collapse; 
-          margin: 20px 0; 
-          font-size: 11px; 
-        }
-        .print-table th, .print-table td { 
-          border: 1px solid #ddd; 
-          padding: 6px; 
-          text-align: center; 
-          vertical-align: middle;
-        }
-        .print-table th { 
-          background-color: #42b983; 
-          color: white; 
-          font-weight: bold; 
-          font-size: 10px;
-        }
-        .print-table tr:nth-child(even) { 
-          background-color: #f9f9f9; 
-        }
-        .print-footer { 
-          margin-top: 30px; 
-          text-align: center; 
-          border-top: 1px solid #ddd; 
-          padding-top: 15px; 
-          color: #666; 
-        }
-        /* Specific styling for received status column */
-        .print-table td:nth-child(6) {
-          font-weight: bold;
-          font-size: 10px;
-        }
-        @media print { 
-          body { margin: 0; } 
-          .print-table { font-size: 9px; }
-          .print-table th { font-size: 8px; }
-          .print-table td:nth-child(6) { font-size: 8px; }
-        }
-      </style>
-    </head>
-    <body>${printContent}</body>
-    </html>
-  `);
+    const printContent = document.getElementById("printableContent").innerHTML;
+    const htmlContent = `
+      <!DOCTYPE html>
+      <html dir="rtl">
+      <head>
+        <title>طباعة جدول المساعدات</title>
+        <meta charset="utf-8">
+        <style>
+          body { 
+            font-family: 'Tajawal', Arial, sans-serif; 
+            direction: rtl; 
+            margin: 20px; 
+            color: #333; 
+          }
+          .print-header { 
+            text-align: center; 
+            margin-bottom: 30px; 
+            border-bottom: 2px solid #198754; 
+            padding-bottom: 15px; 
+          }
+          .print-header h2 { 
+            color: #198754; 
+            margin-bottom: 10px; 
+          }
+          .print-table { 
+            width: 100%; 
+            border-collapse: collapse; 
+            margin: 20px 0; 
+            font-size: 11px; 
+          }
+          .print-table th, .print-table td { 
+            border: 1px solid #ddd; 
+            padding: 6px; 
+            text-align: center; 
+            vertical-align: middle;
+          }
+          .print-table th { 
+            background-color: #198754; 
+            color: white; 
+            font-weight: bold; 
+            font-size: 10px;
+          }
+          .print-table tr:nth-child(even) { 
+            background-color: #f9f9f9; 
+          }
+          .print-footer { 
+            margin-top: 30px; 
+            text-align: center; 
+            border-top: 1px solid #ddd; 
+            padding-top: 15px; 
+            color: #666; 
+          }
+          /* Specific styling for received status column */
+          .print-table td:nth-child(6) {
+            font-weight: bold;
+            font-size: 10px;
+          }
+          @media print { 
+            body { margin: 0; } 
+            .print-table { font-size: 9px; }
+            .print-table th { font-size: 8px; }
+            .print-table td:nth-child(6) { font-size: 8px; }
+          }
+        </style>
+      </head>
+      <body>${printContent}</body>
+      </html>
+    `;
 
-  printWindow.document.close();
-  printWindow.focus();
-  setTimeout(() => {
-    printWindow.print();
-    printWindow.close();
-    alertify.success("تم فتح نافذة الطباعة");
-  }, 250);
+    // Show preview window first
+    const result = await window.electronAPI.printOperation({
+      type: "show-preview",
+      content: htmlContent,
+    });
+
+    // Wait for print result
+    const printResult = await new Promise((resolve) => {
+      window.electronAPI.onPrintResult((result) => resolve(result));
+    });
+
+    if (printResult === "success") {
+      alertify.success("تمت الطباعة بنجاح");
+    } else if (printResult === "cancelled") {
+      alertify.message("تم إلغاء الطباعة");
+    } else {
+      alertify.error("حدث خطأ أثناء الطباعة");
+    }
+  } catch (error) {
+    console.error("Print error:", error);
+    alertify.error("حدث خطأ أثناء الطباعة");
+  }
 };
 
 const viewDetails = (assistanceId) =>
@@ -662,6 +692,43 @@ onMounted(fetchData);
   display: flex;
   align-items: center;
   justify-content: center;
+}
+
+/* Bootstrap solid colors */
+.btn-primary {
+  background-color: #0d6efd;
+  border-color: #0d6efd;
+  color: white;
+}
+
+.btn-secondary {
+  background-color: #6c757d;
+  border-color: #6c757d;
+  color: white;
+}
+
+.btn-success {
+  background-color: #198754;
+  border-color: #198754;
+  color: white;
+}
+
+.btn-danger {
+  background-color: #dc3545;
+  border-color: #dc3545;
+  color: white;
+}
+
+.btn-warning {
+  background-color: #ffc107;
+  border-color: #ffc107;
+  color: #000;
+}
+
+.btn-info {
+  background-color: #0dcaf0;
+  border-color: #0dcaf0;
+  color: white;
 }
 
 .expandable-btn .icon {

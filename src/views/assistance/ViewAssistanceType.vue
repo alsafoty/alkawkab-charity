@@ -240,7 +240,9 @@ const fetchAssistanceTypeDetails = async () => {
     console.log("Assistance Type details:", response.data);
   } catch (error) {
     console.error("Error fetching assistance type details:", error);
-    alertify.error("حدث خطأ أثناء جلب بيانات نوع المساعدة");
+    alertify.error(
+      " يرجى إعادة تسجيل الدخول، حدث خطأ أثناء جلب  بيانات نوع المساعدة"
+    );
   }
 };
 

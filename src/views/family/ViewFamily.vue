@@ -415,7 +415,9 @@ onMounted(async () => {
     }
   } catch (error) {
     console.error("Error fetching family details:", error);
-    alertify.error("حدث خطأ أثناء جلب بيانات العائلة");
+    alertify.error(
+      " يرجى إعادة تسجيل الدخول، حدث خطأ أثناء جلب  بيانات العائلة"
+    );
   }
 });
 

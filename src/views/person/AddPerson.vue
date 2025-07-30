@@ -4,8 +4,19 @@
       <div class="col-12 col-lg-10">
         <div class="card shadow-lg rounded-4 overflow-hidden border-0">
           <!-- Green Header -->
-          <div class="card-header bg-success text-white text-center py-3">
-            <h2 class="mb-0">إضافة شخص جديد</h2>
+          <div
+            class="card-header bg-success text-white py-3 d-flex align-items-center"
+          >
+            <button
+              @click="$router.back()"
+              class="expandable-btn btn btn-link text-white text-decoration-none p-0 border-0"
+            >
+              <span class="icon">
+                <i class="bi bi-arrow-right-short"></i>
+              </span>
+              <span class="btn-text ps-2">عودة </span>
+            </button>
+            <h2 class="mb-0 flex-grow-1 text-center">إضافة شخص جديد</h2>
           </div>
 
           <div class="card-body p-4">
@@ -456,11 +467,15 @@ const fetchExistingFamilies = async () => {
     if (error.response) {
       const errorMessage =
         error.response.data.message || error.response.statusText;
-      alertify.error(`حدث خطأ أثناء جلب قائمة العائلات: ${errorMessage}`);
+      alertify.error(
+        ` يرجى إعادة تسجيل الدخول، حدث خطأ أثناء جلب  قائمة العائلات: ${errorMessage}`
+      );
     } else if (error.request) {
       alertify.error("لا يمكن الاتصال بالخادم. يرجى التحقق من اتصال الإنترنت");
     } else {
-      alertify.error("حدث خطأ أثناء جلب قائمة العائلات");
+      alertify.error(
+        " يرجى إعادة تسجيل الدخول، حدث خطأ أثناء جلب  قائمة العائلات"
+      );
     }
   }
 };
@@ -886,5 +901,49 @@ const submitForm = async () => {
 /* Font family */
 * {
   font-family: "Tajawal", sans-serif;
+}
+
+.expandable-btn {
+  display: flex;
+  align-items: center;
+  transition: all 0.3s ease;
+  background: transparent;
+}
+
+.expandable-btn .icon {
+  font-size: 1.5rem;
+  transition: transform 0.3s ease;
+}
+
+.expandable-btn .btn-text {
+  max-width: 0;
+  opacity: 0;
+  overflow: hidden;
+  white-space: nowrap;
+  transition: all 0.3s ease;
+  margin-right: 0;
+}
+
+.expandable-btn:hover {
+  background: rgba(255, 255, 255, 0.1);
+  border-radius: 20px;
+}
+
+.expandable-btn:hover .icon {
+  transform: translateX(-4px);
+}
+
+.expandable-btn:hover .btn-text {
+  max-width: 100px;
+  opacity: 1;
+  margin-right: 8px;
+}
+
+@media (max-width: 768px) {
+  .expandable-btn:hover .btn-text {
+    max-width: 0;
+    opacity: 0;
+    margin-right: 0;
+  }
 }
 </style>

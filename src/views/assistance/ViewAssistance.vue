@@ -217,7 +217,9 @@ const fetchAssistanceDetails = async () => {
     console.log("Assistance details:", response.data);
   } catch (error) {
     console.error("Error fetching assistance details:", error);
-    alertify.error("حدث خطأ أثناء جلب بيانات المساعدة");
+    alertify.error(
+      " يرجى إعادة تسجيل الدخول، حدث خطأ أثناء جلب  بيانات المساعدة"
+    );
   }
 };
 

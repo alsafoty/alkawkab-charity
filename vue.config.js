@@ -1,21 +1,34 @@
-const { defineConfig } = require('@vue/cli-service')
+const { defineConfig } = require("@vue/cli-service");
 module.exports = defineConfig({
   transpileDependencies: true,
   pluginOptions: {
     electronBuilder: {
-      nodeIntegration: true,
+      nodeIntegration: false,
+      contextIsolation: true,
+      preload: "src/preload.js",
+      customFileProtocol: "./",
+      files: ["**/*"],
       builderOptions: {
-        productName: "Charity Management System",
+        extraResources: [
+          {
+            from: "public",
+            to: "public",
+          },
+        ],
         appId: "com.alkawkab.charity",
+        productName: "Charity Management System",
         win: {
-          icon: "public/images/logo.png",
-          target: ["nsis"]
+          target: ["nsis", "portable"],
+          icon: "build/icons/icon.ico",
         },
         nsis: {
           oneClick: false,
-          allowToChangeInstallationDirectory: true
-        }
-      }
-    }
-  }
-})
+          allowToChangeInstallationDirectory: true,
+          createDesktopShortcut: true,
+          createStartMenuShortcut: true,
+          shortcutName: "Charity Management System",
+        },
+      },
+    },
+  },
+});

@@ -506,11 +506,15 @@ const fetchExistingFamilies = async () => {
     if (error.response) {
       const errorMessage =
         error.response.data.message || error.response.statusText;
-      alertify.error(`حدث خطأ أثناء جلب قائمة العائلات: ${errorMessage}`);
+      alertify.error(
+        ` يرجى إعادة تسجيل الدخول، حدث خطأ أثناء جلب  قائمة العائلات: ${errorMessage}`
+      );
     } else if (error.request) {
       alertify.error("لا يمكن الاتصال بالخادم. يرجى التحقق من اتصال الإنترنت");
     } else {
-      alertify.error("حدث خطأ أثناء جلب قائمة العائلات");
+      alertify.error(
+        " يرجى إعادة تسجيل الدخول، حدث خطأ أثناء جلب  قائمة العائلات"
+      );
     }
   }
 };
@@ -577,11 +581,15 @@ const fetchPersonData = async () => {
     } else if (error.response) {
       const errorMessage =
         error.response.data.message || error.response.statusText;
-      alertify.error(`حدث خطأ أثناء جلب بيانات الشخص: ${errorMessage}`);
+      alertify.error(
+        ` يرجى إعادة تسجيل الدخول، حدث خطأ أثناء جلب  بيانات الشخص: ${errorMessage}`
+      );
     } else if (error.request) {
       alertify.error("لا يمكن الاتصال بالخادم. يرجى التحقق من اتصال الإنترنت");
     } else {
-      alertify.error("حدث خطأ أثناء جلب بيانات الشخص");
+      alertify.error(
+        " يرجى إعادة تسجيل الدخول، حدث خطأ أثناء جلب  بيانات الشخص"
+      );
     }
   }
 };

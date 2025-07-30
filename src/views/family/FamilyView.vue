@@ -3,7 +3,13 @@
     class="families-table container my-4 bg-white bg-opacity-50 p-5 rounded-4 shadow-lg"
     dir="rtl"
   >
-    <h2 class="text-center mb-4 fw-bold">جدول العائلات</h2>
+    <div class="d-flex justify-content-between align-items-center mb-4">
+      <button @click="goBack" class="btn btn-secondary expandable-btn">
+        <i class="bi bi-arrow-right icon"></i>
+        <span class="btn-text">عودة</span>
+      </button>
+      <h2 class="text-center flex-grow-1 mb-0 fw-bold">جدول العائلات</h2>
+    </div>
 
     <div class="d-flex justify-content-between align-items-center mb-4">
       <div class="d-flex gap-2">
@@ -101,6 +107,10 @@ import { useRouter } from "vue-router";
 import axios from "axios";
 import alertify from "alertifyjs";
 
+const goBack = () => {
+  window.history.back();
+};
+
 const API_BASE_URL = "https://charityapp.runasp.net/api";
 const router = useRouter();
 const families = ref([]);
@@ -156,7 +166,9 @@ const fetchFamilies = async () => {
     console.log("Families with members:", familiesWithMembers);
   } catch (error) {
     console.error("Error fetching families:", error);
-    alertify.error("حدث خطأ أثناء جلب بيانات العائلات");
+    alertify.error(
+      " يرجى إعادة تسجيل الدخول، حدث خطأ أثناء جلب  بيانات العائلات"
+    );
   } finally {
     loading.value = false;
   }
@@ -273,6 +285,14 @@ onMounted(fetchFamilies);
   display: flex;
   align-items: center;
   justify-content: center;
+  background-color: #6c757d; /* Adding solid background for secondary button */
+  color: white;
+}
+
+/* Override for success button */
+.btn-success.expandable-btn {
+  background-color: #42b983;
+  color: white;
 }
 
 .expandable-btn .icon {
@@ -293,6 +313,11 @@ onMounted(fetchFamilies);
   min-width: auto;
   padding-left: 1rem;
   padding-right: 1rem;
+  background-color: #5c636a; /* Bootstrap secondary hover */
+}
+
+.btn-success.expandable-btn:hover {
+  background-color: #157347; /* Bootstrap success hover */
 }
 
 .expandable-btn:hover .icon {
@@ -307,23 +332,40 @@ onMounted(fetchFamilies);
 
 /* تنسيق خاص لأزرار الإجراءات */
 .btn-primary.expandable-action-btn {
-  background-color: #42b983;
-  border-color: #42b983;
+  background-color: #0d6efd;
+  border-color: #0d6efd;
+  color: white;
+}
+
+.btn-warning.expandable-action-btn {
+  background-color: #ffc107;
+  border-color: #ffc107;
+  color: #000;
+}
+
+.btn-danger.expandable-action-btn {
+  background-color: #dc3545;
+  border-color: #dc3545;
+  color: white;
 }
 
 .btn-primary.expandable-action-btn:hover {
-  background-color: #3aa876;
-  border-color: #3aa876;
-  box-shadow: 0 4px 8px rgba(66, 185, 131, 0.3);
+  background-color: #0b5ed7;
+  border-color: #0a58ca;
+  box-shadow: 0 4px 8px rgba(13, 110, 253, 0.3);
   transform: translateY(-1px);
 }
 
 .btn-warning.expandable-action-btn:hover {
+  background-color: #ffca2c;
+  border-color: #ffc720;
   box-shadow: 0 4px 8px rgba(255, 193, 7, 0.3);
   transform: translateY(-1px);
 }
 
 .btn-danger.expandable-action-btn:hover {
+  background-color: #bb2d3b;
+  border-color: #b02a37;
   box-shadow: 0 4px 8px rgba(220, 53, 69, 0.3);
   transform: translateY(-1px);
 }

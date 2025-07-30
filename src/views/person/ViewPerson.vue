@@ -347,7 +347,7 @@
         <div class="text-center mt-4">
           <button class="btn btn-success custom-btn px-5" @click="goBack">
             <i class="bi bi-arrow-right me-1"></i>
-            رجوع
+            عودة
           </button>
         </div>
       </div>
@@ -597,7 +597,7 @@ onMounted(async () => {
     }
   } catch (error) {
     console.error("Error fetching person details:", error);
-    alertify.error("حدث خطأ أثناء جلب بيانات الشخص");
+    alertify.error(" يرجى إعادة تسجيل الدخول، حدث خطأ أثناء جلب  بيانات الشخص");
   }
 });
 

@@ -231,11 +231,15 @@ const loadInitialData = async () => {
     if (error.response) {
       const errorMessage =
         error.response.data.message || error.response.statusText;
-      alertify.error(`حدث خطأ أثناء جلب البيانات الأولية: ${errorMessage}`);
+      alertify.error(
+        ` يرجى إعادة تسجيل الدخول، حدث خطأ أثناء جلب  البيانات الأولية: ${errorMessage}`
+      );
     } else if (error.request) {
       alertify.error("لا يمكن الاتصال بالخادم. يرجى التحقق من اتصال الإنترنت");
     } else {
-      alertify.error("حدث خطأ أثناء جلب البيانات الأولية");
+      alertify.error(
+        " يرجى إعادة تسجيل الدخول، حدث خطأ أثناء جلب  البيانات الأولية"
+      );
     }
   }
 };
@@ -284,11 +288,15 @@ const loadAssistanceData = async () => {
     if (error.response) {
       const errorMessage =
         error.response.data.message || error.response.statusText;
-      alertify.error(`حدث خطأ أثناء جلب بيانات المساعدة: ${errorMessage}`);
+      alertify.error(
+        ` يرجى إعادة تسجيل الدخول، حدث خطأ أثناء جلب  بيانات المساعدة: ${errorMessage}`
+      );
     } else if (error.request) {
       alertify.error("لا يمكن الاتصال بالخادم. يرجى التحقق من اتصال الإنترنت");
     } else {
-      alertify.error("حدث خطأ أثناء جلب بيانات المساعدة");
+      alertify.error(
+        " يرجى إعادة تسجيل الدخول، حدث خطأ أثناء جلب  بيانات المساعدة"
+      );
     }
   }
 };
@@ -323,11 +331,15 @@ const loadFamilyMembers = async () => {
     if (error.response) {
       const errorMessage =
         error.response.data.message || error.response.statusText;
-      alertify.error(`حدث خطأ أثناء جلب بيانات أفراد العائلة: ${errorMessage}`);
+      alertify.error(
+        ` يرجى إعادة تسجيل الدخول، حدث خطأ أثناء جلب  بيانات أفراد العائلة: ${errorMessage}`
+      );
     } else if (error.request) {
       alertify.error("لا يمكن الاتصال بالخادم. يرجى التحقق من اتصال الإنترنت");
     } else {
-      alertify.error("حدث خطأ أثناء جلب بيانات أفراد العائلة");
+      alertify.error(
+        " يرجى إعادة تسجيل الدخول، حدث خطأ أثناء جلب  بيانات أفراد العائلة"
+      );
     }
   }
 };
