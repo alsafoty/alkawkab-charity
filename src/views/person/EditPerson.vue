@@ -440,9 +440,9 @@ alertify.set("notifier", "delay", 5);
 
 const route = useRoute();
 const router = useRouter();
-const PersonAPI = ref("https://charityapp.runasp.net/api/Person");
-const FamilyAPI = ref("https://charityapp.runasp.net/api/Family");
-const GuardianAPI = ref("https://charityapp.runasp.net/api/Guardian");
+const PersonAPI = ref(process.env.VUE_APP_API_BASE_URL + "/api/Person");
+const FamilyAPI = ref(process.env.VUE_APP_API_BASE_URL + "/api/Family");
+const GuardianAPI = ref(process.env.VUE_APP_API_BASE_URL + "/api/Guardian");
 const AUTH_TOKEN = localStorage.getItem("token");
 
 const existingFamilies = ref([]);

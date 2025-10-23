@@ -190,7 +190,7 @@ const searchTerm = ref("");
 const fetchAllPersons = async () => {
   try {
     const response = await axios.get(
-      "https://charityapp.runasp.net/api/Person",
+      `${process.env.VUE_APP_API_BASE_URL}/api/Person`,
       {
         headers: {
           Authorization: `Bearer ${AUTH_TOKEN}`,
@@ -236,11 +236,14 @@ onMounted(() => {
 
 // جلب جميع العائلات
 const fetchAllFamilies = async () => {
-  const response = await axios.get("https://charityapp.runasp.net/api/Family", {
-    headers: {
-      Authorization: `Bearer ${AUTH_TOKEN}`,
-    },
-  });
+  const response = await axios.get(
+    `${process.env.VUE_APP_API_BASE_URL}/api/Family`,
+    {
+      headers: {
+        Authorization: `Bearer ${AUTH_TOKEN}`,
+      },
+    }
+  );
   return response.data;
 };
 
@@ -276,12 +279,16 @@ const submitForm = async () => {
       isHouseOwned: formData.value.isHouseOwned,
     };
 
-    await axios.post("https://charityapp.runasp.net/api/Family", familyData, {
-      headers: {
-        Authorization: `Bearer ${AUTH_TOKEN}`,
-        "Content-Type": "application/json",
-      },
-    });
+    await axios.post(
+      `${process.env.VUE_APP_API_BASE_URL}/api/Family`,
+      familyData,
+      {
+        headers: {
+          Authorization: `Bearer ${AUTH_TOKEN}`,
+          "Content-Type": "application/json",
+        },
+      }
+    );
 
     // 2. جلب جميع العائلات وأخذ id الأخيرة
     const familyId = await getLastFamilyId();
@@ -299,7 +306,7 @@ const submitForm = async () => {
           isPartOfFamily: true, // تحديث الحالة
         };
         await axios.put(
-          `https://charityapp.runasp.net/api/Person/${personId}`,
+          `${process.env.VUE_APP_API_BASE_URL}/api/Person/${personId}`,
           updatedPerson,
           {
             headers: {

@@ -255,7 +255,7 @@ const fetchFamilyAndMembers = async () => {
   try {
     // جلب بيانات العائلة
     const familyRes = await axios.get(
-      `https://charityapp.runasp.net/api/Family/${route.params.id}`,
+      `${process.env.VUE_APP_API_BASE_URL}/api/Family/${route.params.id}`,
       {
         headers: { Authorization: `Bearer ${AUTH_TOKEN}` },
       }
@@ -267,7 +267,7 @@ const fetchFamilyAndMembers = async () => {
 
     // جلب جميع الأشخاص
     const personsRes = await axios.get(
-      "https://charityapp.runasp.net/api/Person",
+      `${process.env.VUE_APP_API_BASE_URL}/api/Person`,
       {
         headers: { Authorization: `Bearer ${AUTH_TOKEN}` },
       }
@@ -311,7 +311,7 @@ const removeMember = async (person) => {
         };
 
         await axios.put(
-          `https://charityapp.runasp.net/api/Person/${person.id}`,
+          `${process.env.VUE_APP_API_BASE_URL}/api/Person/${person.id}`,
           updatedPerson,
           {
             headers: {
@@ -350,7 +350,7 @@ const submitForm = async () => {
   try {
     // تحديث بيانات العائلة
     await axios.put(
-      `https://charityapp.runasp.net/api/Family/${route.params.id}`,
+      `${process.env.VUE_APP_API_BASE_URL}/api/Family/${route.params.id}`,
       {
         ...formData.value,
         numberOfFamilyMembers:
@@ -376,7 +376,7 @@ const submitForm = async () => {
         };
 
         await axios.put(
-          `https://charityapp.runasp.net/api/Person/${personId}`,
+          `${process.env.VUE_APP_API_BASE_URL}/api/Person/${personId}`,
           updatedPerson,
           {
             headers: {

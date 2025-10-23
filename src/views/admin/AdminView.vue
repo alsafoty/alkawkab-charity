@@ -130,7 +130,7 @@ const validationErrors = reactive({
   username: "",
   password: "",
 });
-const AuthAPI = ref("https://charityapp.runasp.net/api/Auth/Login");
+const AuthAPI = ref(process.env.VUE_APP_API_BASE_URL + "/api/Auth/Login");
 const router = useRouter();
 
 // التحقق من حالة تسجيل الدخول عند تحميل الصفحة

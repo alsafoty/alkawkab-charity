@@ -414,7 +414,7 @@ const viewAssistanceDetails = (assistanceId) => {
 const fetchAssistanceTypes = async () => {
   try {
     const response = await axios.get(
-      `https://charityapp.runasp.net/api/AssistanceType`,
+      `${process.env.VUE_APP_API_BASE_URL}/api/AssistanceType`,
       {
         headers: {
           Authorization: `Bearer ${AUTH_TOKEN}`,
@@ -434,7 +434,7 @@ const fetchGuardianData = async (guardianId) => {
   loadingGuardianData.value = true;
   try {
     const response = await axios.get(
-      `https://charityapp.runasp.net/api/Guardian/${guardianId}`,
+      `${process.env.VUE_APP_API_BASE_URL}/api/Guardian/${guardianId}`,
       {
         headers: {
           Authorization: `Bearer ${AUTH_TOKEN}`,
@@ -455,7 +455,7 @@ const fetchGuardianData = async (guardianId) => {
 const fetchPersonDetails = async (personId) => {
   try {
     const response = await axios.get(
-      `https://charityapp.runasp.net/api/Person/${personId}`,
+      `${process.env.VUE_APP_API_BASE_URL}/api/Person/${personId}`,
       {
         headers: {
           Authorization: `Bearer ${AUTH_TOKEN}`,
@@ -504,7 +504,7 @@ const fetchAllMemberDetails = async () => {
 const fetchAssistanceData = async (assistanceId) => {
   try {
     const response = await axios.get(
-      `https://charityapp.runasp.net/api/Assistance/${assistanceId}`,
+      `${process.env.VUE_APP_API_BASE_URL}/api/Assistance/${assistanceId}`,
       {
         headers: {
           Authorization: `Bearer ${AUTH_TOKEN}`,
@@ -558,7 +558,7 @@ onMounted(async () => {
 
     // جلب بيانات الشخص
     const response = await axios.get(
-      `https://charityapp.runasp.net/api/Person/${route.params.id}`,
+      `${process.env.VUE_APP_API_BASE_URL}/api/Person/${route.params.id}`,
       {
         headers: {
           Authorization: `Bearer ${AUTH_TOKEN}`,
@@ -607,7 +607,7 @@ const fetchFamilyData = async (familyId) => {
   loadingFamilyData.value = true;
   try {
     const response = await axios.get(
-      `https://charityapp.runasp.net/api/Family/${familyId}`,
+      `${process.env.VUE_APP_API_BASE_URL}/api/Family/${familyId}`,
       {
         headers: {
           Authorization: `Bearer ${AUTH_TOKEN}`,

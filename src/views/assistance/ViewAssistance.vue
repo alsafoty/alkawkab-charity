@@ -117,7 +117,7 @@ import { useRoute, useRouter } from "vue-router";
 import axios from "axios";
 import alertify from "alertifyjs";
 
-const API_BASE_URL = "https://charityapp.runasp.net/api";
+const API_BASE_URL = process.env.VUE_APP_API_BASE_URL + "/api";
 const route = useRoute();
 const router = useRouter();
 const assistanceData = ref({});

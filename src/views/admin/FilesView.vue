@@ -164,7 +164,7 @@
 import { ref, computed } from "vue";
 import axios from "axios";
 
-const API_BASE_URL = "https://charityapp.runasp.net/api";
+const API_BASE_URL = process.env.VUE_APP_API_BASE_URL + "/api";
 
 // Reactive data
 const uploading = ref(false);

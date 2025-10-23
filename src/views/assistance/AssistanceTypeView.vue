@@ -98,7 +98,7 @@ import alertify from "alertifyjs";
 alertify.set("notifier", "position", "bottom-right");
 alertify.set("notifier", "delay", 5);
 
-const API_BASE_URL = "https://charityapp.runasp.net/api";
+const API_BASE_URL = process.env.VUE_APP_API_BASE_URL + "/api";
 const AUTH_TOKEN = localStorage.getItem("token");
 const router = useRouter();
 

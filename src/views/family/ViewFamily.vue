@@ -257,7 +257,7 @@ const viewAssistanceDetails = (assistanceId) => {
 const fetchAssistanceTypes = async () => {
   try {
     const response = await axios.get(
-      `https://charityapp.runasp.net/api/AssistanceType`,
+      `${process.env.VUE_APP_API_BASE_URL}/api/AssistanceType`,
       {
         headers: {
           Authorization: `Bearer ${AUTH_TOKEN}`,
@@ -274,7 +274,7 @@ const fetchAssistanceTypes = async () => {
 const fetchPersonDetails = async (personId) => {
   try {
     const response = await axios.get(
-      `https://charityapp.runasp.net/api/Person/${personId}`,
+      `${process.env.VUE_APP_API_BASE_URL}/api/Person/${personId}`,
       {
         headers: {
           Authorization: `Bearer ${AUTH_TOKEN}`,
@@ -292,7 +292,7 @@ const fetchPersonDetails = async (personId) => {
 const fetchAssistanceData = async (assistanceId) => {
   try {
     const response = await axios.get(
-      `https://charityapp.runasp.net/api/Assistance/${assistanceId}`,
+      `${process.env.VUE_APP_API_BASE_URL}/api/Assistance/${assistanceId}`,
       {
         headers: {
           Authorization: `Bearer ${AUTH_TOKEN}`,
@@ -391,7 +391,7 @@ onMounted(async () => {
 
     // جلب بيانات العائلة
     const response = await axios.get(
-      `https://charityapp.runasp.net/api/Family/${route.params.id}`,
+      `${process.env.VUE_APP_API_BASE_URL}/api/Family/${route.params.id}`,
       {
         headers: {
           Authorization: `Bearer ${AUTH_TOKEN}`,
