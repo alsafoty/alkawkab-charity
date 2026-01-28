@@ -27,12 +27,12 @@
         >
           المساعدات
         </button>
-        <button
+        <!-- <button
           @click="router.push('/files')"
           class="btn btn-success donate-button fs-3 px-5 py-2"
         >
           مركز الملفات
-        </button>
+        </button> -->
       </div>
 
       <!-- زر تسجيل الخروج -->
