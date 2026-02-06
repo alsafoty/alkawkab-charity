@@ -268,10 +268,11 @@
                     <div class="col-md-4" v-if="selectedFamilyInfo">
                       <div class="family-info p-3 bg-white rounded border">
                         <h6 class="text-success mb-2">
-                          معلومات العائلة المختارة
+                          معلومات الأسرة المختارة
                         </h6>
                         <p class="mb-1">
-                          <strong>الاسم:</strong> {{ selectedFamilyInfo.name }}
+                          <strong>رب الأسرة:</strong>
+                          {{ selectedFamilyInfo.name }}
                         </p>
                         <p class="mb-0">
                           <strong>يملكون منزل:</strong>
@@ -468,7 +469,7 @@ const fetchExistingFamilies = async () => {
 const onFamilySelect = () => {
   if (formData.selectedFamilyId) {
     selectedFamilyInfo.value = existingFamilies.value.find(
-      (family) => family.familyId == formData.selectedFamilyId
+      (family) => family.familyId == formData.selectedFamilyId,
     );
 
     // Auto-update person's data based on selected family
@@ -503,7 +504,7 @@ watch(
       formData.isHouseOwned = false;
       selectedFamilyInfo.value = null;
     }
-  }
+  },
 );
 
 watch(
@@ -512,7 +513,7 @@ watch(
     if (formData.isPartOfFamily && formData.isNewFamily) {
       formData.newFamilyName = newVal;
     }
-  }
+  },
 );
 
 watch(
@@ -528,7 +529,7 @@ watch(
       formData.newFamilyName = "";
       formData.familyHouseOwned = false;
     }
-  }
+  },
 );
 
 // Watch for changes in new family house ownership
@@ -538,7 +539,7 @@ watch(
     if (formData.isPartOfFamily && formData.isNewFamily) {
       formData.isHouseOwned = newVal;
     }
-  }
+  },
 );
 
 const submitForm = async () => {
@@ -620,7 +621,7 @@ const submitForm = async () => {
                   Authorization: `Bearer ${AUTH_TOKEN}`,
                   "Content-Type": "application/json",
                 },
-              }
+              },
             );
 
             // Step 3: الحصول على guardianId من الاستجابة
@@ -639,7 +640,7 @@ const submitForm = async () => {
                 guardianError.response.data.message ||
                 guardianError.response.statusText;
               alertify.error(
-                `حدث خطأ أثناء إضافة بيانات الوصي: ${errorMessage}`
+                `حدث خطأ أثناء إضافة بيانات الوصي: ${errorMessage}`,
               );
             } else {
               alertify.error("حدث خطأ أثناء إضافة بيانات الوصي");
@@ -670,7 +671,7 @@ const submitForm = async () => {
                   Authorization: `Bearer ${AUTH_TOKEN}`,
                   "Content-Type": "application/json",
                 },
-              }
+              },
             );
 
             // جلب جميع العائلات للحصول على ID آخر عائلة
@@ -685,7 +686,7 @@ const submitForm = async () => {
             // الحصول على ID آخر عائلة (أحدث عائلة مُضافة)
             if (allFamilies && allFamilies.length > 0) {
               const sortedFamilies = allFamilies.sort(
-                (a, b) => b.familyId - a.familyId
+                (a, b) => b.familyId - a.familyId,
               );
               familyId = sortedFamilies[0].familyId;
             } else {
@@ -694,7 +695,7 @@ const submitForm = async () => {
 
             console.log("New family created with ID:", familyId);
             alertify.success(
-              `تم إنشاء العائلة الجديدة: ${formData.newFamilyName}`
+              `تم إنشاء العائلة الجديدة: ${formData.newFamilyName}`,
             );
           } else {
             alertify.message("جاري تحديث بيانات العائلة المختارة...");
@@ -720,7 +721,7 @@ const submitForm = async () => {
                     Authorization: `Bearer ${AUTH_TOKEN}`,
                     "Content-Type": "application/json",
                   },
-                }
+                },
               );
 
               formData.numberOfFamilyMembers =
@@ -788,7 +789,7 @@ const submitForm = async () => {
             err.response.data.message?.includes("exists")
           ) {
             alertify.error(
-              "الرقم التعريفي موجود مسبقاً. يرجى إدخال رقم مختلف."
+              "الرقم التعريفي موجود مسبقاً. يرجى إدخال رقم مختلف.",
             );
           } else {
             const errorMessage =
@@ -797,7 +798,7 @@ const submitForm = async () => {
           }
         } else if (err.request) {
           alertify.error(
-            "لا يمكن الاتصال بالخادم. يرجى التحقق من اتصال الإنترنت"
+            "لا يمكن الاتصال بالخادم. يرجى التحقق من اتصال الإنترنت",
           );
         } else {
           alertify.error("فشل في إرسال البيانات، تحقق من الاتصال أو التوكن.");
@@ -807,7 +808,7 @@ const submitForm = async () => {
     function () {
       // User clicked Cancel
       alertify.message("تم إلغاء عملية الإضافة");
-    }
+    },
   );
 };
 </script>

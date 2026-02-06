@@ -9,8 +9,8 @@
           <!-- Instructions -->
           <div class="alert alert-info mb-4">
             <i class="bi bi-info-circle me-2"></i>
-            <strong>تعليمات:</strong> يمكنك اختيار عدة عائلات أو أفراد في كل صف،
-            وسيتم توزيع المساعدة على جميع المختارين.
+            <strong>تعليمات:</strong> يمكنك اختيار عدة أسر أو أرامل أو أيتام في
+            كل صف، وسيتم توزيع المساعدة على جميع المختارين.
           </div>
 
           <!-- Table -->
@@ -18,13 +18,13 @@
             <table class="table table-bordered table-hover large-table">
               <thead class="table-header text-white">
                 <tr>
-                  <th width="25%">العائلات</th>
-                  <th width="25%">الأفراد</th>
-                  <th width="20%">نوع المساعدة</th>
-                  <th width="10%">العدد</th>
+                  <th width="23%">نوع المساعدة</th>
+                  <th width="18%">أسر</th>
+                  <th width="18%">أرامل</th>
+                  <th width="18%">أيتام</th>
                   <th width="10%">الاستلام</th>
-                  <th width="15%">ملاحظات</th>
-                  <th width="5%">إجراءات</th>
+                  <th width="8%">ملاحظات</th>
+                  <th width="5%">حذف</th>
                 </tr>
               </thead>
               <tbody>
@@ -33,6 +33,71 @@
                   :key="index"
                   class="assistance-row"
                 >
+                  <!-- Assistance Type Column -->
+                  <td>
+                    <div class="dropdown">
+                      <button
+                        class="btn btn-outline-secondary dropdown-toggle w-100 text-end"
+                        type="button"
+                        :id="`assistanceTypeDropdown${index}`"
+                        data-bs-toggle="dropdown"
+                        aria-expanded="false"
+                        data-bs-auto-close="outside"
+                      >
+                        {{
+                          getSelectedAssistanceTypeText(row.assistanceTypeId)
+                        }}
+                      </button>
+                      <ul
+                        class="dropdown-menu w-100 assistance-type-dropdown rtl-dropdown"
+                        :aria-labelledby="`assistanceTypeDropdown${index}`"
+                      >
+                        <li class="dropdown-item-search">
+                          <input
+                            type="text"
+                            class="form-control search-input"
+                            placeholder="البحث في أنواع المساعدات..."
+                            v-model="row.assistanceTypeSearchTerm"
+                            @click.stop
+                          />
+                        </li>
+                        <li class="dropdown-divider"></li>
+                        <li
+                          v-for="type in getFilteredAssistanceTypes(
+                            row.assistanceTypeSearchTerm,
+                          )"
+                          :key="type.assistanceTypeId"
+                        >
+                          <div
+                            class="dropdown-item rtl-check clickable-item"
+                            @click.stop="
+                              selectAssistanceType(row, type.assistanceTypeId)
+                            "
+                          >
+                            <span class="rtl-label">{{
+                              type.assistanceTypeName
+                            }}</span>
+                          </div>
+                        </li>
+                        <li
+                          v-if="
+                            getFilteredAssistanceTypes(
+                              row.assistanceTypeSearchTerm,
+                            ).length === 0
+                          "
+                        >
+                          <span class="dropdown-item text-muted text-end">
+                            {{
+                              row.assistanceTypeSearchTerm
+                                ? "لا توجد نتائج"
+                                : "لا توجد أنواع مساعدات"
+                            }}
+                          </span>
+                        </li>
+                      </ul>
+                    </div>
+                  </td>
+
                   <!-- Families Column -->
                   <td>
                     <div class="dropdown">
@@ -62,7 +127,7 @@
                         <li class="dropdown-divider"></li>
                         <li
                           v-for="family in getFilteredFamilies(
-                            row.familySearchTerm
+                            row.familySearchTerm,
                           )"
                           :key="family.familyId"
                         >
@@ -106,70 +171,69 @@
                     </div>
                   </td>
 
-                  <!-- Persons Column -->
+                  <!-- Widows Column -->
                   <td>
                     <div class="dropdown">
                       <button
                         class="btn btn-outline-secondary dropdown-toggle w-100 text-end"
                         type="button"
-                        :id="`personsDropdown${index}`"
+                        :id="`widowsDropdown${index}`"
                         data-bs-toggle="dropdown"
                         aria-expanded="false"
                         data-bs-auto-close="outside"
                       >
-                        {{ getSelectedPersonsText(row.selectedPersons) }}
+                        {{ getSelectedWidowsText(row.selectedWidows) }}
                       </button>
                       <ul
-                        class="dropdown-menu w-100 persons-dropdown rtl-dropdown"
-                        :aria-labelledby="`personsDropdown${index}`"
+                        class="dropdown-menu w-100 widows-dropdown rtl-dropdown"
+                        :aria-labelledby="`widowsDropdown${index}`"
                       >
                         <li class="dropdown-item-search">
                           <input
                             type="text"
                             class="form-control search-input"
-                            placeholder="البحث في الأشخاص..."
-                            v-model="row.personSearchTerm"
+                            placeholder="البحث في الأرامل..."
+                            v-model="row.widowSearchTerm"
                             @click.stop
                           />
                         </li>
                         <li class="dropdown-divider"></li>
                         <li
-                          v-for="person in getFilteredPersons(
-                            row.personSearchTerm
+                          v-for="widow in getFilteredWidows(
+                            row.widowSearchTerm,
                           )"
-                          :key="person.id"
+                          :key="widow.id"
                         >
                           <div
                             class="form-check dropdown-item-check rtl-check clickable-item"
-                            @click.stop="togglePersonSelection(row, person.id)"
+                            @click.stop="toggleWidowSelection(row, widow.id)"
                           >
                             <input
                               class="form-check-input"
                               type="checkbox"
-                              :id="`person-${index}-${person.id}`"
-                              :value="person.id"
-                              v-model="row.selectedPersons"
+                              :id="`widow-${index}-${widow.id}`"
+                              :value="widow.id"
+                              v-model="row.selectedWidows"
                               @click.stop
                             />
                             <label
                               class="form-check-label rtl-label"
-                              :for="`person-${index}-${person.id}`"
+                              :for="`widow-${index}-${widow.id}`"
                             >
-                              {{ person.firstName }} {{ person.lastName }}
+                              {{ widow.firstName }} {{ widow.lastName }}
                             </label>
                           </div>
                         </li>
                         <li
                           v-if="
-                            getFilteredPersons(row.personSearchTerm).length ===
-                            0
+                            getFilteredWidows(row.widowSearchTerm).length === 0
                           "
                         >
                           <span class="dropdown-item text-muted text-end">
                             {{
-                              row.personSearchTerm
+                              row.widowSearchTerm
                                 ? "لا توجد نتائج"
-                                : "لا يوجد أشخاص"
+                                : "لا يوجد أرامل"
                             }}
                           </span>
                         </li>
@@ -177,80 +241,75 @@
                     </div>
                   </td>
 
-                  <!-- Assistance Type Column -->
+                  <!-- Orphans Column -->
                   <td>
                     <div class="dropdown">
                       <button
                         class="btn btn-outline-secondary dropdown-toggle w-100 text-end"
                         type="button"
-                        :id="`assistanceTypeDropdown${index}`"
+                        :id="`orphansDropdown${index}`"
                         data-bs-toggle="dropdown"
                         aria-expanded="false"
                         data-bs-auto-close="outside"
                       >
-                        {{
-                          getSelectedAssistanceTypeText(row.assistanceTypeId)
-                        }}
+                        {{ getSelectedOrphansText(row.selectedOrphans) }}
                       </button>
                       <ul
-                        class="dropdown-menu w-100 assistance-type-dropdown rtl-dropdown"
-                        :aria-labelledby="`assistanceTypeDropdown${index}`"
+                        class="dropdown-menu w-100 orphans-dropdown rtl-dropdown"
+                        :aria-labelledby="`orphansDropdown${index}`"
                       >
                         <li class="dropdown-item-search">
                           <input
                             type="text"
                             class="form-control search-input"
-                            placeholder="البحث في أنواع المساعدات..."
-                            v-model="row.assistanceTypeSearchTerm"
+                            placeholder="البحث في الأيتام..."
+                            v-model="row.orphanSearchTerm"
                             @click.stop
                           />
                         </li>
                         <li class="dropdown-divider"></li>
                         <li
-                          v-for="type in getFilteredAssistanceTypes(
-                            row.assistanceTypeSearchTerm
+                          v-for="orphan in getFilteredOrphans(
+                            row.orphanSearchTerm,
                           )"
-                          :key="type.assistanceTypeId"
+                          :key="orphan.id"
                         >
                           <div
-                            class="dropdown-item rtl-check clickable-item"
-                            @click.stop="
-                              selectAssistanceType(row, type.assistanceTypeId)
-                            "
+                            class="form-check dropdown-item-check rtl-check clickable-item"
+                            @click.stop="toggleOrphanSelection(row, orphan.id)"
                           >
-                            <span class="rtl-label">{{
-                              type.assistanceTypeName
-                            }}</span>
+                            <input
+                              class="form-check-input"
+                              type="checkbox"
+                              :id="`orphan-${index}-${orphan.id}`"
+                              :value="orphan.id"
+                              v-model="row.selectedOrphans"
+                              @click.stop
+                            />
+                            <label
+                              class="form-check-label rtl-label"
+                              :for="`orphan-${index}-${orphan.id}`"
+                            >
+                              {{ orphan.firstName }} {{ orphan.lastName }}
+                            </label>
                           </div>
                         </li>
                         <li
                           v-if="
-                            getFilteredAssistanceTypes(
-                              row.assistanceTypeSearchTerm
-                            ).length === 0
+                            getFilteredOrphans(row.orphanSearchTerm).length ===
+                            0
                           "
                         >
                           <span class="dropdown-item text-muted text-end">
                             {{
-                              row.assistanceTypeSearchTerm
+                              row.orphanSearchTerm
                                 ? "لا توجد نتائج"
-                                : "لا توجد أنواع مساعدات"
+                                : "لا يوجد أيتام"
                             }}
                           </span>
                         </li>
                       </ul>
                     </div>
-                  </td>
-
-                  <!-- Number Column -->
-                  <td>
-                    <input
-                      v-model.number="row.numberOfAssistance"
-                      type="number"
-                      class="form-control text-center"
-                      min="1"
-                      required
-                    />
                   </td>
 
                   <!-- Received Column -->
@@ -282,14 +341,18 @@
                     ></textarea>
                   </td>
 
-                  <!-- Actions Column -->
+                  <!-- Delete Column -->
                   <td class="text-center">
                     <button
-                      v-if="assistanceRows.length > 1"
-                      @click="removeRow(index)"
+                      @click="deleteRow(index)"
                       type="button"
                       class="btn btn-danger btn-sm"
-                      title="حذف الصف"
+                      :disabled="assistanceRows.length === 1"
+                      :title="
+                        assistanceRows.length === 1
+                          ? 'لا يمكن حذف الصف الوحيد'
+                          : 'حذف الصف'
+                      "
                     >
                       <i class="bi bi-trash"></i>
                     </button>
@@ -321,8 +384,7 @@
             >
               <small>
                 <strong>الصف {{ index + 1 }}:</strong>
-                {{ summary.recipients }} مستفيد × {{ summary.count }}
-                {{ summary.typeName }} = {{ summary.total }} مساعدة
+                {{ summary.recipients }} مستفيد - {{ summary.typeName }}
               </small>
             </div>
             <hr class="my-2" />
@@ -371,14 +433,15 @@ const isSubmitting = ref(false);
 const assistanceRows = ref([
   {
     selectedFamilies: [],
-    selectedPersons: [],
+    selectedWidows: [],
+    selectedOrphans: [],
     assistanceTypeId: "",
-    numberOfAssistance: 1,
     note: "",
     familySearchTerm: "",
-    personSearchTerm: "",
+    widowSearchTerm: "",
+    orphanSearchTerm: "",
     assistanceTypeSearchTerm: "",
-    received: false,
+    received: true,
   },
 ]);
 
@@ -401,7 +464,7 @@ const loadInitialData = async () => {
       `${API_BASE_URL}/AssistanceType`,
       {
         headers: { Authorization: `Bearer ${AUTH_TOKEN}` },
-      }
+      },
     );
     assistanceTypes.value = assistanceTypesResponse.data;
 
@@ -421,59 +484,60 @@ const loadInitialData = async () => {
 const addRow = () => {
   assistanceRows.value.push({
     selectedFamilies: [],
-    selectedPersons: [],
+    selectedWidows: [],
+    selectedOrphans: [],
     assistanceTypeId: "",
-    numberOfAssistance: 1,
     note: "",
     familySearchTerm: "",
-    personSearchTerm: "",
+    widowSearchTerm: "",
+    orphanSearchTerm: "",
     assistanceTypeSearchTerm: "",
-    received: false,
+    received: true,
   });
   alertify.success("تم إضافة صف جديد");
 };
 
-const removeRow = (index) => {
-  if (assistanceRows.value.length > 1) {
-    alertify.confirm(
-      "تأكيد الحذف",
-      "هل أنت متأكد من حذف هذا الصف؟",
-      function () {
-        // User clicked OK
-        assistanceRows.value.splice(index, 1);
-        alertify.success("تم حذف الصف بنجاح");
-      },
-      function () {
-        // User clicked Cancel
-        alertify.message("تم إلغاء عملية الحذف");
-      }
-    );
-  } else {
-    alertify.warning("لا يمكن حذف الصف الأخير");
+const deleteRow = (index) => {
+  if (assistanceRows.value.length === 1) {
+    alertify.warning("لا يمكن حذف الصف الوحيد");
+    return;
   }
+  assistanceRows.value.splice(index, 1);
+  alertify.success("تم حذف الصف بنجاح");
 };
 
 // Search filter functions
 const getFilteredFamilies = (searchTerm) => {
   if (!searchTerm) return families.value;
   return families.value.filter((family) =>
-    family.name.toLowerCase().includes(searchTerm.toLowerCase())
+    family.name.toLowerCase().includes(searchTerm.toLowerCase()),
   );
 };
 
-const getFilteredPersons = (searchTerm) => {
-  if (!searchTerm) return allPersons.value;
-  return allPersons.value.filter((person) =>
-    `${person.firstName} ${person.lastName}`
+const getFilteredWidows = (searchTerm) => {
+  const widows = allPersons.value.filter((person) => person.isWidow === true);
+  if (!searchTerm) return widows;
+  return widows.filter((widow) =>
+    `${widow.firstName} ${widow.lastName}`
       .toLowerCase()
-      .includes(searchTerm.toLowerCase())
+      .includes(searchTerm.toLowerCase()),
+  );
+};
+
+const getFilteredOrphans = (searchTerm) => {
+  const orphans = allPersons.value.filter((person) => person.isOrphan === true);
+  if (!searchTerm) return orphans;
+  return orphans.filter((orphan) =>
+    `${orphan.firstName} ${orphan.lastName}`
+      .toLowerCase()
+      .includes(searchTerm.toLowerCase()),
   );
 };
 
 const getFilteredAssistanceTypes = (searchTerm) => {
   if (!searchTerm) return assistanceTypes.value;
   return assistanceTypes.value.filter((type) =>
-    type.assistanceTypeName.toLowerCase().includes(searchTerm.toLowerCase())
+    type.assistanceTypeName.toLowerCase().includes(searchTerm.toLowerCase()),
   );
 };
 
@@ -487,13 +551,23 @@ const toggleFamilySelection = (row, familyId) => {
   }
 };
 
-// Toggle person selection
-const togglePersonSelection = (row, personId) => {
-  const index = row.selectedPersons.indexOf(personId);
+// Toggle widow selection
+const toggleWidowSelection = (row, widowId) => {
+  const index = row.selectedWidows.indexOf(widowId);
   if (index > -1) {
-    row.selectedPersons.splice(index, 1);
+    row.selectedWidows.splice(index, 1);
   } else {
-    row.selectedPersons.push(personId);
+    row.selectedWidows.push(widowId);
+  }
+};
+
+// Toggle orphan selection
+const toggleOrphanSelection = (row, orphanId) => {
+  const index = row.selectedOrphans.indexOf(orphanId);
+  if (index > -1) {
+    row.selectedOrphans.splice(index, 1);
+  } else {
+    row.selectedOrphans.push(orphanId);
   }
 };
 
@@ -502,7 +576,7 @@ const selectAssistanceType = (row, typeId) => {
   row.assistanceTypeId = typeId;
   // Close dropdown after selection
   const dropdown = document.querySelector(
-    `#assistanceTypeDropdown${assistanceRows.value.indexOf(row)}`
+    `#assistanceTypeDropdown${assistanceRows.value.indexOf(row)}`,
   );
   if (dropdown) {
     const bsDropdown = bootstrap.Dropdown.getInstance(dropdown);
@@ -513,23 +587,32 @@ const selectAssistanceType = (row, typeId) => {
 };
 
 const getSelectedFamiliesText = (selectedFamilies) => {
-  if (selectedFamilies.length === 0) return "اختر العائلات";
+  if (selectedFamilies.length === 0) return "اختر الأسر";
   if (selectedFamilies.length === 1) {
     const family = families.value.find(
-      (f) => f.familyId === selectedFamilies[0]
+      (f) => f.familyId === selectedFamilies[0],
     );
-    return family ? family.name : "عائلة غير معروفة";
+    return family ? family.name : "أسرة غير معروفة";
   }
-  return `${selectedFamilies.length} عائلة مختارة`;
+  return `${selectedFamilies.length} أسرة مختارة`;
 };
 
-const getSelectedPersonsText = (selectedPersons) => {
-  if (selectedPersons.length === 0) return "اختر الأشخاص";
-  if (selectedPersons.length === 1) {
-    const person = allPersons.value.find((p) => p.id === selectedPersons[0]);
-    return person ? `${person.firstName} ${person.lastName}` : "شخص غير معروف";
+const getSelectedWidowsText = (selectedWidows) => {
+  if (selectedWidows.length === 0) return "اختر الأرامل";
+  if (selectedWidows.length === 1) {
+    const widow = allPersons.value.find((p) => p.id === selectedWidows[0]);
+    return widow ? `${widow.firstName} ${widow.lastName}` : "أرملة غير معروفة";
   }
-  return `${selectedPersons.length} شخص مختار`;
+  return `${selectedWidows.length} أرملة مختارة`;
+};
+
+const getSelectedOrphansText = (selectedOrphans) => {
+  if (selectedOrphans.length === 0) return "اختر الأيتام";
+  if (selectedOrphans.length === 1) {
+    const orphan = allPersons.value.find((p) => p.id === selectedOrphans[0]);
+    return orphan ? `${orphan.firstName} ${orphan.lastName}` : "يتيم غير معروف";
+  }
+  return `${selectedOrphans.length} يتيم مختار`;
 };
 
 const getSelectedAssistanceTypeText = (typeId) => {
@@ -546,13 +629,14 @@ const getAssistanceTypeName = (typeId) => {
 const getSubmissionSummary = () => {
   return assistanceRows.value.map((row) => {
     const recipientCount =
-      row.selectedFamilies.length + row.selectedPersons.length;
+      row.selectedFamilies.length +
+      row.selectedWidows.length +
+      row.selectedOrphans.length;
     const typeName = getAssistanceTypeName(row.assistanceTypeId);
     return {
       recipients: recipientCount,
-      count: row.numberOfAssistance,
       typeName: typeName,
-      total: recipientCount * row.numberOfAssistance,
+      total: recipientCount,
     };
   });
 };
@@ -560,7 +644,7 @@ const getSubmissionSummary = () => {
 const getTotalAssistances = () => {
   return getSubmissionSummary().reduce(
     (total, summary) => total + summary.total,
-    0
+    0,
   );
 };
 
@@ -574,20 +658,19 @@ const submitForm = async () => {
   for (let i = 0; i < assistanceRows.value.length; i++) {
     const row = assistanceRows.value[i];
 
-    if (row.selectedFamilies.length === 0 && row.selectedPersons.length === 0) {
+    if (
+      row.selectedFamilies.length === 0 &&
+      row.selectedWidows.length === 0 &&
+      row.selectedOrphans.length === 0
+    ) {
       alertify.warning(
-        `يرجى اختيار عائلة أو شخص واحد على الأقل في الصف ${i + 1}`
+        `يرجى اختيار أسرة أو أرملة أو يتيم واحد على الأقل في الصف ${i + 1}`,
       );
       return;
     }
 
     if (!row.assistanceTypeId) {
       alertify.warning(`يرجى اختيار نوع المساعدة في الصف ${i + 1}`);
-      return;
-    }
-
-    if (!row.numberOfAssistance || row.numberOfAssistance < 1) {
-      alertify.warning(`يرجى إدخال عدد صحيح للمساعدات في الصف ${i + 1}`);
       return;
     }
   }
@@ -610,7 +693,7 @@ const submitForm = async () => {
           // Add assistances for selected families
           for (const familyId of row.selectedFamilies) {
             assistancesToSubmit.push({
-              numberOfAssistance: Number(row.numberOfAssistance),
+              numberOfAssistance: 1,
               familyId: Number(familyId),
               personId: null,
               assistanceTypeId: Number(row.assistanceTypeId),
@@ -619,12 +702,24 @@ const submitForm = async () => {
             });
           }
 
-          // Add assistances for selected persons
-          for (const personId of row.selectedPersons) {
+          // Add assistances for selected widows
+          for (const widowId of row.selectedWidows) {
             assistancesToSubmit.push({
-              numberOfAssistance: Number(row.numberOfAssistance),
+              numberOfAssistance: 1,
               familyId: null,
-              personId: personId,
+              personId: widowId,
+              assistanceTypeId: Number(row.assistanceTypeId),
+              note: row.note || "",
+              received: row.received,
+            });
+          }
+
+          // Add assistances for selected orphans
+          for (const orphanId of row.selectedOrphans) {
+            assistancesToSubmit.push({
+              numberOfAssistance: 1,
+              familyId: null,
+              personId: orphanId,
               assistanceTypeId: Number(row.assistanceTypeId),
               note: row.note || "",
               received: row.received,
@@ -641,13 +736,13 @@ const submitForm = async () => {
               Authorization: `Bearer ${AUTH_TOKEN}`,
               "Content-Type": "application/json",
             },
-          })
+          }),
         );
 
         await Promise.all(promises);
 
         alertify.success(
-          `تم إضافة ${assistancesToSubmit.length} مساعدة بنجاح!`
+          `تم إضافة ${assistancesToSubmit.length} مساعدة بنجاح!`,
         );
 
         // Navigate after a short delay to show success message
@@ -670,7 +765,7 @@ const submitForm = async () => {
     function () {
       // User clicked Cancel
       alertify.message("تم إلغاء عملية الإرسال");
-    }
+    },
   );
 };
 </script>

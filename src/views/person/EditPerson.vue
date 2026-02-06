@@ -325,10 +325,11 @@
                     <div class="col-md-4" v-if="selectedFamilyInfo">
                       <div class="family-info p-3 bg-white rounded border">
                         <h6 class="text-success mb-2">
-                          معلومات العائلة المختارة
+                          معلومات الأسرة المختارة
                         </h6>
                         <p class="mb-1">
-                          <strong>الاسم:</strong> {{ selectedFamilyInfo.name }}
+                          <strong>رب الأسرة:</strong>
+                          {{ selectedFamilyInfo.name }}
                         </p>
                         <p class="mb-0">
                           <strong>يملكون منزل:</strong>
@@ -573,7 +574,7 @@ const fetchPersonData = async () => {
     console.error("Error fetching person details:", error);
     if (error.response && error.response.status === 404) {
       alertify.error("الشخص غير موجود");
-      router.push("/individual");
+      router.back();
     } else if (error.response) {
       const errorMessage =
         error.response.data.message || error.response.statusText;
@@ -634,7 +635,7 @@ const fetchCurrentFamilyInfo = async () => {
       `${FamilyAPI.value}/${formData.familyId}`,
       {
         headers: { Authorization: `Bearer ${AUTH_TOKEN}` },
-      }
+      },
     );
     currentFamilyInfo.value = response.data;
 
@@ -651,7 +652,7 @@ const fetchCurrentFamilyInfo = async () => {
 const onFamilySelect = () => {
   if (formData.selectedFamilyId) {
     selectedFamilyInfo.value = existingFamilies.value.find(
-      (family) => family.familyId == formData.selectedFamilyId
+      (family) => family.familyId == formData.selectedFamilyId,
     );
 
     if (selectedFamilyInfo.value) {
@@ -684,7 +685,7 @@ watch(
       formData.isHouseOwned = false;
       selectedFamilyInfo.value = null;
     }
-  }
+  },
 );
 
 watch(
@@ -697,7 +698,7 @@ watch(
     ) {
       formData.newFamilyName = newVal;
     }
-  }
+  },
 );
 
 watch(
@@ -716,7 +717,7 @@ watch(
     } else {
       formData.newFamilyName = formData.lastName || "";
     }
-  }
+  },
 );
 
 watch(
@@ -732,7 +733,7 @@ watch(
       formData.newFamilyName = "";
       formData.familyHouseOwned = false;
     }
-  }
+  },
 );
 
 // Watch for changes in new family house ownership
@@ -746,7 +747,7 @@ watch(
     ) {
       formData.isHouseOwned = newVal;
     }
-  }
+  },
 );
 
 const submitForm = async () => {
@@ -810,7 +811,7 @@ const submitForm = async () => {
                     Authorization: `Bearer ${AUTH_TOKEN}`,
                     "Content-Type": "application/json",
                   },
-                }
+                },
               );
               guardianId = originalGuardianId.value;
               alertify.success("تم تحديث بيانات الوصي بنجاح");
@@ -824,7 +825,7 @@ const submitForm = async () => {
                     Authorization: `Bearer ${AUTH_TOKEN}`,
                     "Content-Type": "application/json",
                   },
-                }
+                },
               );
               guardianId =
                 guardianResponse.data.guardianId ||
@@ -863,7 +864,7 @@ const submitForm = async () => {
                   Authorization: `Bearer ${AUTH_TOKEN}`,
                   "Content-Type": "application/json",
                 },
-              }
+              },
             );
 
             // Get latest family ID
@@ -877,7 +878,7 @@ const submitForm = async () => {
 
             if (allFamilies && allFamilies.length > 0) {
               const sortedFamilies = allFamilies.sort(
-                (a, b) => b.familyId - a.familyId
+                (a, b) => b.familyId - a.familyId,
               );
               familyId = sortedFamilies[0].familyId;
             } else {
@@ -885,7 +886,7 @@ const submitForm = async () => {
             }
 
             alertify.success(
-              `تم إنشاء العائلة الجديدة: ${formData.newFamilyName}`
+              `تم إنشاء العائلة الجديدة: ${formData.newFamilyName}`,
             );
             console.log("New family created with ID:", familyId);
           } else {
@@ -911,7 +912,7 @@ const submitForm = async () => {
                     Authorization: `Bearer ${AUTH_TOKEN}`,
                     "Content-Type": "application/json",
                   },
-                }
+                },
               );
 
               formData.numberOfFamilyMembers =
@@ -960,7 +961,7 @@ const submitForm = async () => {
               Authorization: `Bearer ${AUTH_TOKEN}`,
               "Content-Type": "application/json",
             },
-          }
+          },
         );
 
         console.log("Person updated successfully:", response.data);
@@ -968,7 +969,7 @@ const submitForm = async () => {
 
         // Navigate after a short delay to show success message
         setTimeout(() => {
-          router.push("/individual");
+          router.back();
         }, 1500);
       } catch (error) {
         console.error("Error updating person:", error);
@@ -978,7 +979,7 @@ const submitForm = async () => {
           alertify.error(`حدث خطأ أثناء تحديث بيانات الشخص: ${errorMessage}`);
         } else if (error.request) {
           alertify.error(
-            "لا يمكن الاتصال بالخادم. يرجى التحقق من اتصال الإنترنت"
+            "لا يمكن الاتصال بالخادم. يرجى التحقق من اتصال الإنترنت",
           );
         } else {
           alertify.error("حدث خطأ أثناء تحديث بيانات الشخص");
@@ -988,7 +989,7 @@ const submitForm = async () => {
     function () {
       // User clicked Cancel
       alertify.message("تم إلغاء عملية التحديث");
-    }
+    },
   );
 };
 </script>

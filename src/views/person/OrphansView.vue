@@ -5,7 +5,7 @@
     ref="printArea"
   >
     <div class="d-flex justify-content-between align-items-center mb-4">
-      <h2 class="mb-0 fw-bold">جدول الأفراد</h2>
+      <h2 class="mb-0 fw-bold">جدول الأيتام</h2>
       <button class="btn btn-success no-print" @click="printContent">
         <i class="bi bi-printer me-1"></i>
         طباعة
@@ -31,7 +31,16 @@
       </div>
     </div>
 
+    <!-- Loading State -->
+    <div v-if="loading" class="text-center py-4">
+      <div class="spinner-border text-success" role="status">
+        <span class="visually-hidden">جاري التحميل...</span>
+      </div>
+      <p class="mt-2 text-muted">جاري تحميل بيانات الأيتام...</p>
+    </div>
+
     <div
+      v-else
       class="table-responsive rounded-2 shadow-sm border border-light-subtle"
     >
       <table class="table table-striped table-hover">
@@ -49,7 +58,7 @@
           </tr>
         </thead>
         <tbody>
-          <tr v-for="person in filteredPersons" :key="person.id">
+          <tr v-for="person in filteredOrphans" :key="person.id">
             <td>{{ person.id }}</td>
             <td>{{ person.gender }}</td>
             <td>{{ person.firstName }}</td>
@@ -90,16 +99,16 @@
     </div>
 
     <div
-      v-if="!filteredPersons.length"
+      v-if="!loading && !filteredOrphans.length"
       class="alert alert-warning text-center mt-3"
     >
-      لا يوجد أشخاص مطابقون للبحث المحدد
+      لا يوجد أيتام مطابقون للبحث المحدد
     </div>
 
     <!-- Hidden content for printing -->
     <div id="printableContent" style="display: none">
       <div class="print-header text-center mb-4">
-        <h2 class="fw-bold">تقرير الأفراد</h2>
+        <h2 class="fw-bold">تقرير الأيتام</h2>
         <p class="text-muted">تاريخ الطباعة: {{ getCurrentDate() }}</p>
       </div>
 
@@ -114,7 +123,7 @@
           </tr>
         </thead>
         <tbody>
-          <tr v-for="person in filteredPersons" :key="person.id">
+          <tr v-for="person in filteredOrphans" :key="person.id">
             <td>{{ person.id }}</td>
             <td>
               {{ person.firstName }} {{ person.secondName }}
@@ -129,12 +138,13 @@
 
       <div class="print-footer mt-4">
         <p class="text-center text-muted">
-          إجمالي عدد الأفراد: {{ filteredPersons.length }}
+          إجمالي عدد الأيتام: {{ filteredOrphans.length }}
         </p>
       </div>
     </div>
   </div>
 </template>
+
 <script setup>
 import { ref, computed, onMounted } from "vue";
 import axios from "axios";
@@ -149,10 +159,158 @@ const API_BASE_URL = process.env.VUE_APP_API_BASE_URL + "/api";
 const router = useRouter();
 const AUTH_TOKEN = localStorage.getItem("token");
 
-const persons = ref([]);
+const orphans = ref([]);
 const searchQuery = ref("");
+const loading = ref(false);
 const isDeleting = ref(false);
 const printArea = ref(null);
+
+// Fetch orphans data
+const fetchOrphans = async () => {
+  loading.value = true;
+  try {
+    alertify.message("جاري تحميل بيانات الأيتام...");
+
+    const response = await axios.get(`${API_BASE_URL}/Person`, {
+      headers: {
+        Authorization: `Bearer ${AUTH_TOKEN}`,
+      },
+    });
+
+    // Filter only orphans
+    orphans.value = response.data.filter((person) => person.isOrphan === true);
+
+    alertify.success(`تم تحميل ${orphans.value.length} يتيم/يتيمة بنجاح`);
+  } catch (error) {
+    console.error("Error fetching orphans:", error);
+
+    if (error.response) {
+      const errorMessage =
+        error.response.data.message || error.response.statusText;
+      alertify.error(`حدث خطأ أثناء جلب بيانات الأيتام: ${errorMessage}`);
+    } else if (error.request) {
+      alertify.error("لا يمكن الاتصال بالخادم. يرجى التحقق من اتصال الإنترنت");
+    } else {
+      alertify.error("حدث خطأ أثناء جلب بيانات الأيتام");
+    }
+  } finally {
+    loading.value = false;
+  }
+};
+
+// Enhanced search functionality
+const filteredOrphans = computed(() => {
+  if (!searchQuery.value) {
+    return orphans.value;
+  }
+
+  const query = searchQuery.value.toLowerCase().trim();
+
+  return orphans.value.filter((person) => {
+    const fullName =
+      `${person.firstName} ${person.secondName} ${person.thirdName} ${person.lastName}`.toLowerCase();
+
+    const matchesName = fullName.includes(query);
+    const matchesId = person.id.toString().includes(query);
+    const matchesEducation = person.educationalLevel
+      ?.toLowerCase()
+      .includes(query);
+    const matchesPhone = person.phoneNumber?.includes(query);
+    const matchesGender = person.gender?.toLowerCase().includes(query);
+
+    return (
+      matchesName ||
+      matchesId ||
+      matchesEducation ||
+      matchesPhone ||
+      matchesGender
+    );
+  });
+});
+
+// Navigation functions
+const viewDetails = (id) => {
+  router.push(`/view-person/${id}`);
+};
+
+const editPerson = (id) => {
+  router.push(`/edit-person/${id}`);
+};
+
+const deletePerson = async (id) => {
+  if (!id || id === "") {
+    alertify.error("معرف الشخص غير صحيح");
+    return;
+  }
+
+  if (!AUTH_TOKEN) {
+    alertify.error("الرجاء تسجيل الدخول أولاً");
+    return;
+  }
+
+  if (isDeleting.value) {
+    alertify.warning("يتم حذف شخص آخر، يرجى الانتظار");
+    return;
+  }
+
+  const person = orphans.value.find((p) => p.id === id);
+  const personName = person
+    ? `${person.firstName} ${person.lastName}`
+    : `الشخص رقم ${id}`;
+
+  alertify.confirm(
+    "تأكيد الحذف",
+    `هل أنت متأكد من حذف ${personName}؟`,
+    async function () {
+      isDeleting.value = true;
+
+      try {
+        alertify.message("جاري حذف الشخص...");
+
+        await axios.delete(`${API_BASE_URL}/Person/${id}`, {
+          headers: {
+            Authorization: `Bearer ${AUTH_TOKEN}`,
+          },
+        });
+
+        const index = orphans.value.findIndex((p) => p.id === id);
+        if (index > -1) {
+          orphans.value.splice(index, 1);
+        }
+
+        alertify.success(`تم حذف ${personName} بنجاح`);
+      } catch (error) {
+        console.error("Error deleting person:", error);
+
+        if (error.response) {
+          if (error.response.status === 404) {
+            alertify.warning("الشخص غير موجود أو تم حذفه مسبقاً");
+            await fetchOrphans();
+          } else if (error.response.status === 403) {
+            alertify.error("ليس لديك صلاحية لحذف هذا الشخص");
+          } else if (error.response.status === 409) {
+            alertify.error("لا يمكن حذف هذا الشخص لأنه مرتبط ببيانات أخرى");
+          } else {
+            const errorMessage =
+              error.response.data.message || error.response.statusText;
+            alertify.error(`حدث خطأ أثناء حذف الشخص: ${errorMessage}`);
+          }
+        } else if (error.request) {
+          alertify.error(
+            "لا يمكن الاتصال بالخادم. يرجى التحقق من اتصال الإنترنت",
+          );
+        } else {
+          alertify.error("حدث خطأ أثناء حذف الشخص");
+        }
+      } finally {
+        isDeleting.value = false;
+      }
+    },
+    function () {
+      alertify.message("تم إلغاء عملية الحذف");
+    },
+  );
+};
 
 const getCurrentDate = () => {
   return new Date().toLocaleDateString("ar-EG", {
@@ -173,7 +331,7 @@ const printContent = () => {
     <!DOCTYPE html>
     <html dir="rtl">
     <head>
-      <title>طباعة جدول الأفراد</title>
+      <title>طباعة جدول الأيتام</title>
       <meta charset="utf-8">
       <style>
         body { 
@@ -240,160 +398,7 @@ const printContent = () => {
   }, 250);
 };
 
-// Fetch persons data
-const fetchPersons = async () => {
-  try {
-    alertify.message("جاري تحميل بيانات الأشخاص...");
-
-    const response = await axios.get(`${API_BASE_URL}/Person`, {
-      headers: {
-        Authorization: `Bearer ${AUTH_TOKEN}`,
-      },
-    });
-    persons.value = response.data;
-
-    alertify.success(`تم تحميل ${persons.value.length} شخص بنجاح`);
-  } catch (error) {
-    console.error("Error fetching persons:", error);
-
-    if (error.response) {
-      const errorMessage =
-        error.response.data.message || error.response.statusText;
-      alertify.error(`حدث خطأ أثناء جلب بيانات الأشخاص: ${errorMessage}`);
-    } else if (error.request) {
-      alertify.error("لا يمكن الاتصال بالخادم. يرجى التحقق من اتصال الإنترنت");
-    } else {
-      alertify.error("حدث خطأ أثناء جلب بيانات الأشخاص");
-    }
-  }
-};
-
-// Enhanced search functionality - searches across multiple fields
-const filteredPersons = computed(() => {
-  if (!searchQuery.value) {
-    return persons.value;
-  }
-
-  const query = searchQuery.value.toLowerCase().trim();
-
-  return persons.value.filter((person) => {
-    // Search in all name fields
-    const fullName =
-      `${person.firstName} ${person.secondName} ${person.thirdName} ${person.lastName}`.toLowerCase();
-
-    // Search criteria
-    const matchesName = fullName.includes(query);
-    const matchesId = person.id.toString().includes(query);
-    const matchesEducation = person.educationalLevel
-      ?.toLowerCase()
-      .includes(query);
-    const matchesPhone = person.phoneNumber?.includes(query);
-    const matchesGender = person.gender?.toLowerCase().includes(query);
-
-    return (
-      matchesName ||
-      matchesId ||
-      matchesEducation ||
-      matchesPhone ||
-      matchesGender
-    );
-  });
-});
-
-// Navigation functions
-const viewDetails = (id) => {
-  router.push(`/view-person/${id}`);
-};
-
-const editPerson = (id) => {
-  router.push(`/edit-person/${id}`);
-};
-
-const deletePerson = async (id) => {
-  // Input validation
-  if (!id || id === "") {
-    alertify.error("معرف الشخص غير صحيح");
-    return;
-  }
-
-  // Authentication check
-  if (!AUTH_TOKEN) {
-    alertify.error("الرجاء تسجيل الدخول أولاً");
-    return;
-  }
-
-  // Check if already deleting
-  if (isDeleting.value) {
-    alertify.warning("يتم حذف شخص آخر، يرجى الانتظار");
-    return;
-  }
-
-  // Get person details for better confirmation message
-  const person = persons.value.find((p) => p.id === id);
-  const personName = person
-    ? `${person.firstName} ${person.lastName}`
-    : `الشخص رقم ${id}`;
-
-  alertify.confirm(
-    "تأكيد الحذف",
-    `هل أنت متأكد من حذف ${personName}؟`,
-    async function () {
-      // User clicked OK
-      isDeleting.value = true;
-
-      try {
-        alertify.message("جاري حذف الشخص...");
-
-        await axios.delete(`${API_BASE_URL}/Person/${id}`, {
-          headers: {
-            Authorization: `Bearer ${AUTH_TOKEN}`,
-          },
-        });
-
-        // Remove from local array instead of refetching (optimistic update)
-        const index = persons.value.findIndex((p) => p.id === id);
-        if (index > -1) {
-          persons.value.splice(index, 1);
-        }
-
-        alertify.success(`تم حذف ${personName} بنجاح`);
-      } catch (error) {
-        console.error("Error deleting person:", error);
-
-        if (error.response) {
-          if (error.response.status === 404) {
-            alertify.warning("الشخص غير موجود أو تم حذفه مسبقاً");
-            // Refresh data to sync with server
-            await fetchPersons();
-          } else if (error.response.status === 403) {
-            alertify.error("ليس لديك صلاحية لحذف هذا الشخص");
-          } else if (error.response.status === 409) {
-            alertify.error("لا يمكن حذف هذا الشخص لأنه مرتبط ببيانات أخرى");
-          } else {
-            const errorMessage =
-              error.response.data.message || error.response.statusText;
-            alertify.error(`حدث خطأ أثناء حذف الشخص: ${errorMessage}`);
-          }
-        } else if (error.request) {
-          alertify.error(
-            "لا يمكن الاتصال بالخادم. يرجى التحقق من اتصال الإنترنت",
-          );
-        } else {
-          alertify.error("حدث خطأ أثناء حذف الشخص");
-        }
-      } finally {
-        isDeleting.value = false;
-      }
-    },
-    function () {
-      // User clicked Cancel
-      alertify.message("تم إلغاء عملية الحذف");
-    },
-  );
-};
-
-// Initialize data on component mount
-onMounted(fetchPersons);
+onMounted(fetchOrphans);
 </script>
 
 <style scoped>
@@ -430,7 +435,6 @@ onMounted(fetchPersons);
   font-size: 0.9rem;
 }
 
-/* تأثيرات التوسع للأزرار الرئيسية */
 .expandable-btn {
   position: relative;
   overflow: hidden;
@@ -472,7 +476,6 @@ onMounted(fetchPersons);
   margin-right: 0.5rem;
 }
 
-/* تنسيق خاص لأزرار الإجراءات */
 .btn-primary.expandable-action-btn {
   background-color: #42b983;
   border-color: #42b983;
@@ -499,12 +502,15 @@ onMounted(fetchPersons);
   transform: translateY(0) !important;
 }
 
-/* Placeholder RTL fix */
 .form-control::placeholder {
   text-align: right;
 }
 
-/* تحسينات للشاشات الصغيرة */
+.spinner-border {
+  width: 3rem;
+  height: 3rem;
+}
+
 @media (max-width: 768px) {
   .expandable-btn:hover .btn-text {
     max-width: 120px;

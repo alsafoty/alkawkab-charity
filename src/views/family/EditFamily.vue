@@ -5,7 +5,7 @@
         <div class="card shadow-lg rounded-4 overflow-hidden border-0">
           <!-- Green Header -->
           <div class="card-header bg-success text-white text-center py-3">
-            <h2 class="mb-0">تعديل بيانات العائلة</h2>
+            <h2 class="mb-0">تعديل بيانات الأسرة</h2>
           </div>
 
           <div class="card-body p-4">
@@ -14,36 +14,34 @@
               <div class="col-12 mb-4">
                 <div class="section-card p-4 rounded-3 bg-light">
                   <h4 class="section-title mb-4 text-success">
-                    معلومات العائلة الأساسية
+                    معلومات الأسرة الأساسية
                   </h4>
                   <div class="row">
                     <div class="col-md-6">
                       <div class="form-group mb-3">
-                        <label class="form-label fw-bold">اسم العائلة</label>
+                        <label class="form-label fw-bold">رب الأسرة</label>
                         <input
                           v-model="formData.name"
                           type="text"
                           class="form-control shadow-sm"
-                          placeholder="أدخل اسم العائلة"
+                          placeholder="أدخل اسم رب الأسرة"
                           required
                         />
                       </div>
                     </div>
                     <div class="col-md-6">
                       <div class="form-group mb-3">
-                        <label class="form-label fw-bold"
-                          >عدد أفراد العائلة</label
-                        >
+                        <label class="form-label fw-bold">عدد الأفراد</label>
                         <input
-                          :value="currentMembers.length"
+                          v-model.number="formData.numberOfFamilyMembers"
                           type="number"
                           class="form-control shadow-sm"
-                          readonly
-                          title="يتم حساب عدد الأفراد تلقائياً"
+                          placeholder="أدخل عدد الأفراد"
+                          min="1"
+                          required
                         />
                         <small class="text-muted">
-                          يتم حساب عدد الأعضاء تلقائياً عند إضافة أو إزالة أعضاء
-                          العائلة
+                          قم بإدخال عدد أفراد الأسرة يدوياً
                         </small>
                       </div>
                     </div>
@@ -75,11 +73,11 @@
               <div class="col-12 mb-4">
                 <div class="section-card p-4 rounded-3 bg-light">
                   <h4 class="section-title mb-4 text-success">
-                    إدارة أعضاء العائلة
+                    إدارة أعضاء الأسرة
                   </h4>
                   <!-- الأعضاء الحاليون -->
                   <div class="mb-3">
-                    <div class="fw-bold mb-2">أعضاء العائلة الحاليون:</div>
+                    <div class="fw-bold mb-2">أعضاء الأسرة الحاليون:</div>
                     <div v-if="currentMembers.length === 0" class="text-danger">
                       لا يوجد أعضاء.
                     </div>
@@ -107,7 +105,7 @@
 
                   <!-- إضافة أعضاء جدد -->
                   <div class="mt-4">
-                    <div class="fw-bold mb-2">إضافة أشخاص للعائلة:</div>
+                    <div class="fw-bold mb-2">إضافة أشخاص للأسرة:</div>
 
                     <!-- Search Bar -->
                     <div class="mb-3">
@@ -219,6 +217,7 @@ const AUTH_TOKEN = localStorage.getItem("token");
 
 const formData = ref({
   name: "",
+  numberOfFamilyMembers: 1,
   isHouseOwned: false,
 });
 
@@ -258,10 +257,11 @@ const fetchFamilyAndMembers = async () => {
       `${process.env.VUE_APP_API_BASE_URL}/api/Family/${route.params.id}`,
       {
         headers: { Authorization: `Bearer ${AUTH_TOKEN}` },
-      }
+      },
     );
     formData.value = {
       name: familyRes.data.name || "",
+      numberOfFamilyMembers: familyRes.data.numberOfFamilyMembers || 1,
       isHouseOwned: familyRes.data.isHouseOwned || false,
     };
 
@@ -270,22 +270,22 @@ const fetchFamilyAndMembers = async () => {
       `${process.env.VUE_APP_API_BASE_URL}/api/Person`,
       {
         headers: { Authorization: `Bearer ${AUTH_TOKEN}` },
-      }
+      },
     );
     allPersons.value = personsRes.data;
 
     // تصفية أعضاء العائلة الحاليين
     currentMembers.value = allPersons.value.filter(
-      (p) => p.familyId == route.params.id
+      (p) => p.familyId == route.params.id,
     );
 
     // تصفية الأشخاص غير المنتمين لأي عائلة
     personsWithoutFamily.value = allPersons.value.filter(
-      (p) => !p.familyId || p.familyId === 0 || p.familyId === null
+      (p) => !p.familyId || p.familyId === 0 || p.familyId === null,
     );
   } catch (error) {
     console.error("Error fetching data:", error);
-    alertify.error("حدث خطأ أثناء جلب بيانات العائلة أو الأعضاء");
+    alertify.error("حدث خطأ أثناء جلب بيانات الأسرة أو الأعضاء");
     router.push("/family");
   }
 };
@@ -318,11 +318,11 @@ const removeMember = async (person) => {
               Authorization: `Bearer ${AUTH_TOKEN}`,
               "Content-Type": "application/json",
             },
-          }
+          },
         );
 
         alertify.success(
-          `تم إزالة ${person.firstName} ${person.lastName} من العائلة بنجاح`
+          `تم إزالة ${person.firstName} ${person.lastName} من الأسرة بنجاح`,
         );
         // حدث القوائم
         await fetchFamilyAndMembers();
@@ -336,7 +336,7 @@ const removeMember = async (person) => {
     function () {
       // User clicked Cancel
       alertify.message("تم إلغاء عملية الإزالة");
-    }
+    },
   );
 };
 
@@ -352,16 +352,16 @@ const submitForm = async () => {
     await axios.put(
       `${process.env.VUE_APP_API_BASE_URL}/api/Family/${route.params.id}`,
       {
-        ...formData.value,
-        numberOfFamilyMembers:
-          currentMembers.value.length + selectedToAdd.value.length,
+        name: formData.value.name,
+        numberOfFamilyMembers: formData.value.numberOfFamilyMembers,
+        isHouseOwned: formData.value.isHouseOwned,
       },
       {
         headers: {
           Authorization: `Bearer ${AUTH_TOKEN}`,
           "Content-Type": "application/json",
         },
-      }
+      },
     );
 
     // إضافة الأعضاء الجدد
@@ -383,7 +383,7 @@ const submitForm = async () => {
               Authorization: `Bearer ${AUTH_TOKEN}`,
               "Content-Type": "application/json",
             },
-          }
+          },
         );
       }
     }

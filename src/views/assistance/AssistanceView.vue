@@ -42,13 +42,58 @@
         </button>
       </div>
 
-      <div class="flex-grow-1 mx-3">
+      <div class="flex-grow-1 mx-3 d-flex gap-2">
+        <!-- فلتر نوع المستفيد -->
+
         <input
           v-model="searchQuery"
           type="text"
           class="form-control custom-input"
           placeholder="ابحث في المساعدات..."
         />
+
+        <select
+          v-model="beneficiaryTypeFilter"
+          class="form-select custom-input"
+          @change="applyBeneficiaryFilter"
+          dir="rtl"
+          style="
+            max-width: 200px;
+            text-align: right;
+            padding-right: 2rem;
+            background-position: right 0.75rem center;
+            background-size: 12px 12px;
+          "
+        >
+          <option value="all">جميع المستفيدين</option>
+          <option value="family">أسر</option>
+          <option value="widow">أرامل</option>
+          <option value="orphan">أيتام</option>
+          <option value="other">أخرى</option>
+        </select>
+
+        <select
+          v-model="assistanceTypeFilter"
+          class="form-select custom-input"
+          @change="applyAssistanceTypeFilter"
+          dir="rtl"
+          style="
+            max-width: 200px;
+            text-align: right;
+            padding-right: 2rem;
+            background-position: right 0.75rem center;
+            background-size: 12px 12px;
+          "
+        >
+          <option value="all">جميع أنواع المساعدات</option>
+          <option
+            v-for="type in assistanceTypes"
+            :key="type.assistanceTypeId"
+            :value="type.assistanceTypeId"
+          >
+            {{ type.assistanceTypeName }}
+          </option>
+        </select>
       </div>
     </div>
 
@@ -100,10 +145,9 @@
       <table class="table table-striped table-hover">
         <thead class="table-header text-white">
           <tr>
-            <th>رقم المساعدة</th>
+            <th>نوع المستفيد</th>
             <th>المستفيد</th>
             <th>نوع المساعدة</th>
-            <th>عدد المساعدات</th>
             <th class="sortable-header" @click="toggleDateSort">
               <div class="header-content">
                 <span class="header-text">تاريخ المساعدة</span>
@@ -126,7 +170,7 @@
             v-for="assistance in sortedAndFilteredAssistances"
             :key="assistance.assistanceId"
           >
-            <th>{{ assistance.assistanceId }}</th>
+            <td>{{ getBeneficiaryType(assistance) }}</td>
             <td>
               {{
                 getPersonName(assistance.personId) ||
@@ -134,7 +178,6 @@
               }}
             </td>
             <td>{{ getAssistanceTypeName(assistance.assistanceTypeId) }}</td>
-            <td>{{ assistance.numberOfAssistance }}</td>
             <td>{{ formatDate(assistance.date) }}</td>
             <td>
               <i
@@ -185,6 +228,9 @@
     <div id="printableContent" style="display: none">
       <div class="print-header text-center mb-4">
         <h2 class="fw-bold">تقرير المساعدات</h2>
+        <h4 v-if="getPrintTitle()" class="text-success mt-2">
+          {{ getPrintTitle() }}
+        </h4>
         <p class="text-muted">تاريخ الطباعة: {{ getCurrentDate() }}</p>
         <div v-if="activeDateFilter" class="text-muted">
           <small
@@ -197,33 +243,35 @@
       <table class="table table-bordered print-table">
         <thead class="table-dark">
           <tr>
-            <th>رقم المساعدة</th>
-            <th>المستفيد</th>
+            <th>#</th>
+            <th>الاسم</th>
+            <th>الرقم الوطني</th>
+            <th>رقم الهاتف</th>
             <th>نوع المساعدة</th>
-            <th>عدد المساعدات</th>
             <th>تاريخ المساعدة</th>
-            <th>حالة الاستلام</th>
             <th>التوقيع</th>
           </tr>
         </thead>
         <tbody>
           <tr
-            v-for="assistance in sortedAndFilteredAssistances"
+            v-for="(assistance, index) in getSortedPrintAssistances()"
             :key="assistance.assistanceId"
           >
-            <td>{{ assistance.assistanceId }}</td>
+            <td>{{ index + 1 }}</td>
             <td>
               {{
                 getPersonName(assistance.personId) ||
                 " عائلة " + getFamilyName(assistance.familyId)
               }}
             </td>
-            <td>{{ getAssistanceTypeName(assistance.assistanceTypeId) }}</td>
-            <td>{{ assistance.numberOfAssistance }}</td>
-            <td>{{ formatDate(assistance.date) }}</td>
             <td>
-              {{ assistance.received ? "تم الاستلام" : "لم يتم الاستلام" }}
+              {{ getNationalId(assistance.personId, assistance.familyId) }}
             </td>
+            <td>
+              {{ getPhoneNumber(assistance.personId, assistance.familyId) }}
+            </td>
+            <td>{{ getAssistanceTypeName(assistance.assistanceTypeId) }}</td>
+            <td>{{ formatDate(assistance.date) }}</td>
             <td>{{ " " }}</td>
           </tr>
         </tbody>
@@ -263,12 +311,18 @@ const filterDateFrom = ref("");
 const filterDateTo = ref("");
 const activeDateFilter = ref(null);
 
+// متغير فلتر نوع المستفيد
+const beneficiaryTypeFilter = ref("all");
+
+// متغير فلتر نوع المساعدة
+const assistanceTypeFilter = ref("all");
+
 // متغيرات ترتيب التاريخ
 const dateSortOrder = ref("none"); // "none", "asc", "desc"
 
 const getAssistanceTypeName = (typeId) => {
   const assistanceType = assistanceTypes.value.find(
-    (type) => type.assistanceTypeId === typeId
+    (type) => type.assistanceTypeId === typeId,
   );
   return assistanceType ? assistanceType.assistanceTypeName : "غير معروف";
 };
@@ -283,6 +337,77 @@ const getPersonName = (personId) => {
   if (!personId || personId === "") return "";
   const person = persons.value.find((p) => p.id === personId);
   return person ? `${person.firstName} ${person.lastName}` : "غير معروف";
+};
+
+const getNationalId = (personId, familyId) => {
+  if (personId && personId !== "") {
+    // Return the person's id as the national ID
+    return personId;
+  }
+  if (familyId && familyId !== 0) {
+    // For families, get the head of family's id
+    const family = families.value.find((f) => f.familyId === familyId);
+    if (family?.personId) {
+      return family.personId;
+    }
+  }
+  return "-";
+};
+
+const getPhoneNumber = (personId, familyId) => {
+  if (personId && personId !== "") {
+    const person = persons.value.find((p) => p.id === personId);
+    return person?.phoneNumber || "-";
+  }
+  if (familyId && familyId !== 0) {
+    // For families, get the head of family's phone number
+    const family = families.value.find((f) => f.familyId === familyId);
+    if (family?.personId) {
+      const person = persons.value.find((p) => p.id === family.personId);
+      return person?.phoneNumber || "-";
+    }
+  }
+  return "-";
+};
+
+// دالة تحديد نوع المستفيد
+const getBeneficiaryType = (assistance) => {
+  if (assistance.familyId && assistance.familyId !== 0) {
+    return "أسرة";
+  } else if (assistance.personId && assistance.personId !== "") {
+    const person = persons.value.find((p) => p.id === assistance.personId);
+    if (person) {
+      if (person.isWidow) return "أرمل/ة";
+      if (person.isOrphan) return "يتيم/ة";
+      return "فرد";
+    }
+  }
+  return "غير محدد";
+};
+
+// دالة تطبيق فلتر نوع المستفيد
+const applyBeneficiaryFilter = () => {
+  const filterLabels = {
+    all: "جميع المستفيدين",
+    family: "أسر",
+    widow: "أرامل",
+    orphan: "أيتام",
+    other: "أخرى",
+  };
+
+  if (beneficiaryTypeFilter.value !== "all") {
+    alertify.success(
+      `تم تطبيق فلتر: ${filterLabels[beneficiaryTypeFilter.value]}`,
+    );
+  }
+};
+
+// دالة تطبيق فلتر نوع المساعدة
+const applyAssistanceTypeFilter = () => {
+  if (assistanceTypeFilter.value !== "all") {
+    const typeName = getAssistanceTypeName(assistanceTypeFilter.value);
+    alertify.success(`تم تطبيق فلتر: ${typeName}`);
+  }
 };
 
 const formatDate = (dateString) => {
@@ -324,7 +449,7 @@ const applyDateFilter = () => {
       to: null,
     };
     alertify.success(
-      "تم تطبيق فلتر التاريخ من: " + formatDate(filterDateFrom.value)
+      "تم تطبيق فلتر التاريخ من: " + formatDate(filterDateFrom.value),
     );
   } else if (filterDateTo.value) {
     activeDateFilter.value = {
@@ -332,7 +457,7 @@ const applyDateFilter = () => {
       to: filterDateTo.value,
     };
     alertify.success(
-      "تم تطبيق فلتر التاريخ إلى: " + formatDate(filterDateTo.value)
+      "تم تطبيق فلتر التاريخ إلى: " + formatDate(filterDateTo.value),
     );
   } else {
     alertify.warning("يرجى اختيار تاريخ واحد على الأقل");
@@ -418,6 +543,33 @@ const fetchData = async () => {
 const sortedAndFilteredAssistances = computed(() => {
   let result = assistances.value;
 
+  // تطبيق فلتر نوع المستفيد
+  if (beneficiaryTypeFilter.value !== "all") {
+    result = result.filter((assistance) => {
+      const beneficiaryType = getBeneficiaryType(assistance);
+
+      if (beneficiaryTypeFilter.value === "family") {
+        return beneficiaryType === "أسرة";
+      } else if (beneficiaryTypeFilter.value === "widow") {
+        return beneficiaryType === "أرمل/ة";
+      } else if (beneficiaryTypeFilter.value === "orphan") {
+        return beneficiaryType === "يتيم/ة";
+      } else if (beneficiaryTypeFilter.value === "other") {
+        return beneficiaryType === "فرد" || beneficiaryType === "غير محدد";
+      }
+
+      return true;
+    });
+  }
+
+  // تطبيق فلتر نوع المساعدة
+  if (assistanceTypeFilter.value !== "all") {
+    result = result.filter(
+      (assistance) =>
+        assistance.assistanceTypeId === assistanceTypeFilter.value,
+    );
+  }
+
   // تطبيق البحث النصي
   if (searchQuery.value) {
     const query = searchQuery.value.toLowerCase();
@@ -430,7 +582,7 @@ const sortedAndFilteredAssistances = computed(() => {
           .includes(query) ||
         assistance.note?.toLowerCase().includes(query) ||
         assistance.numberOfAssistance.toString().includes(query) ||
-        assistance.assistanceId.toString().includes(query)
+        assistance.assistanceId.toString().includes(query),
     );
   }
 
@@ -481,6 +633,42 @@ const getReceivedStatusText = (received) => {
   return received ? "تم الاستلام" : "لم يتم الاستلام";
 };
 
+// Sort assistances alphabetically by beneficiary name for printing
+const getSortedPrintAssistances = () => {
+  return [...sortedAndFilteredAssistances.value].sort((a, b) => {
+    const nameA =
+      getPersonName(a.personId) || " عائلة " + getFamilyName(a.familyId);
+    const nameB =
+      getPersonName(b.personId) || " عائلة " + getFamilyName(b.familyId);
+    return nameA.localeCompare(nameB, "ar");
+  });
+};
+
+// Generate dynamic print title based on active filters
+const getPrintTitle = () => {
+  const filters = [];
+
+  // Add assistance type filter if active
+  if (assistanceTypeFilter.value !== "all") {
+    const typeName = getAssistanceTypeName(assistanceTypeFilter.value);
+    filters.push(typeName);
+  }
+
+  // Add beneficiary type filter if active
+  if (beneficiaryTypeFilter.value !== "all") {
+    const filterLabels = {
+      family: "أسر",
+      widow: "أرامل",
+      orphan: "أيتام",
+      other: "أخرى",
+    };
+    filters.push(filterLabels[beneficiaryTypeFilter.value]);
+  }
+
+  // Return filter text or empty string
+  return filters.length > 0 ? filters.join(" - ") : "";
+};
+
 const directPrint = () => {
   alertify.message("جاري تحضير الطباعة...");
 
@@ -510,15 +698,21 @@ const directPrint = () => {
           color: #42b983; 
           margin-bottom: 10px; 
         }
+        .print-header h4 {
+          color: #42b983;
+          font-size: 1.2rem;
+          margin-bottom: 10px;
+          font-weight: 600;
+        }
         .print-table { 
           width: 100%; 
           border-collapse: collapse; 
           margin: 20px 0; 
-          font-size: 11px; 
+          font-size: 10px; 
         }
         .print-table th, .print-table td { 
           border: 1px solid #ddd; 
-          padding: 6px; 
+          padding: 5px; 
           text-align: center; 
           vertical-align: middle;
         }
@@ -526,8 +720,15 @@ const directPrint = () => {
           background-color: #42b983; 
           color: white; 
           font-weight: bold; 
-          font-size: 10px;
+          font-size: 9px;
         }
+        .print-table th:nth-child(1) { width: 4%; } /* # */
+        .print-table th:nth-child(2) { width: 20%; } /* الاسم */
+        .print-table th:nth-child(3) { width: 15%; } /* الرقم الوطني */
+        .print-table th:nth-child(4) { width: 12%; } /* رقم الهاتف */
+        .print-table th:nth-child(5) { width: 18%; } /* نوع المساعدة */
+        .print-table th:nth-child(6) { width: 13%; } /* تاريخ المساعدة */
+        .print-table th:nth-child(7) { width: 18%; } /* التوقيع */
         .print-table tr:nth-child(even) { 
           background-color: #f9f9f9; 
         }
@@ -538,16 +739,10 @@ const directPrint = () => {
           padding-top: 15px; 
           color: #666; 
         }
-        /* Specific styling for received status column */
-        .print-table td:nth-child(6) {
-          font-weight: bold;
-          font-size: 10px;
-        }
         @media print { 
           body { margin: 0; } 
-          .print-table { font-size: 9px; }
-          .print-table th { font-size: 8px; }
-          .print-table td:nth-child(6) { font-size: 8px; }
+          .print-table { font-size: 8px; }
+          .print-table th { font-size: 7px; }
         }
       </style>
     </head>
@@ -572,11 +767,11 @@ const editAssistance = (assistanceId) =>
 const deleteAssistance = async (assistanceId) => {
   // Get assistance details for better confirmation message
   const assistance = assistances.value.find(
-    (a) => a.assistanceId === assistanceId
+    (a) => a.assistanceId === assistanceId,
   );
   const assistanceInfo = assistance
     ? `المساعدة رقم ${assistanceId} (${getAssistanceTypeName(
-        assistance.assistanceTypeId
+        assistance.assistanceTypeId,
       )})`
     : `المساعدة رقم ${assistanceId}`;
 
@@ -603,7 +798,7 @@ const deleteAssistance = async (assistanceId) => {
           alertify.error(`حدث خطأ أثناء حذف المساعدة: ${errorMessage}`);
         } else if (error.request) {
           alertify.error(
-            "لا يمكن الاتصال بالخادم. يرجى التحقق من اتصال الإنترنت"
+            "لا يمكن الاتصال بالخادم. يرجى التحقق من اتصال الإنترنت",
           );
         } else {
           alertify.error("حدث خطأ أثناء حذف المساعدة");
@@ -613,7 +808,7 @@ const deleteAssistance = async (assistanceId) => {
     function () {
       // User clicked Cancel
       alertify.message("تم إلغاء عملية الحذف");
-    }
+    },
   );
 };
 
@@ -820,6 +1015,14 @@ onMounted(fetchData);
 .form-select {
   text-align: right;
   font-size: 0.9rem;
+}
+
+/* تنسيق القوائم المنسدلة في RTL */
+[dir="rtl"] .form-select {
+  padding-right: 2.5rem !important;
+  padding-left: 0.75rem !important;
+  background-position: right 0.75rem center !important;
+  text-align: right;
 }
 
 /* تحسينات للشاشات الصغيرة */

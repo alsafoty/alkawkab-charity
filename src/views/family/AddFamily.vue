@@ -2,7 +2,7 @@
   <div class="container my-4" dir="rtl">
     <div class="card border-0 shadow rounded-4 overflow-hidden">
       <div class="card-header bg-success text-white py-3">
-        <h3 class="mb-0 fw-bold text-center">إضافة عائلة جديدة</h3>
+        <h3 class="mb-0 fw-bold text-center">إضافة أسرة جديدة</h3>
       </div>
       <div class="card-body p-4">
         <form @submit.prevent="submitForm" class="row g-4">
@@ -10,34 +10,34 @@
           <div class="col-12 mb-4">
             <div class="section-card p-4 rounded-3 bg-light">
               <h4 class="section-title mb-4 text-success">
-                معلومات العائلة الأساسية
+                معلومات الأسرة الأساسية
               </h4>
               <div class="row">
                 <div class="col-md-6">
                   <div class="form-group mb-3">
-                    <label class="form-label fw-bold">اسم العائلة</label>
+                    <label class="form-label fw-bold">رب الأسرة</label>
                     <input
                       v-model="formData.name"
                       type="text"
                       class="form-control shadow-sm"
-                      placeholder="أدخل اسم العائلة"
+                      placeholder="أدخل اسم رب الأسرة"
                       required
                     />
                   </div>
                 </div>
                 <div class="col-md-6">
                   <div class="form-group mb-3">
-                    <label class="form-label fw-bold">عدد أفراد العائلة</label>
+                    <label class="form-label fw-bold">عدد الأفراد</label>
                     <input
-                      :value="calculatedMemberCount"
+                      v-model.number="formData.numberOfFamilyMembers"
                       type="number"
                       class="form-control shadow-sm"
-                      readonly
-                      placeholder="سيتم حسابه تلقائياً"
-                      title="سيتم حساب عدد الأفراد تلقائياً عند إضافة أعضاء للعائلة"
+                      placeholder="أدخل عدد الأفراد"
+                      min="1"
+                      required
                     />
                     <small class="text-muted">
-                      سيتم حساب عدد الأفراد تلقائياً عند إضافة أعضاء للعائلة
+                      قم بإدخال عدد أفراد الأسرة يدوياً
                     </small>
                   </div>
                 </div>
@@ -67,10 +67,10 @@
           <div class="col-12 mb-4">
             <div class="section-card p-4 rounded-3 bg-light">
               <h4 class="section-title mb-4 text-success">
-                إضافة أعضاء للعائلة
+                إضافة أعضاء للأسرة
               </h4>
               <div class="mb-2 text-muted">
-                اختر الأشخاص الذين تريد إضافتهم لهذه العائلة:
+                اختر الأشخاص الذين تريد إضافتهم لهذه الأسرة:
               </div>
 
               <!-- Search Bar -->
@@ -154,7 +154,7 @@
                 class="spinner-border spinner-border-sm me-2"
               ></span>
               <i class="bi bi-check-circle me-2"></i>
-              إضافة العائلة
+              إضافة الأسرة
             </button>
           </div>
         </form>
@@ -178,6 +178,7 @@ const AUTH_TOKEN = localStorage.getItem("token");
 
 const formData = ref({
   name: "",
+  numberOfFamilyMembers: 1,
   isHouseOwned: false,
 });
 
@@ -195,7 +196,7 @@ const fetchAllPersons = async () => {
         headers: {
           Authorization: `Bearer ${AUTH_TOKEN}`,
         },
-      }
+      },
     );
     allPersons.value = response.data;
   } catch (error) {
@@ -208,8 +209,8 @@ const fetchAllPersons = async () => {
 const personsWithoutFamily = computed(() =>
   allPersons.value.filter(
     (person) =>
-      !person.familyId || person.familyId === 0 || person.familyId === null
-  )
+      !person.familyId || person.familyId === 0 || person.familyId === null,
+  ),
 );
 
 // Computed property for filtered persons based on search
@@ -227,9 +228,6 @@ const filteredPersonsWithoutFamily = computed(() => {
   });
 });
 
-// حساب عدد الأعضاء المختارين
-const calculatedMemberCount = computed(() => selectedPersons.value.length);
-
 onMounted(() => {
   fetchAllPersons();
 });
@@ -242,7 +240,7 @@ const fetchAllFamilies = async () => {
       headers: {
         Authorization: `Bearer ${AUTH_TOKEN}`,
       },
-    }
+    },
   );
   return response.data;
 };
@@ -263,19 +261,28 @@ const getPersonWithoutAssistances = (person) => {
 // إرسال البيانات
 const submitForm = async () => {
   if (!formData.value.name.trim()) {
-    alertify.warning("يرجى إدخال اسم العائلة");
+    alertify.warning("يرجى إدخال اسم رب الأسرة");
+    return;
+  }
+
+  if (
+    !formData.value.numberOfFamilyMembers ||
+    formData.value.numberOfFamilyMembers < 1
+  ) {
+    alertify.warning("يرجى إدخال عدد الأفراد (على الأقل 1)");
     return;
   }
 
   loading.value = true;
 
   // Show loading notification
-  alertify.message("جاري إضافة العائلة...");
+  alertify.message("جاري إضافة الأسرة...");
 
   try {
     // 1. أضف العائلة
     const familyData = {
       name: formData.value.name.trim(),
+      numberOfFamilyMembers: formData.value.numberOfFamilyMembers,
       isHouseOwned: formData.value.isHouseOwned,
     };
 
@@ -287,7 +294,7 @@ const submitForm = async () => {
           Authorization: `Bearer ${AUTH_TOKEN}`,
           "Content-Type": "application/json",
         },
-      }
+      },
     );
 
     // 2. جلب جميع العائلات وأخذ id الأخيرة
@@ -313,16 +320,20 @@ const submitForm = async () => {
               Authorization: `Bearer ${AUTH_TOKEN}`,
               "Content-Type": "application/json",
             },
-          }
+          },
         );
       }
     }
 
     // Success notification
-    alertify.success("تمت إضافة العائلة وربط الأعضاء بنجاح");
+    alertify.success("تمت إضافة الأسرة وربط الأعضاء بنجاح");
 
     // Reset form
-    formData.value = { name: "", isHouseOwned: false };
+    formData.value = {
+      name: "",
+      numberOfFamilyMembers: 1,
+      isHouseOwned: false,
+    };
     selectedPersons.value = [];
     searchTerm.value = "";
 
@@ -338,11 +349,11 @@ const submitForm = async () => {
     if (error.response) {
       const errorMessage =
         error.response.data.message || error.response.statusText;
-      alertify.error(`حدث خطأ أثناء إضافة العائلة: ${errorMessage}`);
+      alertify.error(`حدث خطأ أثناء إضافة الأسرة: ${errorMessage}`);
     } else if (error.message) {
       alertify.error(error.message);
     } else {
-      alertify.error("حدث خطأ أثناء إضافة العائلة أو ربط الأعضاء");
+      alertify.error("حدث خطأ أثناء إضافة الأسرة أو ربط الأعضاء");
     }
   } finally {
     loading.value = false;

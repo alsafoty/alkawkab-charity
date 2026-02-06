@@ -8,18 +8,17 @@
       style="max-width: 500px"
     >
       <h2 class="fs-1 fw-bold mb-4">الدخول لقاعدة البيانات</h2>
-      <div class="d-flex flex-column justify-content-around mb-3 gap-3">
+
+      <!-- الأزرار الرئيسية -->
+      <div
+        v-if="!showBeneficiariesMenu"
+        class="d-flex flex-column justify-content-around mb-3 gap-3"
+      >
         <button
-          @click="router.push('/individual')"
+          @click="showBeneficiariesMenu = true"
           class="btn btn-success donate-button fs-3 px-5 py-2"
         >
-          أفراد
-        </button>
-        <button
-          @click="router.push('/family')"
-          class="btn btn-success donate-button fs-3 px-5 py-2"
-        >
-          عائلات
+          المستفيدين
         </button>
         <button
           @click="router.push('/assistance')"
@@ -27,12 +26,35 @@
         >
           المساعدات
         </button>
-        <!-- <button
-          @click="router.push('/files')"
+      </div>
+
+      <!-- قائمة المستفيدين -->
+      <div v-else class="d-flex flex-column justify-content-around mb-3 gap-3">
+        <button
+          @click="router.push('/family')"
           class="btn btn-success donate-button fs-3 px-5 py-2"
         >
-          مركز الملفات
-        </button> -->
+          أسر
+        </button>
+        <button
+          @click="router.push('/widows')"
+          class="btn btn-success donate-button fs-3 px-5 py-2"
+        >
+          أرامل
+        </button>
+        <button
+          @click="router.push('/orphans')"
+          class="btn btn-success donate-button fs-3 px-5 py-2"
+        >
+          أيتام
+        </button>
+        <button
+          @click="showBeneficiariesMenu = false"
+          class="btn btn-secondary donate-button fs-3 px-5 py-2"
+        >
+          <i class="bi bi-arrow-right me-2"></i>
+          رجوع
+        </button>
       </div>
 
       <!-- زر تسجيل الخروج -->
@@ -50,9 +72,11 @@
 </template>
 
 <script setup>
+import { ref } from "vue";
 import { useRouter } from "vue-router";
 
 const router = useRouter();
+const showBeneficiariesMenu = ref(false);
 
 // وظيفة تسجيل الخروج
 const logout = () => {

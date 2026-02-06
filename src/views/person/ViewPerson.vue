@@ -94,13 +94,13 @@
         >
           <div class="col-12">
             <div class="info-section">
-              <h4 class="section-title mb-3">معلومات العائلة</h4>
+              <h4 class="section-title mb-3">معلومات الأسرة</h4>
 
               <!-- Loading state -->
               <div v-if="loadingFamilyData" class="text-center py-3">
                 <div class="spinner-border text-success" role="status">
                   <span class="visually-hidden"
-                    >جاري تحميل بيانات العائلة...</span
+                    >جاري تحميل بيانات الأسرة...</span
                   >
                 </div>
               </div>
@@ -108,15 +108,15 @@
               <!-- Family data -->
               <div v-else-if="getFamilyInfo()" class="info-grid">
                 <div class="info-item">
-                  <strong>رقم العائلة:</strong>
+                  <strong>رقم الأسرة:</strong>
                   {{ getFamilyInfo().familyId }}
                 </div>
                 <div class="info-item">
-                  <strong>اسم العائلة:</strong>
+                  <strong>رب الأسرة:</strong>
                   {{ getFamilyInfo().name }}
                 </div>
                 <div class="info-item">
-                  <strong>عدد أفراد العائلة:</strong>
+                  <strong>عدد الأفراد:</strong>
                   <span class="badge bg-success">{{
                     actualFamilyMemberCount
                   }}</span>
@@ -132,7 +132,7 @@
                 v-if="memberDetails && memberDetails.length > 0"
                 class="mt-4"
               >
-                <h5 class="text-success mb-3">أعضاء العائلة:</h5>
+                <h5 class="text-success mb-3">أعضاء الأسرة:</h5>
                 <div class="row g-2">
                   <div
                     v-for="(member, index) in memberDetails"
@@ -287,7 +287,7 @@
                       <th>نوع المساعدة</th>
                       <th>عدد المساعدات</th>
                       <th>ملاحظات</th>
-                      <th>الإجراءات</th>
+                      <th class="no-print">الإجراءات</th>
                     </tr>
                   </thead>
                   <tbody>
@@ -305,7 +305,7 @@
                         }}</span>
                       </td>
                       <td>{{ assistance.note || "-" }}</td>
-                      <td>
+                      <td class="no-print">
                         <button
                           @click="
                             viewAssistanceDetails(assistance.assistanceId)
@@ -350,6 +350,142 @@
             رجوع
           </button>
         </div>
+      </div>
+    </div>
+
+    <!-- Hidden content for printing -->
+    <div id="printableContent" style="display: none">
+      <div class="print-header text-center mb-4">
+        <h2 class="fw-bold">تفاصيل الشخص</h2>
+        <p class="text-muted">تاريخ الطباعة: {{ getCurrentDate() }}</p>
+      </div>
+
+      <div class="print-section mb-3">
+        <h4 class="section-title">المعلومات الشخصية</h4>
+        <table class="print-info-table">
+          <tr>
+            <td><strong>الرقم التعريفي:</strong></td>
+            <td>{{ personData.id }}</td>
+            <td><strong>الجنس:</strong></td>
+            <td>{{ personData.gender }}</td>
+          </tr>
+          <tr>
+            <td><strong>الاسم الكامل:</strong></td>
+            <td colspan="3">
+              {{ personData.firstName }} {{ personData.secondName }}
+              {{ personData.thirdName }} {{ personData.lastName }}
+            </td>
+          </tr>
+          <tr>
+            <td><strong>رقم الجوال:</strong></td>
+            <td>{{ personData.phoneNumber }}</td>
+            <td><strong>المستوى التعليمي:</strong></td>
+            <td>{{ personData.educationalLevel }}</td>
+          </tr>
+          <tr>
+            <td><strong>المهنة:</strong></td>
+            <td>{{ personData.job }}</td>
+            <td><strong>عدد أفراد العائلة:</strong></td>
+            <td>{{ actualFamilyMemberCount }}</td>
+          </tr>
+        </table>
+      </div>
+
+      <div class="print-section mb-3">
+        <h4 class="section-title">الحالة</h4>
+        <table class="print-info-table">
+          <tr>
+            <td><strong>أرمل/ة:</strong></td>
+            <td>{{ personData.isWidow ? "نعم" : "لا" }}</td>
+            <td><strong>يتيم/ة:</strong></td>
+            <td>{{ personData.isOrphan ? "نعم" : "لا" }}</td>
+          </tr>
+          <tr>
+            <td><strong>جزء من عائلة:</strong></td>
+            <td>{{ personData.isPartOfFamily ? "نعم" : "لا" }}</td>
+            <td><strong>يملك منزل:</strong></td>
+            <td>{{ personData.isHouseOwned ? "نعم" : "لا" }}</td>
+          </tr>
+        </table>
+      </div>
+
+      <div
+        v-if="personData.isPartOfFamily && getFamilyInfo()"
+        class="print-section mb-3"
+      >
+        <h4 class="section-title">معلومات الأسرة</h4>
+        <table class="print-info-table">
+          <tr>
+            <td><strong>رقم الأسرة:</strong></td>
+            <td>{{ getFamilyInfo().familyId }}</td>
+            <td><strong>رب الأسرة:</strong></td>
+            <td>{{ getFamilyInfo().name }}</td>
+          </tr>
+        </table>
+        <div v-if="memberDetails && memberDetails.length > 0" class="mt-2">
+          <strong>أعضاء الأسرة:</strong>
+          <ul class="member-list">
+            <li v-for="(member, index) in memberDetails" :key="member.id">
+              {{ index + 1 }}. {{ member.firstName }} {{ member.secondName }}
+              {{ member.lastName }}
+              <span v-if="member.id === personData.id">(أنت)</span>
+            </li>
+          </ul>
+        </div>
+      </div>
+
+      <div
+        v-if="personData.isOrphan && guardianData"
+        class="print-section mb-3"
+      >
+        <h4 class="section-title">معلومات الوصي</h4>
+        <table class="print-info-table">
+          <tr>
+            <td><strong>الاسم الكامل:</strong></td>
+            <td colspan="3">
+              {{ guardianData.firstName }} {{ guardianData.secondName }}
+              {{ guardianData.thirdName }} {{ guardianData.lastName }}
+            </td>
+          </tr>
+          <tr>
+            <td><strong>صلة القرابة:</strong></td>
+            <td>{{ guardianData.relationship }}</td>
+            <td><strong>المهنة:</strong></td>
+            <td>{{ guardianData.guardianJob }}</td>
+          </tr>
+          <tr>
+            <td><strong>رقم الجوال:</strong></td>
+            <td colspan="3">{{ guardianData.guardianPhoneNumber }}</td>
+          </tr>
+        </table>
+      </div>
+
+      <div
+        v-if="assistanceData && assistanceData.length > 0"
+        class="print-section mb-3"
+      >
+        <h4 class="section-title">المساعدات المُستلمة</h4>
+        <table class="table table-bordered print-table">
+          <thead>
+            <tr>
+              <th>رقم المساعدة</th>
+              <th>نوع المساعدة</th>
+              <th>عدد المساعدات</th>
+              <th>ملاحظات</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr
+              v-for="assistance in assistanceData"
+              :key="assistance.assistanceId"
+            >
+              <td>{{ assistance.assistanceId }}</td>
+              <td>{{ getAssistanceTypeName(assistance.assistanceTypeId) }}</td>
+              <td>{{ assistance.numberOfAssistance }}</td>
+              <td>{{ assistance.note || "-" }}</td>
+            </tr>
+          </tbody>
+        </table>
       </div>
     </div>
   </div>
@@ -400,7 +536,7 @@ const actualFamilyMemberCount = computed(() => {
 // دالة للحصول على اسم نوع المساعدة
 const getAssistanceTypeName = (typeId) => {
   const assistanceType = assistanceTypes.value.find(
-    (type) => type.assistanceTypeId === typeId
+    (type) => type.assistanceTypeId === typeId,
   );
   return assistanceType ? assistanceType.assistanceTypeName : "غير معروف";
 };
@@ -419,7 +555,7 @@ const fetchAssistanceTypes = async () => {
         headers: {
           Authorization: `Bearer ${AUTH_TOKEN}`,
         },
-      }
+      },
     );
     assistanceTypes.value = response.data;
   } catch (error) {
@@ -439,7 +575,7 @@ const fetchGuardianData = async (guardianId) => {
         headers: {
           Authorization: `Bearer ${AUTH_TOKEN}`,
         },
-      }
+      },
     );
     guardianData.value = response.data;
     console.log("Guardian data:", guardianData.value);
@@ -460,7 +596,7 @@ const fetchPersonDetails = async (personId) => {
         headers: {
           Authorization: `Bearer ${AUTH_TOKEN}`,
         },
-      }
+      },
     );
     return response.data;
   } catch (error) {
@@ -491,7 +627,7 @@ const fetchAllMemberDetails = async () => {
 
     memberDetails.value = results
       .filter(
-        (result) => result.status === "fulfilled" && result.value !== null
+        (result) => result.status === "fulfilled" && result.value !== null,
       )
       .map((result) => result.value);
   } catch (error) {
@@ -509,7 +645,7 @@ const fetchAssistanceData = async (assistanceId) => {
         headers: {
           Authorization: `Bearer ${AUTH_TOKEN}`,
         },
-      }
+      },
     );
     return response.data;
   } catch (error) {
@@ -531,14 +667,14 @@ const fetchAllAssistances = async () => {
   loadingAssistances.value = true;
   try {
     const assistancePromises = personData.value.assistances.map(
-      (assistanceId) => fetchAssistanceData(assistanceId)
+      (assistanceId) => fetchAssistanceData(assistanceId),
     );
 
     const results = await Promise.allSettled(assistancePromises);
 
     assistanceData.value = results
       .filter(
-        (result) => result.status === "fulfilled" && result.value !== null
+        (result) => result.status === "fulfilled" && result.value !== null,
       )
       .map((result) => result.value);
 
@@ -563,7 +699,7 @@ onMounted(async () => {
         headers: {
           Authorization: `Bearer ${AUTH_TOKEN}`,
         },
-      }
+      },
     );
 
     personData.value = response.data;
@@ -588,7 +724,7 @@ onMounted(async () => {
         await fetchFamilyData(personData.value.familyId);
       } else {
         console.log(
-          "Person is part of family but no familyId found, using embedded family data"
+          "Person is part of family but no familyId found, using embedded family data",
         );
         if (personData.value.family) {
           await fetchAllMemberDetails();
@@ -612,7 +748,7 @@ const fetchFamilyData = async (familyId) => {
         headers: {
           Authorization: `Bearer ${AUTH_TOKEN}`,
         },
-      }
+      },
     );
     familyData.value = response.data;
     personData.value.family = response.data;
@@ -623,7 +759,7 @@ const fetchFamilyData = async (familyId) => {
   } catch (error) {
     console.error("Error fetching family data:", error);
     console.warn(
-      "Could not fetch family data, using person's embedded family data"
+      "Could not fetch family data, using person's embedded family data",
     );
     if (personData.value.family) {
       await fetchAllMemberDetails();
@@ -633,12 +769,117 @@ const fetchFamilyData = async (familyId) => {
   }
 };
 
+const getCurrentDate = () => {
+  return new Date().toLocaleDateString("ar-EG", {
+    year: "numeric",
+    month: "long",
+    day: "numeric",
+    weekday: "long",
+  });
+};
+
 const printContent = () => {
-  window.print();
+  alertify.message("جاري تحضير الطباعة...");
+
+  const printContent = document.getElementById("printableContent").innerHTML;
+  const printWindow = window.open("", "_blank");
+
+  printWindow.document.write(`
+    <!DOCTYPE html>
+    <html dir="rtl">
+    <head>
+      <title>طباعة تفاصيل الشخص</title>
+      <meta charset="utf-8">
+      <style>
+        body { 
+          font-family: 'Tajawal', Arial, sans-serif; 
+          direction: rtl; 
+          margin: 20px; 
+          color: #333; 
+        }
+        .print-header { 
+          text-align: center; 
+          margin-bottom: 30px; 
+          border-bottom: 2px solid #42b983; 
+          padding-bottom: 15px; 
+        }
+        .print-header h2 { 
+          color: #42b983; 
+          margin-bottom: 10px; 
+        }
+        .print-section {
+          margin-bottom: 20px;
+          page-break-inside: avoid;
+        }
+        .section-title {
+          color: #42b983;
+          font-size: 1.1rem;
+          border-bottom: 1px solid #42b983;
+          padding-bottom: 5px;
+          margin-bottom: 10px;
+        }
+        .print-info-table { 
+          width: 100%; 
+          border-collapse: collapse; 
+          margin: 10px 0; 
+          font-size: 11px; 
+        }
+        .print-info-table td { 
+          border: 1px solid #ddd; 
+          padding: 6px; 
+          text-align: right;
+        }
+        .print-info-table strong { 
+          color: #42b983;
+        }
+        .print-table { 
+          width: 100%; 
+          border-collapse: collapse; 
+          margin: 10px 0; 
+          font-size: 10px; 
+        }
+        .print-table th, .print-table td { 
+          border: 1px solid #ddd; 
+          padding: 6px; 
+          text-align: center; 
+        }
+        .print-table th { 
+          background-color: #42b983; 
+          color: white; 
+          font-weight: bold; 
+        }
+        .member-list {
+          list-style-position: inside;
+          margin: 5px 0;
+          padding-right: 10px;
+          font-size: 11px;
+        }
+        .member-list li {
+          padding: 3px 0;
+        }
+        @media print { 
+          body { margin: 0; } 
+          .print-info-table { font-size: 10px; }
+          .print-table { font-size: 9px; }
+          .member-list { font-size: 10px; }
+        }
+      </style>
+    </head>
+    <body>${printContent}</body>
+    </html>
+  `);
+
+  printWindow.document.close();
+  printWindow.focus();
+  setTimeout(() => {
+    printWindow.print();
+    printWindow.close();
+    alertify.success("تم فتح نافذة الطباعة");
+  }, 250);
 };
 
 const goBack = () => {
-  router.push("/individual");
+  router.back();
 };
 </script>
 
@@ -746,19 +987,36 @@ const goBack = () => {
     background-color: #42b983 !important;
     -webkit-print-color-adjust: exact !important;
     print-color-adjust: exact !important;
+    padding: 1rem !important;
+  }
+
+  .card-body {
+    padding: 1rem !important;
   }
 
   .info-section {
     page-break-inside: avoid;
     margin-bottom: 1rem;
+    box-shadow: none !important;
+    border: 1px solid #e0e0e0;
   }
 
-  .member-card {
-    page-break-inside: avoid;
+  .section-title {
+    font-size: 1.1rem;
+    color: #42b983 !important;
+    -webkit-print-color-adjust: exact !important;
+    print-color-adjust: exact !important;
+  }
+
+  .info-grid {
+    gap: 0.5rem;
   }
 
   .info-item {
-    color: black !important;
+    padding: 0.5rem;
+    background-color: #f8f9fa !important;
+    -webkit-print-color-adjust: exact !important;
+    print-color-adjust: exact !important;
   }
 
   .info-item strong {
@@ -767,10 +1025,48 @@ const goBack = () => {
     print-color-adjust: exact !important;
   }
 
+  .member-card {
+    page-break-inside: avoid;
+    border: 1px solid #dee2e6 !important;
+    margin-bottom: 0.5rem;
+  }
+
+  .badge {
+    background-color: #42b983 !important;
+    -webkit-print-color-adjust: exact !important;
+    print-color-adjust: exact !important;
+  }
+
+  .table {
+    font-size: 11px;
+    page-break-inside: avoid;
+  }
+
   .table-header {
     background-color: #42b983 !important;
     -webkit-print-color-adjust: exact !important;
     print-color-adjust: exact !important;
+  }
+
+  .table th,
+  .table td {
+    padding: 0.4rem !important;
+    border: 1px solid #dee2e6 !important;
+  }
+
+  .alert {
+    page-break-inside: avoid;
+    border: 1px solid #dee2e6;
+  }
+
+  /* Ensure proper spacing between sections */
+  .row {
+    margin-bottom: 0.5rem;
+  }
+
+  /* Avoid breaking family and guardian sections */
+  .row.g-4 {
+    page-break-inside: avoid;
   }
 }
 </style>

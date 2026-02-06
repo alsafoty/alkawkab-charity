@@ -4,7 +4,7 @@
       <div
         class="card-header bg-success text-white py-3 d-flex justify-content-between align-items-center"
       >
-        <h3 class="mb-0 fw-bold">تفاصيل العائلة</h3>
+        <h3 class="mb-0 fw-bold">تفاصيل الأسرة</h3>
         <button class="btn btn-light no-print" @click="printContent">
           <i class="bi bi-printer me-1"></i>
           طباعة
@@ -13,15 +13,15 @@
       <div class="card-body p-4" ref="printArea">
         <!-- Basic Family Information -->
         <div class="info-section mb-4">
-          <h4 class="section-title mb-3">معلومات العائلة الأساسية</h4>
+          <h4 class="section-title mb-3">معلومات الأسرة الأساسية</h4>
           <div class="info-grid">
             <div class="info-item">
-              <strong>اسم العائلة:</strong>
+              <strong>رب الأسرة:</strong>
               <span>{{ familyData.name }}</span>
             </div>
             <div class="info-item">
-              <strong>عدد أفراد العائلة:</strong>
-              <span>{{ actualFamilyMemberCount }}</span>
+              <strong>عدد الأفراد:</strong>
+              <span>{{ familyData.numberOfFamilyMembers || 0 }}</span>
             </div>
             <div class="info-item">
               <strong>حالة المنزل:</strong>
@@ -33,7 +33,7 @@
         <!-- Family Members -->
         <div class="info-section mb-4">
           <h4 class="section-title mb-3">
-            أفراد العائلة ({{ actualFamilyMemberCount }})
+            أفراد الأسرة (المسجلين: {{ memberDetails.length }})
           </h4>
 
           <!-- Loading State -->
@@ -97,7 +97,7 @@
                 class="bi bi-people-fill text-muted"
                 style="font-size: 3rem"
               ></i>
-              <p class="text-muted mt-2">لا توجد أعضاء مسجلين في هذه العائلة</p>
+              <p class="text-muted mt-2">لا توجد أعضاء مسجلين في هذه الأسرة</p>
               <small class="text-muted"
                 >يمكن إضافة أعضاء من خلال نافذة إضافة شخص</small
               >
@@ -190,7 +190,7 @@
           <h4 class="section-title mb-3">المساعدات المُستلمة</h4>
           <div class="alert alert-info text-center">
             <i class="bi bi-info-circle me-2"></i>
-            لا توجد مساعدات مُسجلة لهذه العائلة حتى الآن.
+            لا توجد مساعدات مُسجلة لهذه الأسرة حتى الآن.
           </div>
         </div>
 
@@ -228,15 +228,10 @@ const memberLoadError = ref(false);
 const AUTH_TOKEN = localStorage.getItem("token");
 const printArea = ref(null);
 
-// حساب عدد أفراد العائلة الفعلي من قائمة الأعضاء
-const actualFamilyMemberCount = computed(() => {
-  return memberDetails.value ? memberDetails.value.length : 0;
-});
-
 // دالة للحصول على اسم نوع المساعدة
 const getAssistanceTypeName = (typeId) => {
   const assistanceType = assistanceTypes.value.find(
-    (type) => type.assistanceTypeId === typeId
+    (type) => type.assistanceTypeId === typeId,
   );
   return assistanceType ? assistanceType.assistanceTypeName : "غير معروف";
 };
@@ -262,7 +257,7 @@ const fetchAssistanceTypes = async () => {
         headers: {
           Authorization: `Bearer ${AUTH_TOKEN}`,
         },
-      }
+      },
     );
     assistanceTypes.value = response.data;
   } catch (error) {
@@ -279,7 +274,7 @@ const fetchPersonDetails = async (personId) => {
         headers: {
           Authorization: `Bearer ${AUTH_TOKEN}`,
         },
-      }
+      },
     );
     return response.data;
   } catch (error) {
@@ -297,7 +292,7 @@ const fetchAssistanceData = async (assistanceId) => {
         headers: {
           Authorization: `Bearer ${AUTH_TOKEN}`,
         },
-      }
+      },
     );
     return response.data;
   } catch (error) {
@@ -319,14 +314,14 @@ const fetchAllAssistances = async () => {
   loadingAssistances.value = true;
   try {
     const assistancePromises = familyData.value.assistances.map(
-      (assistanceId) => fetchAssistanceData(assistanceId)
+      (assistanceId) => fetchAssistanceData(assistanceId),
     );
 
     const results = await Promise.allSettled(assistancePromises);
 
     assistanceData.value = results
       .filter(
-        (result) => result.status === "fulfilled" && result.value !== null
+        (result) => result.status === "fulfilled" && result.value !== null,
       )
       .map((result) => result.value);
 
@@ -363,13 +358,13 @@ const fetchAllMemberDetails = async () => {
 
     memberDetails.value = results
       .filter(
-        (result) => result.status === "fulfilled" && result.value !== null
+        (result) => result.status === "fulfilled" && result.value !== null,
       )
       .map((result) => result.value);
 
     // التحقق من وجود أخطاء
     const hasErrors = results.some(
-      (result) => result.status === "rejected" || result.value === null
+      (result) => result.status === "rejected" || result.value === null,
     );
     if (hasErrors) {
       memberLoadError.value = true;
@@ -396,7 +391,7 @@ onMounted(async () => {
         headers: {
           Authorization: `Bearer ${AUTH_TOKEN}`,
         },
-      }
+      },
     );
     familyData.value = response.data;
 
@@ -415,7 +410,7 @@ onMounted(async () => {
     }
   } catch (error) {
     console.error("Error fetching family details:", error);
-    alertify.error("حدث خطأ أثناء جلب بيانات العائلة");
+    alertify.error("حدث خطأ أثناء جلب بيانات الأسرة");
   }
 });
 

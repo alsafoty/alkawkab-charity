@@ -2,24 +2,31 @@
   <div
     class="families-table container my-4 bg-white bg-opacity-50 p-5 rounded-4 shadow-lg"
     dir="rtl"
+    ref="printArea"
   >
-    <h2 class="text-center mb-4 fw-bold">جدول العائلات</h2>
+    <div class="d-flex justify-content-between align-items-center mb-4">
+      <h2 class="mb-0 fw-bold">جدول الأسر</h2>
+      <button class="btn btn-success no-print" @click="printContent">
+        <i class="bi bi-printer me-1"></i>
+        طباعة
+      </button>
+    </div>
 
     <div class="d-flex justify-content-between align-items-center mb-4">
-      <div class="d-flex gap-2">
+      <div class="d-flex gap-2 no-print">
         <!-- زر إضافة عائلة مع تأثير التوسع -->
         <router-link to="/add-family" class="btn btn-success expandable-btn">
           <i class="bi bi-plus-circle icon"></i>
-          <span class="btn-text">إضافة عائلة</span>
+          <span class="btn-text">إضافة أسرة</span>
         </router-link>
       </div>
 
-      <div class="flex-grow-1 mx-3">
+      <div class="flex-grow-1 mx-3 no-print">
         <input
           v-model="searchQuery"
           type="text"
           class="form-control custom-input"
-          placeholder="ابحث باسم العائلة أو رقم العائلة..."
+          placeholder="ابحث باسم رب الأسرة أو رقم الأسرة..."
         />
       </div>
     </div>
@@ -29,7 +36,7 @@
       <div class="spinner-border text-success" role="status">
         <span class="visually-hidden">جاري التحميل...</span>
       </div>
-      <p class="mt-2 text-muted">جاري تحميل بيانات العائلات...</p>
+      <p class="mt-2 text-muted">جاري تحميل بيانات الأسر...</p>
     </div>
 
     <div
@@ -39,11 +46,11 @@
       <table class="table table-striped table-hover">
         <thead class="table-header text-white">
           <tr>
-            <th>رقم العائلة</th>
-            <th>اسم العائلة</th>
+            <th>رقم الأسرة</th>
+            <th>رب الأسرة</th>
             <th>عدد الأفراد</th>
             <th>حالة المنزل</th>
-            <th>الإجراءات</th>
+            <th class="no-print">الإجراءات</th>
           </tr>
         </thead>
         <tbody>
@@ -52,11 +59,11 @@
             <td>{{ family.name }}</td>
             <td>
               <span class="badge bg-success">
-                {{ getActualMemberCount(family) }}
+                {{ family.numberOfFamilyMembers || 0 }}
               </span>
             </td>
             <td>{{ family.isHouseOwned ? "ملك" : "إيجار" }}</td>
-            <td class="d-flex gap-2 justify-content-center">
+            <td class="d-flex gap-2 justify-content-center no-print">
               <button
                 @click="viewDetails(family.familyId)"
                 class="btn btn-primary btn-sm expandable-action-btn"
@@ -91,7 +98,40 @@
       v-if="!loading && !filteredFamilies.length"
       class="alert alert-warning text-center mt-3"
     >
-      لا يوجد عائلات مطابقة للبحث المحدد
+      لا يوجد أسر مطابقة للبحث المحدد
+    </div>
+
+    <!-- Hidden content for printing -->
+    <div id="printableContent" style="display: none">
+      <div class="print-header text-center mb-4">
+        <h2 class="fw-bold">تقرير الأسر</h2>
+        <p class="text-muted">تاريخ الطباعة: {{ getCurrentDate() }}</p>
+      </div>
+
+      <table class="table table-bordered print-table">
+        <thead class="table-dark">
+          <tr>
+            <th>رقم الأسرة</th>
+            <th>رب الأسرة</th>
+            <th>عدد الأفراد</th>
+            <th>حالة المنزل</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr v-for="family in filteredFamilies" :key="family.familyId">
+            <td>{{ family.familyId }}</td>
+            <td>{{ family.name }}</td>
+            <td>{{ family.numberOfFamilyMembers || 0 }}</td>
+            <td>{{ family.isHouseOwned ? "ملك" : "إيجار" }}</td>
+          </tr>
+        </tbody>
+      </table>
+
+      <div class="print-footer mt-4">
+        <p class="text-center text-muted">
+          إجمالي عدد الأسر: {{ filteredFamilies.length }}
+        </p>
+      </div>
     </div>
   </div>
 </template>
@@ -107,13 +147,92 @@ const families = ref([]);
 const searchQuery = ref("");
 const loading = ref(false);
 const AUTH_TOKEN = localStorage.getItem("token");
+const printArea = ref(null);
 
-// دالة لحساب العدد الحقيقي لأفراد العائلة
-const getActualMemberCount = (family) => {
-  if (family.familyMembers && Array.isArray(family.familyMembers)) {
-    return family.familyMembers.length;
-  }
-  return 0;
+const getCurrentDate = () => {
+  return new Date().toLocaleDateString("ar-EG", {
+    year: "numeric",
+    month: "long",
+    day: "numeric",
+    weekday: "long",
+  });
+};
+
+const printContent = () => {
+  alertify.message("جاري تحضير الطباعة...");
+
+  const printContent = document.getElementById("printableContent").innerHTML;
+  const printWindow = window.open("", "_blank");
+
+  printWindow.document.write(`
+    <!DOCTYPE html>
+    <html dir="rtl">
+    <head>
+      <title>طباعة جدول الأسر</title>
+      <meta charset="utf-8">
+      <style>
+        body { 
+          font-family: 'Tajawal', Arial, sans-serif; 
+          direction: rtl; 
+          margin: 20px; 
+          color: #333; 
+        }
+        .print-header { 
+          text-align: center; 
+          margin-bottom: 30px; 
+          border-bottom: 2px solid #42b983; 
+          padding-bottom: 15px; 
+        }
+        .print-header h2 { 
+          color: #42b983; 
+          margin-bottom: 10px; 
+        }
+        .print-table { 
+          width: 100%; 
+          border-collapse: collapse; 
+          margin: 20px 0; 
+          font-size: 11px; 
+        }
+        .print-table th, .print-table td { 
+          border: 1px solid #ddd; 
+          padding: 8px; 
+          text-align: center; 
+          vertical-align: middle;
+        }
+        .print-table th { 
+          background-color: #42b983; 
+          color: white; 
+          font-weight: bold; 
+          font-size: 12px;
+        }
+        .print-table tr:nth-child(even) { 
+          background-color: #f9f9f9; 
+        }
+        .print-footer { 
+          margin-top: 30px; 
+          text-align: center; 
+          border-top: 1px solid #ddd; 
+          padding-top: 15px; 
+          color: #666; 
+        }
+        @media print { 
+          body { margin: 0; } 
+          .print-table { font-size: 10px; }
+          .print-table th { font-size: 11px; }
+        }
+      </style>
+    </head>
+    <body>${printContent}</body>
+    </html>
+  `);
+
+  printWindow.document.close();
+  printWindow.focus();
+  setTimeout(() => {
+    printWindow.print();
+    printWindow.close();
+    alertify.success("تم فتح نافذة الطباعة");
+  }, 250);
 };
 
 const fetchFamilies = async () => {
@@ -125,38 +244,11 @@ const fetchFamilies = async () => {
       },
     });
 
-    // جلب تفاصيل كل عائلة مع أعضائها
-    const familiesWithMembers = await Promise.all(
-      response.data.map(async (family) => {
-        try {
-          const detailResponse = await axios.get(
-            `${API_BASE_URL}/Family/${family.familyId}`,
-            {
-              headers: {
-                Authorization: `Bearer ${AUTH_TOKEN}`,
-              },
-            }
-          );
-          return detailResponse.data;
-        } catch (error) {
-          console.error(
-            `Error fetching details for family ${family.familyId}:`,
-            error
-          );
-          // في حالة الخطأ، إرجاع البيانات الأساسية مع قائمة أعضاء فارغة
-          return {
-            ...family,
-            familyMembers: [],
-          };
-        }
-      })
-    );
-
-    families.value = familiesWithMembers;
-    console.log("Families with members:", familiesWithMembers);
+    families.value = response.data;
+    console.log("Families:", response.data);
   } catch (error) {
     console.error("Error fetching families:", error);
-    alertify.error("حدث خطأ أثناء جلب بيانات العائلات");
+    alertify.error("حدث خطأ أثناء جلب بيانات الأسر");
   } finally {
     loading.value = false;
   }
@@ -213,7 +305,7 @@ const deleteFamily = async (id) => {
       } catch (error) {
         console.error(
           "خطأ أثناء الحذف:",
-          error.response?.data || error.message
+          error.response?.data || error.message,
         );
         alertify.error("حدث خطأ أثناء حذف العائلة");
       }
@@ -221,7 +313,7 @@ const deleteFamily = async (id) => {
     function () {
       // User clicked Cancel
       alertify.message("تم إلغاء عملية الحذف");
-    }
+    },
   );
 };
 
@@ -360,5 +452,42 @@ onMounted(fetchFamilies);
 .badge {
   font-size: 0.9rem;
   padding: 0.4rem 0.6rem;
+}
+
+/* Print styles */
+@media print {
+  .no-print {
+    display: none !important;
+  }
+
+  .container {
+    padding: 0 !important;
+    margin: 0 !important;
+    background: white !important;
+  }
+
+  .families-table {
+    box-shadow: none !important;
+    background: white !important;
+  }
+
+  .table {
+    font-size: 12px;
+  }
+
+  .table-header {
+    background-color: #42b983 !important;
+    -webkit-print-color-adjust: exact !important;
+    print-color-adjust: exact !important;
+  }
+
+  .table th,
+  .table td {
+    padding: 0.5rem !important;
+  }
+
+  h2 {
+    margin-bottom: 1rem !important;
+  }
 }
 </style>
