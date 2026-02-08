@@ -20,8 +20,8 @@
               <span>{{ assistanceData.assistanceId }}</span>
             </div>
             <div class="info-item">
-              <strong>عدد المساعدات:</strong>
-              <span>{{ assistanceData.numberOfAssistance }}</span>
+              <strong>تاريخ المساعدة:</strong>
+              <span>{{ formatDate(assistanceData.date) }}</span>
             </div>
             <div class="info-item">
               <strong>نوع المساعدة:</strong>
@@ -130,7 +130,7 @@ const printArea = ref(null);
 // دالة للحصول على اسم نوع المساعدة
 const getAssistanceTypeName = (typeId) => {
   const assistanceType = assistanceTypes.value.find(
-    (type) => type.assistanceTypeId === typeId
+    (type) => type.assistanceTypeId === typeId,
   );
   return assistanceType ? assistanceType.assistanceTypeName : "غير معروف";
 };
@@ -138,7 +138,7 @@ const getAssistanceTypeName = (typeId) => {
 // دالة للحصول على تفاصيل نوع المساعدة
 const assistanceTypeDetails = computed(() => {
   return assistanceTypes.value.find(
-    (type) => type.assistanceTypeId === assistanceData.value.assistanceTypeId
+    (type) => type.assistanceTypeId === assistanceData.value.assistanceTypeId,
   );
 });
 
@@ -154,6 +154,17 @@ const getPersonName = (personId) => {
   if (!personId || personId === "") return "";
   const person = persons.value.find((p) => p.id === personId);
   return person ? `${person.firstName} ${person.lastName}` : "غير معروف";
+};
+
+// دالة لتنسيق التاريخ
+const formatDate = (date) => {
+  if (!date) return "غير محدد";
+  const d = new Date(date);
+  return d.toLocaleDateString("ar-JO", {
+    year: "numeric",
+    month: "long",
+    day: "numeric",
+  });
 };
 
 // جلب أنواع المساعدات من الـ API
@@ -207,7 +218,7 @@ const fetchAssistanceDetails = async () => {
         headers: {
           Authorization: `Bearer ${AUTH_TOKEN}`,
         },
-      }
+      },
     );
     assistanceData.value = response.data;
     console.log("Assistance details:", response.data);

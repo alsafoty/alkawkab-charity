@@ -12,12 +12,12 @@
             <form @submit.prevent="submitForm" class="row g-3">
               <!-- Personal Information -->
               <div class="col-md-6">
-                <label class="form-label fw-bold">الرقم التعريفي</label>
+                <label class="form-label fw-bold">الرقم الوطني</label>
                 <input
                   v-model="formData.id"
                   type="text"
                   class="form-control"
-                  placeholder="أدخل الرقم التعريفي"
+                  placeholder="أدخل الرقم الوطني"
                   required
                 />
                 <small class="text-muted">يجب أن يكون رقماً فريداً</small>
@@ -288,9 +288,103 @@
               <div v-if="formData.isOrphan || formData.age < 18" class="col-12">
                 <div class="section-card p-4 rounded-3 bg-light">
                   <h4 class="section-title mb-4 text-success">معلومات الوصي</h4>
-                  <div class="row g-3">
+
+                  <!-- Guardian Type Selection -->
+                  <div class="row mb-4">
+                    <div class="col-12">
+                      <div class="d-flex gap-4">
+                        <div class="form-check">
+                          <input
+                            class="form-check-input"
+                            type="radio"
+                            name="guardianType"
+                            id="newGuardian"
+                            :value="true"
+                            v-model="formData.isNewGuardian"
+                          />
+                          <label
+                            class="form-check-label fw-bold"
+                            for="newGuardian"
+                          >
+                            إضافة وصي جديد
+                          </label>
+                        </div>
+                        <div class="form-check">
+                          <input
+                            class="form-check-input"
+                            type="radio"
+                            name="guardianType"
+                            id="existingGuardian"
+                            :value="false"
+                            v-model="formData.isNewGuardian"
+                          />
+                          <label
+                            class="form-check-label fw-bold"
+                            for="existingGuardian"
+                          >
+                            اختيار وصي موجود
+                          </label>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+
+                  <!-- Existing Guardian Selection -->
+                  <div v-if="!formData.isNewGuardian" class="row g-3">
+                    <div class="col-12">
+                      <label class="form-label fw-bold">اختر الوصي</label>
+                      <select
+                        v-model="formData.selectedGuardianId"
+                        @change="onGuardianSelect"
+                        class="form-select"
+                        required
+                      >
+                        <option value="">-- اختر وصياً --</option>
+                        <option
+                          v-for="guardian in existingGuardians"
+                          :key="guardian.guardianId"
+                          :value="guardian.guardianId"
+                        >
+                          {{ guardian.firstName }} {{ guardian.secondName }}
+                          {{ guardian.lastName }} ({{ guardian.relationship }})
+                        </option>
+                      </select>
+                    </div>
+
+                    <!-- Display Selected Guardian Info -->
+                    <div v-if="selectedGuardianInfo" class="col-12 mt-3">
+                      <div class="alert alert-info">
+                        <h6 class="fw-bold mb-2">معلومات الوصي المختار:</h6>
+                        <p class="mb-1">
+                          <strong>الاسم:</strong>
+                          {{ selectedGuardianInfo.firstName }}
+                          {{ selectedGuardianInfo.secondName }}
+                          {{ selectedGuardianInfo.thirdName }}
+                          {{ selectedGuardianInfo.lastName }}
+                        </p>
+                        <p class="mb-1">
+                          <strong>صلة القرابة:</strong>
+                          {{ selectedGuardianInfo.relationship }}
+                        </p>
+                        <p class="mb-1">
+                          <strong>المهنة:</strong>
+                          {{ selectedGuardianInfo.guardianJob || "غير محدد" }}
+                        </p>
+                        <p class="mb-0">
+                          <strong>رقم الهاتف:</strong>
+                          {{
+                            selectedGuardianInfo.guardianPhoneNumber ||
+                            "غير محدد"
+                          }}
+                        </p>
+                      </div>
+                    </div>
+                  </div>
+
+                  <!-- New Guardian Fields -->
+                  <div v-if="formData.isNewGuardian" class="row g-3">
                     <div class="col-md-6">
-                      <label class="form-label">الرقم التعريفي للوصي</label>
+                      <label class="form-label">الرقم الوطني للوصي</label>
                       <input
                         v-model="formData.guardian.guardianId"
                         type="text"
@@ -399,6 +493,8 @@ const AUTH_TOKEN = localStorage.getItem("token");
 
 const existingFamilies = ref([]);
 const selectedFamilyInfo = ref(null);
+const existingGuardians = ref([]);
+const selectedGuardianInfo = ref(null);
 
 const formData = reactive({
   id: "", // سيتم إدخاله يدوياً
@@ -421,6 +517,8 @@ const formData = reactive({
   selectedFamilyId: "",
   newFamilyName: "",
   familyHouseOwned: false,
+  isNewGuardian: true,
+  selectedGuardianId: "",
   guardian: {
     guardianId: "",
     firstName: "",
@@ -437,6 +535,7 @@ const formData = reactive({
 // Fetch existing families when component mounts
 onMounted(async () => {
   await fetchExistingFamilies();
+  await fetchExistingGuardians();
 });
 
 const fetchExistingFamilies = async () => {
@@ -466,6 +565,33 @@ const fetchExistingFamilies = async () => {
   }
 };
 
+const fetchExistingGuardians = async () => {
+  try {
+    alertify.message("جاري تحميل قائمة الأوصياء...");
+
+    const response = await axios.get(GuardianAPI.value, {
+      headers: {
+        Authorization: `Bearer ${AUTH_TOKEN}`,
+      },
+    });
+    existingGuardians.value = response.data;
+
+    alertify.success("تم تحميل قائمة الأوصياء بنجاح");
+  } catch (error) {
+    console.error("Error fetching guardians:", error);
+
+    if (error.response) {
+      const errorMessage =
+        error.response.data.message || error.response.statusText;
+      alertify.error(`حدث خطأ أثناء جلب قائمة الأوصياء: ${errorMessage}`);
+    } else if (error.request) {
+      alertify.error("لا يمكن الاتصال بالخادم. يرجى التحقق من اتصال الإنترنت");
+    } else {
+      alertify.error("حدث خطأ أثناء جلب قائمة الأوصياء");
+    }
+  }
+};
+
 const onFamilySelect = () => {
   if (formData.selectedFamilyId) {
     selectedFamilyInfo.value = existingFamilies.value.find(
@@ -484,6 +610,22 @@ const onFamilySelect = () => {
     selectedFamilyInfo.value = null;
     formData.numberOfFamilyMembers = 1;
     formData.isHouseOwned = false;
+  }
+};
+
+const onGuardianSelect = () => {
+  if (formData.selectedGuardianId) {
+    selectedGuardianInfo.value = existingGuardians.value.find(
+      (guardian) => guardian.guardianId == formData.selectedGuardianId,
+    );
+
+    if (selectedGuardianInfo.value) {
+      alertify.success(
+        `تم اختيار الوصي: ${selectedGuardianInfo.value.firstName} ${selectedGuardianInfo.value.lastName}`,
+      );
+    }
+  } else {
+    selectedGuardianInfo.value = null;
   }
 };
 
@@ -542,6 +684,52 @@ watch(
   },
 );
 
+// Watch for guardian selection changes
+watch(
+  () => formData.isNewGuardian,
+  (newVal) => {
+    if (newVal) {
+      // Reset existing guardian selection
+      formData.selectedGuardianId = "";
+      selectedGuardianInfo.value = null;
+    } else {
+      // Clear new guardian form
+      formData.guardian = {
+        guardianId: "",
+        firstName: "",
+        secondName: "",
+        thirdName: "",
+        lastName: "",
+        relationship: "",
+        guardianJob: "",
+        guardianPhoneNumber: "",
+      };
+    }
+  },
+);
+
+watch(
+  () => formData.isOrphan,
+  (newVal) => {
+    if (newVal) {
+      formData.isNewGuardian = true;
+    } else {
+      formData.selectedGuardianId = "";
+      selectedGuardianInfo.value = null;
+      formData.guardian = {
+        guardianId: "",
+        firstName: "",
+        secondName: "",
+        thirdName: "",
+        lastName: "",
+        relationship: "",
+        guardianJob: "",
+        guardianPhoneNumber: "",
+      };
+    }
+  },
+);
+
 const submitForm = async () => {
   if (!AUTH_TOKEN) {
     alertify.error("الرجاء تسجيل الدخول أولاً.");
@@ -550,7 +738,7 @@ const submitForm = async () => {
 
   // Form validation
   if (!formData.id.trim()) {
-    alertify.warning("يرجى إدخال الرقم التعريفي");
+    alertify.warning("يرجى إدخال الرقم الوطني");
     return;
   }
 
@@ -569,9 +757,15 @@ const submitForm = async () => {
     return;
   }
 
-  if (formData.isOrphan && !formData.guardian.firstName.trim()) {
-    alertify.warning("يرجى إدخال بيانات الوصي للشخص اليتيم");
-    return;
+  if (formData.isOrphan) {
+    if (formData.isNewGuardian && !formData.guardian.firstName.trim()) {
+      alertify.warning("يرجى إدخال بيانات الوصي للشخص اليتيم");
+      return;
+    }
+    if (!formData.isNewGuardian && !formData.selectedGuardianId) {
+      alertify.warning("يرجى اختيار وصي للشخص اليتيم");
+      return;
+    }
   }
 
   if (
@@ -593,59 +787,68 @@ const submitForm = async () => {
 
         let guardianId = null;
 
-        // Step 1 & 2: إضافة الوصي أولاً إذا كان الشخص يتيماً
+        // Step 1 & 2: إضافة الوصي أولاً إذا كان الشخص يتيماً ووصي جديد
         if (formData.isOrphan) {
-          try {
-            alertify.message("جاري إضافة بيانات الوصي...");
+          if (formData.isNewGuardian) {
+            try {
+              alertify.message("جاري إضافة بيانات الوصي...");
 
-            // إنشاء payload للوصي بناءً على الـ schema المُقدم
-            const guardianPayload = {
-              guardianId: formData.guardian.guardianId,
-              firstName: formData.guardian.firstName,
-              secondName: formData.guardian.secondName,
-              thirdName: formData.guardian.thirdName,
-              lastName: formData.guardian.lastName,
-              relationship: formData.guardian.relationship,
-              guardianJob: formData.guardian.guardianJob,
-              guardianPhoneNumber: formData.guardian.guardianPhoneNumber,
-            };
+              // إنشاء payload للوصي بناءً على الـ schema المُقدم
+              const guardianPayload = {
+                guardianId: formData.guardian.guardianId,
+                firstName: formData.guardian.firstName,
+                secondName: formData.guardian.secondName,
+                thirdName: formData.guardian.thirdName,
+                lastName: formData.guardian.lastName,
+                relationship: formData.guardian.relationship,
+                guardianJob: formData.guardian.guardianJob,
+                guardianPhoneNumber: formData.guardian.guardianPhoneNumber,
+              };
 
-            console.log("Adding guardian first:", guardianPayload);
+              console.log("Adding guardian first:", guardianPayload);
 
-            // إرسال طلب إضافة الوصي
-            const guardianResponse = await axios.post(
-              GuardianAPI.value,
-              guardianPayload,
-              {
-                headers: {
-                  Authorization: `Bearer ${AUTH_TOKEN}`,
-                  "Content-Type": "application/json",
+              // إرسال طلب إضافة الوصي
+              const guardianResponse = await axios.post(
+                GuardianAPI.value,
+                guardianPayload,
+                {
+                  headers: {
+                    Authorization: `Bearer ${AUTH_TOKEN}`,
+                    "Content-Type": "application/json",
+                  },
                 },
-              },
-            );
-
-            // Step 3: الحصول على guardianId من الاستجابة
-            guardianId =
-              guardianResponse.data.guardianId ||
-              guardianResponse.data.id ||
-              guardianPayload.guardianId;
-
-            console.log("Guardian added successfully with ID:", guardianId);
-            alertify.success("تم إضافة بيانات الوصي بنجاح");
-          } catch (guardianError) {
-            console.error("Error adding guardian:", guardianError);
-
-            if (guardianError.response) {
-              const errorMessage =
-                guardianError.response.data.message ||
-                guardianError.response.statusText;
-              alertify.error(
-                `حدث خطأ أثناء إضافة بيانات الوصي: ${errorMessage}`,
               );
-            } else {
-              alertify.error("حدث خطأ أثناء إضافة بيانات الوصي");
+
+              // Step 3: الحصول على guardianId من الاستجابة
+              guardianId =
+                guardianResponse.data.guardianId ||
+                guardianResponse.data.id ||
+                guardianPayload.guardianId;
+
+              console.log("Guardian added successfully with ID:", guardianId);
+              alertify.success("تم إضافة بيانات الوصي بنجاح");
+            } catch (guardianError) {
+              console.error("Error adding guardian:", guardianError);
+
+              if (guardianError.response) {
+                const errorMessage =
+                  guardianError.response.data.message ||
+                  guardianError.response.statusText;
+                alertify.error(
+                  `حدث خطأ أثناء إضافة بيانات الوصي: ${errorMessage}`,
+                );
+              } else {
+                alertify.error("حدث خطأ أثناء إضافة بيانات الوصي");
+              }
+              return; // إيقاف العملية إذا فشل إضافة الوصي
             }
-            return; // إيقاف العملية إذا فشل إضافة الوصي
+          } else {
+            // Use existing guardian
+            guardianId = formData.selectedGuardianId;
+            alertify.success(`تم اختيار الوصي الموجود: ${guardianId}`);
+            // Use existing guardian
+            guardianId = formData.selectedGuardianId;
+            alertify.success(`تم اختيار الوصي الموجود: ${guardianId}`);
           }
         }
 
@@ -776,7 +979,7 @@ const submitForm = async () => {
 
         // Navigate after a short delay to show success message
         setTimeout(() => {
-          router.push("/individual");
+          router.back();
         }, 1500);
       } catch (err) {
         console.error("Error:", err);
@@ -788,9 +991,7 @@ const submitForm = async () => {
             err.response.data.message?.includes("duplicate") ||
             err.response.data.message?.includes("exists")
           ) {
-            alertify.error(
-              "الرقم التعريفي موجود مسبقاً. يرجى إدخال رقم مختلف.",
-            );
+            alertify.error("الرقم الوطني موجود مسبقاً. يرجى إدخال رقم مختلف.");
           } else {
             const errorMessage =
               err.response.data.message || err.response.statusText;

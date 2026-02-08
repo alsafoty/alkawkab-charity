@@ -19,38 +19,22 @@
                   <div class="row">
                     <div class="col-md-6">
                       <div class="form-group mb-3">
-                        <label class="form-label fw-bold">رب الأسرة</label>
+                        <label class="form-label fw-bold">اسم الأسرة</label>
                         <input
                           v-model="formData.name"
                           type="text"
                           class="form-control shadow-sm"
-                          placeholder="أدخل اسم رب الأسرة"
+                          placeholder="أدخل اسم الأسرة"
                           required
                         />
                       </div>
                     </div>
                     <div class="col-md-6">
                       <div class="form-group mb-3">
-                        <label class="form-label fw-bold">عدد الأفراد</label>
-                        <input
-                          v-model.number="formData.numberOfFamilyMembers"
-                          type="number"
-                          class="form-control shadow-sm"
-                          placeholder="أدخل عدد الأفراد"
-                          min="1"
-                          required
-                        />
-                        <small class="text-muted">
-                          قم بإدخال عدد أفراد الأسرة يدوياً
-                        </small>
-                      </div>
-                    </div>
-                    <div class="col-12">
-                      <div class="form-group mb-3">
                         <label class="form-label fw-bold mb-2"
                           >حالة السكن</label
                         >
-                        <div class="house-status p-3 bg-light rounded-3 border">
+                        <div class="house-status p-3 bg-white rounded-3 border">
                           <div class="form-check mb-0">
                             <input
                               v-model="formData.isHouseOwned"
@@ -63,6 +47,134 @@
                             </label>
                           </div>
                         </div>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              <!-- بيانات رب الأسرة -->
+              <div class="col-12 mb-4" v-if="headOfFamily.id">
+                <div
+                  class="section-card p-4 rounded-3 bg-light border-2 border-success"
+                >
+                  <h4 class="section-title mb-4 text-success">
+                    <i class="bi bi-person-badge me-2"></i>
+                    بيانات رب الأسرة
+                  </h4>
+                  <div class="row">
+                    <div class="col-md-6">
+                      <div class="form-group mb-3">
+                        <label class="form-label fw-bold">رقم الهوية</label>
+                        <input
+                          v-model="headOfFamily.id"
+                          type="text"
+                          class="form-control shadow-sm"
+                          placeholder="رقم الهوية"
+                          readonly
+                          disabled
+                        />
+                        <small class="text-muted"
+                          >لا يمكن تعديل رقم الهوية</small
+                        >
+                      </div>
+                    </div>
+                    <div class="col-md-6">
+                      <div class="form-group mb-3">
+                        <label class="form-label fw-bold">الجنس</label>
+                        <select
+                          v-model="headOfFamily.gender"
+                          class="form-control shadow-sm"
+                          required
+                        >
+                          <option value="">اختر الجنس</option>
+                          <option value="ذكر">ذكر</option>
+                          <option value="أنثى">أنثى</option>
+                        </select>
+                      </div>
+                    </div>
+                    <div class="col-md-3">
+                      <div class="form-group mb-3">
+                        <label class="form-label fw-bold">الاسم الأول *</label>
+                        <input
+                          v-model="headOfFamily.firstName"
+                          type="text"
+                          class="form-control shadow-sm"
+                          placeholder="الاسم الأول"
+                          required
+                        />
+                      </div>
+                    </div>
+                    <div class="col-md-3">
+                      <div class="form-group mb-3">
+                        <label class="form-label fw-bold">اسم الأب *</label>
+                        <input
+                          v-model="headOfFamily.secondName"
+                          type="text"
+                          class="form-control shadow-sm"
+                          placeholder="اسم الأب"
+                          required
+                        />
+                      </div>
+                    </div>
+                    <div class="col-md-3">
+                      <div class="form-group mb-3">
+                        <label class="form-label fw-bold">اسم الجد *</label>
+                        <input
+                          v-model="headOfFamily.thirdName"
+                          type="text"
+                          class="form-control shadow-sm"
+                          placeholder="اسم الجد"
+                          required
+                        />
+                      </div>
+                    </div>
+                    <div class="col-md-3">
+                      <div class="form-group mb-3">
+                        <label class="form-label fw-bold">اسم العائلة *</label>
+                        <input
+                          v-model="headOfFamily.lastName"
+                          type="text"
+                          class="form-control shadow-sm"
+                          placeholder="اسم العائلة"
+                          required
+                        />
+                      </div>
+                    </div>
+                    <div class="col-md-6">
+                      <div class="form-group mb-3">
+                        <label class="form-label fw-bold">رقم الهاتف</label>
+                        <input
+                          v-model="headOfFamily.phoneNumber"
+                          type="text"
+                          class="form-control shadow-sm"
+                          placeholder="رقم الهاتف"
+                        />
+                      </div>
+                    </div>
+                    <div class="col-md-6">
+                      <div class="form-group mb-3">
+                        <label class="form-label fw-bold"
+                          >المستوى التعليمي *</label
+                        >
+                        <input
+                          v-model="headOfFamily.educationalLevel"
+                          type="text"
+                          class="form-control shadow-sm"
+                          placeholder="المستوى التعليمي"
+                          required
+                        />
+                      </div>
+                    </div>
+                    <div class="col-md-12">
+                      <div class="form-group mb-3">
+                        <label class="form-label fw-bold">الوظيفة</label>
+                        <input
+                          v-model="headOfFamily.job"
+                          type="text"
+                          class="form-control shadow-sm"
+                          placeholder="الوظيفة"
+                        />
                       </div>
                     </div>
                   </div>
@@ -91,14 +203,25 @@
                           {{ person.firstName }} {{ person.lastName }} (رقم:
                           {{ person.id }})
                         </span>
-                        <button
-                          type="button"
-                          class="btn btn-outline-danger btn-sm"
-                          @click="removeMember(person)"
-                          :disabled="removingIds.includes(person.id)"
-                        >
-                          إزالة
-                        </button>
+                        <div class="btn-group" role="group">
+                          <button
+                            type="button"
+                            class="btn btn-outline-primary btn-sm"
+                            @click="editPerson(person)"
+                          >
+                            <i class="bi bi-pencil-square me-1"></i>
+                            تعديل
+                          </button>
+                          <button
+                            type="button"
+                            class="btn btn-outline-danger btn-sm"
+                            @click="removeMember(person)"
+                            :disabled="removingIds.includes(person.id)"
+                          >
+                            <i class="bi bi-trash me-1"></i>
+                            إزالة
+                          </button>
+                        </div>
                       </li>
                     </ul>
                   </div>
@@ -221,6 +344,22 @@ const formData = ref({
   isHouseOwned: false,
 });
 
+const headOfFamily = ref({
+  id: "",
+  gender: "",
+  firstName: "",
+  secondName: "",
+  thirdName: "",
+  lastName: "",
+  phoneNumber: "",
+  educationalLevel: "",
+  job: "",
+  isPartOfFamily: true,
+  isWidow: false,
+  isOrphan: false,
+  guardianId: null,
+});
+
 const allPersons = ref([]);
 const currentMembers = ref([]);
 const personsWithoutFamily = ref([]);
@@ -279,6 +418,41 @@ const fetchFamilyAndMembers = async () => {
       (p) => p.familyId == route.params.id,
     );
 
+    // جلب بيانات رب الأسرة (أول عضو)
+    if (
+      familyRes.data.familyMembers &&
+      familyRes.data.familyMembers.length > 0
+    ) {
+      const headId = familyRes.data.familyMembers[0];
+      try {
+        const headRes = await axios.get(
+          `${process.env.VUE_APP_API_BASE_URL}/api/Person/${headId}`,
+          {
+            headers: { Authorization: `Bearer ${AUTH_TOKEN}` },
+          },
+        );
+        headOfFamily.value = {
+          id: headRes.data.id || "",
+          gender: headRes.data.gender || "",
+          firstName: headRes.data.firstName || "",
+          secondName: headRes.data.secondName || "",
+          thirdName: headRes.data.thirdName || "",
+          lastName: headRes.data.lastName || "",
+          phoneNumber: headRes.data.phoneNumber || "",
+          educationalLevel: headRes.data.educationalLevel || "",
+          job: headRes.data.job || "",
+          isPartOfFamily: headRes.data.isPartOfFamily,
+          isWidow: headRes.data.isWidow,
+          isOrphan: headRes.data.isOrphan,
+          guardianId: headRes.data.guardianId,
+          familyId: headRes.data.familyId,
+        };
+      } catch (error) {
+        console.error("Error fetching head of family:", error);
+        alertify.warning("تعذر جلب بيانات رب الأسرة");
+      }
+    }
+
     // تصفية الأشخاص غير المنتمين لأي عائلة
     personsWithoutFamily.value = allPersons.value.filter(
       (p) => !p.familyId || p.familyId === 0 || p.familyId === null,
@@ -291,6 +465,11 @@ const fetchFamilyAndMembers = async () => {
 };
 
 onMounted(fetchFamilyAndMembers);
+
+// الانتقال إلى صفحة تعديل بيانات الفرد
+const editPerson = (person) => {
+  router.push(`/edit-person/${person.id}`);
+};
 
 // إزالة عضو من العائلة
 const removeMember = async (person) => {
@@ -348,7 +527,35 @@ const submitForm = async () => {
   alertify.message("جاري حفظ التعديلات...");
 
   try {
-    // تحديث بيانات العائلة
+    // 1. تحديث بيانات رب الأسرة
+    if (headOfFamily.value.id) {
+      const updatedHead = {
+        ...getPersonWithoutAssistances(headOfFamily.value),
+        gender: headOfFamily.value.gender,
+        firstName: headOfFamily.value.firstName,
+        secondName: headOfFamily.value.secondName,
+        thirdName: headOfFamily.value.thirdName,
+        lastName: headOfFamily.value.lastName,
+        phoneNumber: headOfFamily.value.phoneNumber || null,
+        educationalLevel: headOfFamily.value.educationalLevel,
+        job: headOfFamily.value.job || null,
+        familyId: parseInt(route.params.id),
+        isPartOfFamily: true,
+      };
+
+      await axios.put(
+        `${process.env.VUE_APP_API_BASE_URL}/api/Person/${headOfFamily.value.id}`,
+        updatedHead,
+        {
+          headers: {
+            Authorization: `Bearer ${AUTH_TOKEN}`,
+            "Content-Type": "application/json",
+          },
+        },
+      );
+    }
+
+    // 2. تحديث بيانات العائلة
     await axios.put(
       `${process.env.VUE_APP_API_BASE_URL}/api/Family/${route.params.id}`,
       {
@@ -364,7 +571,7 @@ const submitForm = async () => {
       },
     );
 
-    // إضافة الأعضاء الجدد
+    // 3. إضافة الأعضاء الجدد
     for (const personId of selectedToAdd.value) {
       const person = allPersons.value.find((p) => p.id === personId);
       if (person) {

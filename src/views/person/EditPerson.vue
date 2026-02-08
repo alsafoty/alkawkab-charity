@@ -12,7 +12,7 @@
             <form @submit.prevent="submitForm" class="row g-3">
               <!-- Personal Information -->
               <div class="col-md-6">
-                <label class="form-label fw-bold">الرقم التعريفي</label>
+                <label class="form-label fw-bold">الرقم الوطني</label>
                 <input
                   v-model="formData.id"
                   type="text"
@@ -20,7 +20,7 @@
                   readonly
                   disabled
                 />
-                <small class="text-muted">لا يمكن تعديل الرقم التعريفي</small>
+                <small class="text-muted">لا يمكن تعديل الرقم الوطني</small>
               </div>
               <div class="col-md-6">
                 <label class="form-label">الاسم الأول</label>

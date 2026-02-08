@@ -17,7 +17,7 @@
               <h4 class="section-title mb-3">المعلومات الشخصية</h4>
               <div class="info-grid">
                 <div class="info-item">
-                  <strong>الرقم التعريفي:</strong> {{ personData.id }}
+                  <strong>الرقم الوطني:</strong> {{ personData.id }}
                 </div>
                 <div class="info-item">
                   <strong>الجنس:</strong> {{ personData.gender }}
@@ -198,7 +198,7 @@
                 <div class="row g-3">
                   <div class="col-md-6">
                     <div class="info-item">
-                      <strong>رقم الوصي:</strong>
+                      <strong>الرقم الوطني:</strong>
                       {{ guardianData.guardianId }}
                     </div>
                   </div>
@@ -285,7 +285,7 @@
                     <tr>
                       <th>رقم المساعدة</th>
                       <th>نوع المساعدة</th>
-                      <th>عدد المساعدات</th>
+                      <th>تاريخ المساعدة</th>
                       <th>ملاحظات</th>
                       <th class="no-print">الإجراءات</th>
                     </tr>
@@ -299,11 +299,7 @@
                       <td>
                         {{ getAssistanceTypeName(assistance.assistanceTypeId) }}
                       </td>
-                      <td>
-                        <span class="badge bg-success">{{
-                          assistance.numberOfAssistance
-                        }}</span>
-                      </td>
+                      <td>{{ formatDate(assistance.date) }}</td>
                       <td>{{ assistance.note || "-" }}</td>
                       <td class="no-print">
                         <button
@@ -356,7 +352,7 @@
     <!-- Hidden content for printing -->
     <div id="printableContent" style="display: none">
       <div class="print-header text-center mb-4">
-        <h2 class="fw-bold">تفاصيل الشخص</h2>
+        <h2 class="fw-bold">تفاصيل المستفيد</h2>
         <p class="text-muted">تاريخ الطباعة: {{ getCurrentDate() }}</p>
       </div>
 
@@ -364,7 +360,7 @@
         <h4 class="section-title">المعلومات الشخصية</h4>
         <table class="print-info-table">
           <tr>
-            <td><strong>الرقم التعريفي:</strong></td>
+            <td><strong>الرقم الوطني:</strong></td>
             <td>{{ personData.id }}</td>
             <td><strong>الجنس:</strong></td>
             <td>{{ personData.gender }}</td>
@@ -409,9 +405,10 @@
         </table>
       </div>
 
-      <div
+      <!-- <div
         v-if="personData.isPartOfFamily && getFamilyInfo()"
         class="print-section mb-3"
+        display="none"
       >
         <h4 class="section-title">معلومات الأسرة</h4>
         <table class="print-info-table">
@@ -432,7 +429,7 @@
             </li>
           </ul>
         </div>
-      </div>
+      </div> -->
 
       <div
         v-if="personData.isOrphan && guardianData"
@@ -470,7 +467,7 @@
             <tr>
               <th>رقم المساعدة</th>
               <th>نوع المساعدة</th>
-              <th>عدد المساعدات</th>
+              <th>تاريخ المساعدة</th>
               <th>ملاحظات</th>
             </tr>
           </thead>
@@ -481,7 +478,7 @@
             >
               <td>{{ assistance.assistanceId }}</td>
               <td>{{ getAssistanceTypeName(assistance.assistanceTypeId) }}</td>
-              <td>{{ assistance.numberOfAssistance }}</td>
+              <td>{{ formatDate(assistance.date) }}</td>
               <td>{{ assistance.note || "-" }}</td>
             </tr>
           </tbody>
@@ -603,6 +600,17 @@ const fetchPersonDetails = async (personId) => {
     console.error(`Error fetching person ${personId}:`, error);
     return null;
   }
+};
+
+// دالة لتنسيق التاريخ
+const formatDate = (date) => {
+  if (!date) return "غير محدد";
+  const d = new Date(date);
+  return d.toLocaleDateString("ar-JO", {
+    year: "numeric",
+    month: "long",
+    day: "numeric",
+  });
 };
 
 // دالة لجلب تفاصيل جميع أعضاء العائلة
@@ -770,7 +778,7 @@ const fetchFamilyData = async (familyId) => {
 };
 
 const getCurrentDate = () => {
-  return new Date().toLocaleDateString("ar-EG", {
+  return new Date().toLocaleDateString("ar-JO", {
     year: "numeric",
     month: "long",
     day: "numeric",

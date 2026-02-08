@@ -1,11 +1,11 @@
 <template>
   <div
-    class="persons-table container my-4 bg-white bg-opacity-50 p-5 rounded-4 shadow-lg"
+    class="guardians-table container my-4 bg-white bg-opacity-50 p-5 rounded-4 shadow-lg"
     dir="rtl"
     ref="printArea"
   >
     <div class="d-flex justify-content-between align-items-center mb-4">
-      <h2 class="mb-0 fw-bold">جدول الأرامل</h2>
+      <h2 class="mb-0 fw-bold">جدول الأوصياء</h2>
       <button class="btn btn-success no-print" @click="printContent">
         <i class="bi bi-printer me-1"></i>
         طباعة
@@ -14,10 +14,10 @@
 
     <div class="d-flex justify-content-between align-items-center mb-4">
       <div class="d-flex gap-2 no-print">
-        <!-- زر إضافة شخص جديد مع تأثير التوسع -->
-        <router-link to="/add-person" class="btn btn-success expandable-btn">
+        <!-- زر إضافة وصي جديد -->
+        <router-link to="/add-guardian" class="btn btn-success expandable-btn">
           <i class="bi bi-plus-circle icon"></i>
-          <span class="btn-text">إضافة شخص جديد</span>
+          <span class="btn-text">إضافة وصي جديد</span>
         </router-link>
       </div>
 
@@ -26,7 +26,7 @@
           v-model="searchQuery"
           type="text"
           class="form-control custom-input"
-          placeholder="ابحث بالاسم أو الرقم الوطني أو المستوى التعليمي..."
+          placeholder="ابحث بالاسم أو الرقم الوطني أو صلة القرابة..."
         />
       </div>
 
@@ -53,7 +53,7 @@
       <div class="spinner-border text-success" role="status">
         <span class="visually-hidden">جاري التحميل...</span>
       </div>
-      <p class="mt-2 text-muted">جاري تحميل بيانات الأرامل...</p>
+      <p class="mt-2 text-muted">جاري تحميل بيانات الأوصياء...</p>
     </div>
 
     <div
@@ -64,26 +64,32 @@
         <thead class="table-header text-white">
           <tr>
             <th>الرقم الوطني</th>
-            <th>الجنس</th>
             <th>الاسم الكامل</th>
+            <th>صلة القرابة</th>
+            <th>المهنة</th>
             <th>رقم الهاتف</th>
-            <th>المستوى التعليمي</th>
+            <th>عدد الأيتام</th>
             <th class="no-print">الإجراءات</th>
           </tr>
         </thead>
         <tbody>
-          <tr v-for="person in filteredWidows" :key="person.id">
-            <td>{{ person.id }}</td>
-            <td>{{ person.gender }}</td>
+          <tr v-for="guardian in filteredGuardians" :key="guardian.guardianId">
+            <td>{{ guardian.guardianId }}</td>
             <td>
-              {{ person.firstName }} {{ person.secondName }}
-              {{ person.thirdName }} {{ person.lastName }}
+              {{ guardian.firstName }} {{ guardian.secondName }}
+              {{ guardian.thirdName }} {{ guardian.lastName }}
             </td>
-            <td>{{ person.phoneNumber }}</td>
-            <td>{{ person.educationalLevel }}</td>
+            <td>{{ guardian.relationship }}</td>
+            <td>{{ guardian.guardianJob || "-" }}</td>
+            <td>{{ guardian.guardianPhoneNumber || "-" }}</td>
+            <td>
+              <span class="badge bg-success">{{
+                guardian.peopleUnderGuardianship?.length || 0
+              }}</span>
+            </td>
             <td class="d-flex gap-2 justify-content-center no-print">
               <button
-                @click="viewDetails(person.id)"
+                @click="viewGuardianDetails(guardian.guardianId)"
                 class="btn btn-primary btn-sm expandable-action-btn"
                 title="عرض التفاصيل"
               >
@@ -91,7 +97,7 @@
                 <span class="btn-text"></span>
               </button>
               <button
-                @click="editPerson(person.id)"
+                @click="editGuardian(guardian.guardianId)"
                 class="btn btn-warning btn-sm expandable-action-btn"
                 title="تعديل"
               >
@@ -99,7 +105,7 @@
                 <span class="btn-text"></span>
               </button>
               <button
-                @click="deletePerson(person.id)"
+                @click="deleteGuardian(guardian.guardianId)"
                 class="btn btn-danger btn-sm expandable-action-btn"
                 title="حذف"
               >
@@ -113,16 +119,16 @@
     </div>
 
     <div
-      v-if="!loading && !filteredWidows.length"
+      v-if="!loading && !filteredGuardians.length"
       class="alert alert-warning text-center mt-3"
     >
-      لا يوجد أرامل مطابقون للبحث المحدد
+      لا يوجد أوصياء مطابقون للبحث المحدد
     </div>
 
     <!-- Hidden content for printing -->
     <div id="printableContent" style="display: none">
       <div class="print-header text-center mb-4">
-        <h2 class="fw-bold">تقرير الأرامل</h2>
+        <h2 class="fw-bold">تقرير الأوصياء</h2>
         <p class="text-muted">تاريخ الطباعة: {{ getCurrentDate() }}</p>
       </div>
 
@@ -131,28 +137,30 @@
           <tr>
             <th>الرقم الوطني</th>
             <th>الاسم الكامل</th>
-            <th>الجنس</th>
+            <th>صلة القرابة</th>
+            <th>المهنة</th>
             <th>رقم الهاتف</th>
-            <th>المستوى التعليمي</th>
+            <th>عدد الأيتام</th>
           </tr>
         </thead>
         <tbody>
-          <tr v-for="person in filteredWidows" :key="person.id">
-            <td>{{ person.id }}</td>
+          <tr v-for="guardian in filteredGuardians" :key="guardian.guardianId">
+            <td>{{ guardian.guardianId }}</td>
             <td>
-              {{ person.firstName }} {{ person.secondName }}
-              {{ person.thirdName }} {{ person.lastName }}
+              {{ guardian.firstName }} {{ guardian.secondName }}
+              {{ guardian.thirdName }} {{ guardian.lastName }}
             </td>
-            <td>{{ person.gender }}</td>
-            <td>{{ person.phoneNumber }}</td>
-            <td>{{ person.educationalLevel }}</td>
+            <td>{{ guardian.relationship }}</td>
+            <td>{{ guardian.guardianJob || "-" }}</td>
+            <td>{{ guardian.guardianPhoneNumber || "-" }}</td>
+            <td>{{ guardian.peopleUnderGuardianship?.length || 0 }}</td>
           </tr>
         </tbody>
       </table>
 
       <div class="print-footer mt-4">
         <p class="text-center text-muted">
-          إجمالي عدد الأرامل: {{ filteredWidows.length }}
+          إجمالي عدد الأوصياء: {{ filteredGuardians.length }}
         </p>
       </div>
     </div>
@@ -165,7 +173,7 @@ import axios from "axios";
 import { useRouter } from "vue-router";
 import alertify from "alertifyjs";
 
-// Configure alertify for this component
+// Configure alertify
 alertify.set("notifier", "position", "bottom-right");
 alertify.set("notifier", "delay", 5);
 
@@ -173,40 +181,38 @@ const API_BASE_URL = process.env.VUE_APP_API_BASE_URL + "/api";
 const router = useRouter();
 const AUTH_TOKEN = localStorage.getItem("token");
 
-const widows = ref([]);
+const guardians = ref([]);
 const searchQuery = ref("");
 const sortBy = ref("name"); // الترتيب الافتراضي حسب الاسم
 const loading = ref(false);
 const isDeleting = ref(false);
 const printArea = ref(null);
 
-// Fetch widows data
-const fetchWidows = async () => {
+// Fetch guardians data
+const fetchGuardians = async () => {
   loading.value = true;
   try {
-    alertify.message("جاري تحميل بيانات الأرامل...");
+    alertify.message("جاري تحميل بيانات الأوصياء...");
 
-    const response = await axios.get(`${API_BASE_URL}/Person`, {
+    const response = await axios.get(`${API_BASE_URL}/Guardian`, {
       headers: {
         Authorization: `Bearer ${AUTH_TOKEN}`,
       },
     });
 
-    // Filter only widows
-    widows.value = response.data.filter((person) => person.isWidow === true);
-
-    alertify.success(`تم تحميل ${widows.value.length} أرمل/أرملة بنجاح`);
+    guardians.value = response.data;
+    alertify.success(`تم تحميل ${guardians.value.length} وصي بنجاح`);
   } catch (error) {
-    console.error("Error fetching widows:", error);
+    console.error("Error fetching guardians:", error);
 
     if (error.response) {
       const errorMessage =
         error.response.data.message || error.response.statusText;
-      alertify.error(`حدث خطأ أثناء جلب بيانات الأرامل: ${errorMessage}`);
+      alertify.error(`حدث خطأ أثناء جلب بيانات الأوصياء: ${errorMessage}`);
     } else if (error.request) {
       alertify.error("لا يمكن الاتصال بالخادم. يرجى التحقق من اتصال الإنترنت");
     } else {
-      alertify.error("حدث خطأ أثناء جلب بيانات الأرامل");
+      alertify.error("حدث خطأ أثناء جلب بيانات الأوصياء");
     }
   } finally {
     loading.value = false;
@@ -214,31 +220,31 @@ const fetchWidows = async () => {
 };
 
 // Enhanced search functionality with sorting
-const filteredWidows = computed(() => {
-  let result = widows.value;
+const filteredGuardians = computed(() => {
+  let result = guardians.value;
 
   // تطبيق البحث
   if (searchQuery.value) {
     const query = searchQuery.value.toLowerCase().trim();
 
-    result = result.filter((person) => {
+    result = result.filter((guardian) => {
       const fullName =
-        `${person.firstName} ${person.secondName} ${person.thirdName} ${person.lastName}`.toLowerCase();
+        `${guardian.firstName} ${guardian.secondName} ${guardian.thirdName} ${guardian.lastName}`.toLowerCase();
 
       const matchesName = fullName.includes(query);
-      const matchesId = person.id.toString().includes(query);
-      const matchesEducation = person.educationalLevel
+      const matchesId = guardian.guardianId.toString().includes(query);
+      const matchesRelationship = guardian.relationship
         ?.toLowerCase()
         .includes(query);
-      const matchesPhone = person.phoneNumber?.includes(query);
-      const matchesGender = person.gender?.toLowerCase().includes(query);
+      const matchesJob = guardian.guardianJob?.toLowerCase().includes(query);
+      const matchesPhone = guardian.guardianPhoneNumber?.includes(query);
 
       return (
         matchesName ||
         matchesId ||
-        matchesEducation ||
-        matchesPhone ||
-        matchesGender
+        matchesRelationship ||
+        matchesJob ||
+        matchesPhone
       );
     });
   }
@@ -255,17 +261,17 @@ const filteredWidows = computed(() => {
 });
 
 // Navigation functions
-const viewDetails = (id) => {
-  router.push(`/view-person/${id}`);
+const viewGuardianDetails = (id) => {
+  router.push(`/view-guardian/${id}`);
 };
 
-const editPerson = (id) => {
-  router.push(`/edit-person/${id}`);
+const editGuardian = (id) => {
+  router.push(`/edit-guardian/${id}`);
 };
 
-const deletePerson = async (id) => {
+const deleteGuardian = async (id) => {
   if (!id || id === "") {
-    alertify.error("معرف الشخص غير صحيح");
+    alertify.error("معرف الوصي غير صحيح");
     return;
   }
 
@@ -275,58 +281,66 @@ const deletePerson = async (id) => {
   }
 
   if (isDeleting.value) {
-    alertify.warning("يتم حذف شخص آخر، يرجى الانتظار");
+    alertify.warning("يتم حذف وصي آخر، يرجى الانتظار");
     return;
   }
 
-  const person = widows.value.find((p) => p.id === id);
-  const personName = person
-    ? `${person.firstName} ${person.lastName}`
-    : `الشخص رقم ${id}`;
+  const guardian = guardians.value.find((g) => g.guardianId === id);
+  const guardianName = guardian
+    ? `${guardian.firstName} ${guardian.lastName}`
+    : `الوصي رقم ${id}`;
+
+  // Check if guardian has orphans under guardianship
+  if (guardian?.peopleUnderGuardianship?.length > 0) {
+    alertify.error(
+      `لا يمكن حذف ${guardianName} لأنه وصي على ${guardian.peopleUnderGuardianship.length} يتيم/أيتام`,
+    );
+    return;
+  }
 
   alertify.confirm(
     "تأكيد الحذف",
-    `هل أنت متأكد من حذف ${personName}؟`,
+    `هل أنت متأكد من حذف ${guardianName}؟`,
     async function () {
       isDeleting.value = true;
 
       try {
-        alertify.message("جاري حذف الشخص...");
+        alertify.message("جاري حذف الوصي...");
 
-        await axios.delete(`${API_BASE_URL}/Person/${id}`, {
+        await axios.delete(`${API_BASE_URL}/Guardian/${id}`, {
           headers: {
             Authorization: `Bearer ${AUTH_TOKEN}`,
           },
         });
 
-        const index = widows.value.findIndex((p) => p.id === id);
+        const index = guardians.value.findIndex((g) => g.guardianId === id);
         if (index > -1) {
-          widows.value.splice(index, 1);
+          guardians.value.splice(index, 1);
         }
 
-        alertify.success(`تم حذف ${personName} بنجاح`);
+        alertify.success(`تم حذف ${guardianName} بنجاح`);
       } catch (error) {
-        console.error("Error deleting person:", error);
+        console.error("Error deleting guardian:", error);
 
         if (error.response) {
           if (error.response.status === 404) {
-            alertify.warning("الشخص غير موجود أو تم حذفه مسبقاً");
-            await fetchWidows();
+            alertify.warning("الوصي غير موجود أو تم حذفه مسبقاً");
+            await fetchGuardians();
           } else if (error.response.status === 403) {
-            alertify.error("ليس لديك صلاحية لحذف هذا الشخص");
+            alertify.error("ليس لديك صلاحية لحذف هذا الوصي");
           } else if (error.response.status === 409) {
-            alertify.error("لا يمكن حذف هذا الشخص لأنه مرتبط ببيانات أخرى");
+            alertify.error("لا يمكن حذف هذا الوصي لأنه مرتبط بأيتام");
           } else {
             const errorMessage =
               error.response.data.message || error.response.statusText;
-            alertify.error(`حدث خطأ أثناء حذف الشخص: ${errorMessage}`);
+            alertify.error(`حدث خطأ أثناء حذف الوصي: ${errorMessage}`);
           }
         } else if (error.request) {
           alertify.error(
             "لا يمكن الاتصال بالخادم. يرجى التحقق من اتصال الإنترنت",
           );
         } else {
-          alertify.error("حدث خطأ أثناء حذف الشخص");
+          alertify.error("حدث خطأ أثناء حذف الوصي");
         }
       } finally {
         isDeleting.value = false;
@@ -357,7 +371,7 @@ const printContent = () => {
     <!DOCTYPE html>
     <html dir="rtl">
     <head>
-      <title>طباعة جدول الأرامل</title>
+      <title>طباعة جدول الأوصياء</title>
       <meta charset="utf-8">
       <style>
         body { 
@@ -424,11 +438,11 @@ const printContent = () => {
   }, 250);
 };
 
-onMounted(fetchWidows);
+onMounted(fetchGuardians);
 </script>
 
 <style scoped>
-.persons-table {
+.guardians-table {
   font-family: "Tajawal", sans-serif;
 }
 
@@ -502,6 +516,11 @@ onMounted(fetchWidows);
   margin-right: 0.5rem;
 }
 
+.btn-danger.expandable-action-btn:hover {
+  box-shadow: 0 4px 8px rgba(220, 53, 69, 0.3);
+  transform: translateY(-1px);
+}
+
 .btn-primary.expandable-action-btn {
   background-color: #42b983;
   border-color: #42b983;
@@ -516,11 +535,6 @@ onMounted(fetchWidows);
 
 .btn-warning.expandable-action-btn:hover {
   box-shadow: 0 4px 8px rgba(255, 193, 7, 0.3);
-  transform: translateY(-1px);
-}
-
-.btn-danger.expandable-action-btn:hover {
-  box-shadow: 0 4px 8px rgba(220, 53, 69, 0.3);
   transform: translateY(-1px);
 }
 
@@ -563,7 +577,7 @@ onMounted(fetchWidows);
     background: white !important;
   }
 
-  .persons-table {
+  .guardians-table {
     box-shadow: none !important;
     background: white !important;
   }

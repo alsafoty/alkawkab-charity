@@ -18,13 +18,29 @@
           @click="showBeneficiariesMenu = true"
           class="btn btn-success donate-button fs-3 px-5 py-2"
         >
+          <i class="bi bi-person-hearts me-2"></i>
           المستفيدين
         </button>
         <button
           @click="router.push('/assistance')"
           class="btn btn-success donate-button fs-3 px-5 py-2"
         >
+          <i class="bi bi-gift me-2"></i>
           المساعدات
+        </button>
+        <button
+          @click="router.push('/members')"
+          class="btn btn-success donate-button fs-3 px-5 py-2"
+        >
+          <i class="bi bi-people me-2"></i>
+          العضوية
+        </button>
+        <button
+          @click="router.push('/files-center')"
+          class="btn btn-success donate-button fs-3 px-5 py-2"
+        >
+          <i class="bi bi-folder2-open me-2"></i>
+          مركز الملفات
         </button>
       </div>
 
@@ -34,18 +50,21 @@
           @click="router.push('/family')"
           class="btn btn-success donate-button fs-3 px-5 py-2"
         >
+          <i class="bi bi-house-heart-fill me-2"></i>
           أسر
         </button>
         <button
           @click="router.push('/widows')"
           class="btn btn-success donate-button fs-3 px-5 py-2"
         >
+          <i class="bi bi-person-fill me-2"></i>
           أرامل
         </button>
         <button
           @click="router.push('/orphans')"
           class="btn btn-success donate-button fs-3 px-5 py-2"
         >
+          <i class="bi bi-people-fill me-2"></i>
           أيتام
         </button>
         <button

@@ -21,12 +21,12 @@
         </router-link>
       </div>
 
-      <div class="flex-grow-1 mx-3 no-print">
+      <div class="flex-grow-1 me-3 no-print">
         <input
           v-model="searchQuery"
           type="text"
           class="form-control custom-input"
-          placeholder="ابحث بالاسم أو الرقم التعريفي أو المستوى التعليمي..."
+          placeholder="ابحث بالاسم أو الرقم الوطني أو المستوى التعليمي..."
         />
       </div>
     </div>
@@ -37,7 +37,7 @@
       <table class="table table-striped table-hover">
         <thead class="table-header text-white">
           <tr>
-            <th>الرقم التعريفي</th>
+            <th>الرقم الوطني</th>
             <th>الجنس</th>
             <th>الاسم الأول</th>
             <th>اسم الأب</th>
@@ -106,7 +106,7 @@
       <table class="table table-bordered print-table">
         <thead class="table-dark">
           <tr>
-            <th>الرقم التعريفي</th>
+            <th>الرقم الوطني</th>
             <th>الاسم الكامل</th>
             <th>الجنس</th>
             <th>رقم الهاتف</th>
@@ -155,7 +155,7 @@ const isDeleting = ref(false);
 const printArea = ref(null);
 
 const getCurrentDate = () => {
-  return new Date().toLocaleDateString("ar-EG", {
+  return new Date().toLocaleDateString("ar-JO", {
     year: "numeric",
     month: "long",
     day: "numeric",

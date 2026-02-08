@@ -12,7 +12,7 @@
         إضافة نوع مساعدة
       </router-link>
 
-      <div class="flex-grow-1 mx-3">
+      <div class="flex-grow-1 me-3">
         <input
           v-model="searchQuery"
           type="text"
@@ -112,7 +112,7 @@ const filteredTypes = computed(() => {
   return assistanceTypes.value.filter(
     (type) =>
       type.assistanceTypeName.toLowerCase().includes(query) ||
-      (type.assistanceValue && type.assistanceValue.toString().includes(query))
+      (type.assistanceValue && type.assistanceValue.toString().includes(query)),
   );
 });
 
@@ -149,7 +149,7 @@ const viewDetails = (assistanceTypeId) => {
 const deleteType = async (id) => {
   // Get the assistance type name for better confirmation message
   const assistanceType = assistanceTypes.value.find(
-    (type) => type.assistanceTypeId === id
+    (type) => type.assistanceTypeId === id,
   );
   const typeName = assistanceType
     ? assistanceType.assistanceTypeName
@@ -178,7 +178,7 @@ const deleteType = async (id) => {
           alertify.error(`حدث خطأ أثناء حذف نوع المساعدة: ${errorMessage}`);
         } else if (error.request) {
           alertify.error(
-            "لا يمكن الاتصال بالخادم. يرجى التحقق من اتصال الإنترنت"
+            "لا يمكن الاتصال بالخادم. يرجى التحقق من اتصال الإنترنت",
           );
         } else {
           alertify.error("حدث خطأ أثناء حذف نوع المساعدة");
@@ -188,7 +188,7 @@ const deleteType = async (id) => {
     function () {
       // User clicked Cancel
       alertify.message("تم إلغاء عملية الحذف");
-    }
+    },
   );
 };
 

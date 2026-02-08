@@ -3,7 +3,13 @@
     class="assistance-table container my-4 bg-white bg-opacity-50 p-5 rounded-4 shadow-lg"
     dir="rtl"
   >
-    <h2 class="text-center mb-4 fw-bold">جدول المساعدات</h2>
+    <div class="d-flex justify-content-between align-items-center mb-4">
+      <h2 class="mb-0 fw-bold">جدول المساعدات</h2>
+      <button class="btn btn-success no-print" @click="directPrint">
+        <i class="bi bi-printer me-1"></i>
+        طباعة
+      </button>
+    </div>
 
     <div class="d-flex justify-content-between align-items-center mb-4">
       <div class="d-flex gap-2">
@@ -25,12 +31,6 @@
           <span class="btn-text">أنواع المساعدات</span>
         </router-link>
 
-        <!-- زر الطباعة مع تأثير التوسع -->
-        <button @click="directPrint" class="btn btn-secondary expandable-btn">
-          <i class="bi bi-printer icon"></i>
-          <span class="btn-text">طباعة الجدول</span>
-        </button>
-
         <!-- زر فلترة الفترة الزمنية مع تأثير التوسع -->
         <button
           @click="toggleDateFilter"
@@ -42,7 +42,7 @@
         </button>
       </div>
 
-      <div class="flex-grow-1 mx-3 d-flex gap-2">
+      <div class="flex-grow-1 me-2 d-flex gap-2">
         <!-- فلتر نوع المستفيد -->
 
         <input
@@ -93,6 +93,25 @@
           >
             {{ type.assistanceTypeName }}
           </option>
+        </select>
+
+        <select
+          v-model="sortBy"
+          class="form-select custom-input"
+          dir="rtl"
+          style="
+            max-width: 230px;
+            text-align: right;
+            padding-right: 2rem;
+            background-position: right 0.75rem center;
+            background-size: 12px 12px;
+          "
+        >
+          <option value="date-desc">ترتيب حسب: الأحدث</option>
+          <option value="date-asc">ترتيب حسب: الأقدم</option>
+          <option value="beneficiary">ترتيب حسب: المستفيد</option>
+          <option value="type">ترتيب حسب: نوع المساعدة</option>
+          <option value="received">ترتيب حسب: حالة الاستلام</option>
         </select>
       </div>
     </div>
@@ -167,14 +186,14 @@
         </thead>
         <tbody>
           <tr
-            v-for="assistance in sortedAndFilteredAssistances"
+            v-for="assistance in paginatedAssistances"
             :key="assistance.assistanceId"
           >
             <td>{{ getBeneficiaryType(assistance) }}</td>
             <td>
               {{
                 getPersonName(assistance.personId) ||
-                " عائلة " + getFamilyName(assistance.familyId)
+                " أسرة " + getFamilyName(assistance.familyId)
               }}
             </td>
             <td>{{ getAssistanceTypeName(assistance.assistanceTypeId) }}</td>
@@ -188,7 +207,9 @@
                 "
               ></i>
             </td>
-            <td>{{ assistance.note || "-" }}</td>
+            <td class="note-cell" :title="assistance.note || ''">
+              {{ truncateNote(assistance.note) }}
+            </td>
             <td class="d-flex gap-2 justify-content-center">
               <button
                 @click="viewDetails(assistance.assistanceId)"
@@ -215,6 +236,106 @@
           </tr>
         </tbody>
       </table>
+    </div>
+
+    <!-- Pagination Controls -->
+    <div
+      v-if="sortedAndFilteredAssistances.length > 0"
+      class="d-flex justify-content-between align-items-center mt-4 no-print"
+    >
+      <div class="text-muted">
+        عرض
+        {{ (currentPage - 1) * itemsPerPage + 1 }}
+        -
+        {{
+          Math.min(
+            currentPage * itemsPerPage,
+            sortedAndFilteredAssistances.length,
+          )
+        }}
+        من {{ sortedAndFilteredAssistances.length }} مساعدة
+      </div>
+
+      <nav aria-label="تصفح المساعدات">
+        <ul class="pagination mb-0">
+          <li class="page-item" :class="{ disabled: currentPage === 1 }">
+            <button
+              class="page-link"
+              @click="prevPage"
+              :disabled="currentPage === 1"
+            >
+              <i class="bi bi-chevron-right"></i>
+            </button>
+          </li>
+
+          <!-- عرض أرقام الصفحات -->
+          <template v-if="totalPages <= 7">
+            <li
+              v-for="page in totalPages"
+              :key="page"
+              class="page-item"
+              :class="{ active: currentPage === page }"
+            >
+              <button class="page-link" @click="goToPage(page)">
+                {{ page }}
+              </button>
+            </li>
+          </template>
+
+          <!-- عرض مختصر للصفحات الكثيرة -->
+          <template v-else>
+            <li class="page-item" :class="{ active: currentPage === 1 }">
+              <button class="page-link" @click="goToPage(1)">1</button>
+            </li>
+
+            <li v-if="currentPage > 3" class="page-item disabled">
+              <span class="page-link">...</span>
+            </li>
+
+            <template v-for="page in totalPages" :key="page">
+              <li
+                v-if="
+                  page > 1 &&
+                  page < totalPages &&
+                  Math.abs(page - currentPage) <= 1
+                "
+                class="page-item"
+                :class="{ active: currentPage === page }"
+              >
+                <button class="page-link" @click="goToPage(page)">
+                  {{ page }}
+                </button>
+              </li>
+            </template>
+
+            <li v-if="currentPage < totalPages - 2" class="page-item disabled">
+              <span class="page-link">...</span>
+            </li>
+
+            <li
+              class="page-item"
+              :class="{ active: currentPage === totalPages }"
+            >
+              <button class="page-link" @click="goToPage(totalPages)">
+                {{ totalPages }}
+              </button>
+            </li>
+          </template>
+
+          <li
+            class="page-item"
+            :class="{ disabled: currentPage === totalPages }"
+          >
+            <button
+              class="page-link"
+              @click="nextPage"
+              :disabled="currentPage === totalPages"
+            >
+              <i class="bi bi-chevron-left"></i>
+            </button>
+          </li>
+        </ul>
+      </nav>
     </div>
 
     <div
@@ -261,7 +382,7 @@
             <td>
               {{
                 getPersonName(assistance.personId) ||
-                " عائلة " + getFamilyName(assistance.familyId)
+                " أسرة " + getFamilyName(assistance.familyId)
               }}
             </td>
             <td>
@@ -286,7 +407,7 @@
   </div>
 </template>
 <script setup>
-import { ref, computed, onMounted } from "vue";
+import { ref, computed, onMounted, watch } from "vue";
 import { useRouter } from "vue-router";
 import axios from "axios";
 import alertify from "alertifyjs";
@@ -317,8 +438,15 @@ const beneficiaryTypeFilter = ref("all");
 // متغير فلتر نوع المساعدة
 const assistanceTypeFilter = ref("all");
 
+// متغير الترتيب
+const sortBy = ref("date-desc"); // الترتيب الافتراضي حسب الأحدث
+
 // متغيرات ترتيب التاريخ
 const dateSortOrder = ref("none"); // "none", "asc", "desc"
+
+// متغيرات pagination
+const currentPage = ref(1);
+const itemsPerPage = 30;
 
 const getAssistanceTypeName = (typeId) => {
   const assistanceType = assistanceTypes.value.find(
@@ -330,6 +458,13 @@ const getAssistanceTypeName = (typeId) => {
 const getFamilyName = (familyId) => {
   if (!familyId || familyId === 0) return "-";
   const family = families.value.find((f) => f.familyId === familyId);
+  if (family && family.familyMembers && family.familyMembers.length > 0) {
+    const headId = family.familyMembers[0];
+    const headPerson = persons.value.find((p) => p.id === headId);
+    if (headPerson) {
+      return `${headPerson.firstName} ${headPerson.lastName}`;
+    }
+  }
   return family ? family.name : "غير معروف";
 };
 
@@ -347,8 +482,9 @@ const getNationalId = (personId, familyId) => {
   if (familyId && familyId !== 0) {
     // For families, get the head of family's id
     const family = families.value.find((f) => f.familyId === familyId);
-    if (family?.personId) {
-      return family.personId;
+    if (family && family.familyMembers && family.familyMembers.length > 0) {
+      const headId = family.familyMembers[0];
+      return headId;
     }
   }
   return "-";
@@ -362,8 +498,9 @@ const getPhoneNumber = (personId, familyId) => {
   if (familyId && familyId !== 0) {
     // For families, get the head of family's phone number
     const family = families.value.find((f) => f.familyId === familyId);
-    if (family?.personId) {
-      const person = persons.value.find((p) => p.id === family.personId);
+    if (family && family.familyMembers && family.familyMembers.length > 0) {
+      const headId = family.familyMembers[0];
+      const person = persons.value.find((p) => p.id === headId);
       return person?.phoneNumber || "-";
     }
   }
@@ -419,8 +556,14 @@ const formatDate = (dateString) => {
   });
 };
 
+const truncateNote = (note, maxLength = 100) => {
+  if (!note) return "-";
+  if (note.length <= maxLength) return note;
+  return note.substring(0, maxLength) + "...";
+};
+
 const getCurrentDate = () => {
-  return new Date().toLocaleDateString("ar-EG", {
+  return new Date().toLocaleDateString("ar-JO", {
     year: "numeric",
     month: "long",
     day: "numeric",
@@ -625,8 +768,91 @@ const sortedAndFilteredAssistances = computed(() => {
     });
   }
 
-  return result;
+  // تطبيق الترتيب من القائمة المنسدلة
+  const sorted = [...result];
+  if (sortBy.value === "date-desc") {
+    sorted.sort((a, b) => {
+      const dateA = a.date ? new Date(a.date) : new Date(0);
+      const dateB = b.date ? new Date(b.date) : new Date(0);
+      return dateB - dateA;
+    });
+  } else if (sortBy.value === "date-asc") {
+    sorted.sort((a, b) => {
+      const dateA = a.date ? new Date(a.date) : new Date(0);
+      const dateB = b.date ? new Date(b.date) : new Date(0);
+      return dateA - dateB;
+    });
+  } else if (sortBy.value === "beneficiary") {
+    sorted.sort((a, b) => {
+      const nameA = (
+        getPersonName(a.personId) || " عائلة " + getFamilyName(a.familyId)
+      ).toLowerCase();
+      const nameB = (
+        getPersonName(b.personId) || " عائلة " + getFamilyName(b.familyId)
+      ).toLowerCase();
+      return nameA.localeCompare(nameB, "ar");
+    });
+  } else if (sortBy.value === "type") {
+    sorted.sort((a, b) => {
+      const typeA = getAssistanceTypeName(a.assistanceTypeId);
+      const typeB = getAssistanceTypeName(b.assistanceTypeId);
+      return typeA.localeCompare(typeB, "ar");
+    });
+  } else if (sortBy.value === "received") {
+    sorted.sort((a, b) => {
+      // ترتيب حسب حالة الاستلام (المستلم أولاً)
+      return b.received - a.received;
+    });
+  }
+
+  return sorted;
 });
+
+// Pagination computed properties
+const totalPages = computed(() => {
+  return Math.ceil(sortedAndFilteredAssistances.value.length / itemsPerPage);
+});
+
+const paginatedAssistances = computed(() => {
+  const start = (currentPage.value - 1) * itemsPerPage;
+  const end = start + itemsPerPage;
+  return sortedAndFilteredAssistances.value.slice(start, end);
+});
+
+// Pagination methods
+const goToPage = (page) => {
+  if (page >= 1 && page <= totalPages.value) {
+    currentPage.value = page;
+    // التمرير لأعلى الجدول عند تغيير الصفحة
+    window.scrollTo({ top: 0, behavior: "smooth" });
+  }
+};
+
+const nextPage = () => {
+  if (currentPage.value < totalPages.value) {
+    goToPage(currentPage.value + 1);
+  }
+};
+
+const prevPage = () => {
+  if (currentPage.value > 1) {
+    goToPage(currentPage.value - 1);
+  }
+};
+
+// إعادة ضبط الصفحة عند تغيير الفلاتر
+watch(
+  [
+    searchQuery,
+    beneficiaryTypeFilter,
+    assistanceTypeFilter,
+    activeDateFilter,
+    sortBy,
+  ],
+  () => {
+    currentPage.value = 1;
+  },
+);
 
 // Helper function to format received status for printing
 const getReceivedStatusText = (received) => {
@@ -637,9 +863,9 @@ const getReceivedStatusText = (received) => {
 const getSortedPrintAssistances = () => {
   return [...sortedAndFilteredAssistances.value].sort((a, b) => {
     const nameA =
-      getPersonName(a.personId) || " عائلة " + getFamilyName(a.familyId);
+      getPersonName(a.personId) || " أسرة " + getFamilyName(a.familyId);
     const nameB =
-      getPersonName(b.personId) || " عائلة " + getFamilyName(b.familyId);
+      getPersonName(b.personId) || " أسرة " + getFamilyName(b.familyId);
     return nameA.localeCompare(nameB, "ar");
   });
 };
@@ -826,6 +1052,14 @@ onMounted(fetchData);
 .table td {
   text-align: center;
   vertical-align: middle;
+}
+
+.note-cell {
+  max-width: 200px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  cursor: help;
 }
 
 .custom-input {
@@ -1034,5 +1268,44 @@ onMounted(fetchData);
   .expandable-action-btn:hover .btn-text {
     max-width: 60px;
   }
+}
+
+/* Pagination Styles */
+.pagination {
+  gap: 0.25rem;
+}
+
+.page-link {
+  color: #42b983;
+  border: 1px solid #dee2e6;
+  padding: 0.5rem 0.75rem;
+  transition: all 0.3s ease;
+  border-radius: 0.375rem;
+  font-weight: 500;
+}
+
+.page-link:hover {
+  background-color: #42b983;
+  color: white;
+  border-color: #42b983;
+}
+
+.page-item.active .page-link {
+  background-color: #42b983;
+  border-color: #42b983;
+  color: white;
+  font-weight: bold;
+}
+
+.page-item.disabled .page-link {
+  color: #6c757d;
+  pointer-events: none;
+  background-color: #fff;
+  border-color: #dee2e6;
+}
+
+.page-link:focus {
+  box-shadow: 0 0 0 0.25rem rgba(66, 185, 131, 0.25);
+  z-index: 3;
 }
 </style>

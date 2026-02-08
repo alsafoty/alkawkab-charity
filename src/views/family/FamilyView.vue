@@ -29,6 +29,25 @@
           placeholder="ابحث باسم رب الأسرة أو رقم الأسرة..."
         />
       </div>
+
+      <div class="no-print" style="min-width: 200px">
+        <select
+          v-model="sortBy"
+          class="form-select custom-input"
+          dir="rtl"
+          style="
+            max-width: 230px;
+            text-align: right;
+            padding-right: 2rem;
+            background-position: right 0.75rem center;
+            background-size: 12px 12px;
+          "
+        >
+          <option value="familyId">ترتيب حسب: تاريخ الإضافة</option>
+          <option value="name">ترتيب حسب: الاسم</option>
+          <option value="members">ترتيب حسب: عدد الأفراد</option>
+        </select>
+      </div>
     </div>
 
     <!-- Loading State -->
@@ -48,6 +67,8 @@
           <tr>
             <th>رقم الأسرة</th>
             <th>رب الأسرة</th>
+            <th>الرقم الوطني</th>
+            <th>رقم الهاتف</th>
             <th>عدد الأفراد</th>
             <th>حالة المنزل</th>
             <th class="no-print">الإجراءات</th>
@@ -56,7 +77,9 @@
         <tbody>
           <tr v-for="family in filteredFamilies" :key="family.familyId">
             <td>{{ family.familyId }}</td>
-            <td>{{ family.name }}</td>
+            <td>{{ getHeadOfFamilyName(family) }}</td>
+            <td>{{ getHeadOfFamilyId(family) }}</td>
+            <td>{{ getHeadOfFamilyPhone(family) }}</td>
             <td>
               <span class="badge bg-success">
                 {{ family.numberOfFamilyMembers || 0 }}
@@ -113,6 +136,8 @@
           <tr>
             <th>رقم الأسرة</th>
             <th>رب الأسرة</th>
+            <th>الرقم الوطني</th>
+            <th>رقم الهاتف</th>
             <th>عدد الأفراد</th>
             <th>حالة المنزل</th>
           </tr>
@@ -120,7 +145,9 @@
         <tbody>
           <tr v-for="family in filteredFamilies" :key="family.familyId">
             <td>{{ family.familyId }}</td>
-            <td>{{ family.name }}</td>
+            <td>{{ getHeadOfFamilyName(family) }}</td>
+            <td>{{ getHeadOfFamilyId(family) }}</td>
+            <td>{{ getHeadOfFamilyPhone(family) }}</td>
             <td>{{ family.numberOfFamilyMembers || 0 }}</td>
             <td>{{ family.isHouseOwned ? "ملك" : "إيجار" }}</td>
           </tr>
@@ -144,13 +171,98 @@ import alertify from "alertifyjs";
 const API_BASE_URL = process.env.VUE_APP_API_BASE_URL + "/api";
 const router = useRouter();
 const families = ref([]);
+const familyHeadsData = ref({}); // تخزين بيانات رؤساء الأسر
 const searchQuery = ref("");
+const sortBy = ref("familyId"); // الترتيب الافتراضي حسب رقم الأسرة
 const loading = ref(false);
 const AUTH_TOKEN = localStorage.getItem("token");
 const printArea = ref(null);
 
+const filteredFamilies = computed(() => {
+  let result = families.value;
+
+  // تطبيق البحث
+  if (searchQuery.value) {
+    const query = searchQuery.value.toLowerCase();
+    result = result.filter((family) => {
+      const headName = getHeadOfFamilyName(family).toLowerCase();
+      return (
+        headName.includes(query) ||
+        family.name.toLowerCase().includes(query) ||
+        family.familyId.toString().includes(query)
+      );
+    });
+  }
+
+  // تطبيق الترتيب
+  const sorted = [...result];
+  if (sortBy.value === "familyId") {
+    sorted.sort((a, b) => a.familyId - b.familyId);
+  } else if (sortBy.value === "name") {
+    sorted.sort((a, b) => {
+      const nameA = getHeadOfFamilyName(a).toLowerCase();
+      const nameB = getHeadOfFamilyName(b).toLowerCase();
+      return nameA.localeCompare(nameB, "ar");
+    });
+  } else if (sortBy.value === "members") {
+    sorted.sort(
+      (a, b) => (b.numberOfFamilyMembers || 0) - (a.numberOfFamilyMembers || 0),
+    );
+  }
+
+  return sorted;
+});
+
+// دالة لجلب بيانات شخص واحد
+const fetchPersonById = async (personId) => {
+  try {
+    const response = await axios.get(`${API_BASE_URL}/Person/${personId}`, {
+      headers: {
+        Authorization: `Bearer ${AUTH_TOKEN}`,
+      },
+    });
+    return response.data;
+  } catch (error) {
+    console.error(`Error fetching person ${personId}:`, error);
+    return null;
+  }
+};
+
+// دالة لجلب بيانات رؤساء الأسر
+const fetchFamilyHeadsData = async () => {
+  const promises = families.value.map(async (family) => {
+    if (family.familyMembers && family.familyMembers.length > 0) {
+      const headId = family.familyMembers[0]; // أول عضو هو رب الأسرة
+      const headData = await fetchPersonById(headId);
+      if (headData) {
+        familyHeadsData.value[family.familyId] = headData;
+      }
+    }
+  });
+
+  await Promise.all(promises);
+};
+
+const getHeadOfFamilyId = (family) => {
+  const headData = familyHeadsData.value[family.familyId];
+  return headData?.id || "-";
+};
+
+const getHeadOfFamilyPhone = (family) => {
+  const headData = familyHeadsData.value[family.familyId];
+  return headData?.phoneNumber || "-";
+};
+
+const getHeadOfFamilyName = (family) => {
+  const headData = familyHeadsData.value[family.familyId];
+  if (headData) {
+    return `${headData.firstName} ${headData.lastName}`;
+  }
+  return family.name || "-";
+};
+
 const getCurrentDate = () => {
-  return new Date().toLocaleDateString("ar-EG", {
+  return new Date().toLocaleDateString("ar-JO", {
     year: "numeric",
     month: "long",
     day: "numeric",
@@ -246,6 +358,9 @@ const fetchFamilies = async () => {
 
     families.value = response.data;
     console.log("Families:", response.data);
+
+    // جلب بيانات رؤساء الأسر
+    await fetchFamilyHeadsData();
   } catch (error) {
     console.error("Error fetching families:", error);
     alertify.error("حدث خطأ أثناء جلب بيانات الأسر");
@@ -253,26 +368,6 @@ const fetchFamilies = async () => {
     loading.value = false;
   }
 };
-
-// Enhanced search functionality - searches across multiple fields
-const filteredFamilies = computed(() => {
-  if (!searchQuery.value) {
-    return families.value;
-  }
-
-  const query = searchQuery.value.toLowerCase().trim();
-
-  return families.value.filter((family) => {
-    // Search criteria
-    const matchesName = family.name?.toLowerCase().includes(query);
-    const matchesId = family.familyId?.toString().includes(query);
-    const matchesHouseStatus = family.isHouseOwned
-      ? "ملك".includes(query)
-      : "إيجار".includes(query);
-
-    return matchesName || matchesId || matchesHouseStatus;
-  });
-});
 
 const viewDetails = (id) => {
   router.push(`/view-family/${id}`);

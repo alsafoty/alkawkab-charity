@@ -19,6 +19,18 @@
           <i class="bi bi-plus-circle icon"></i>
           <span class="btn-text">إضافة شخص جديد</span>
         </router-link>
+
+        <!-- زر إضافة وصي جديد -->
+        <router-link to="/add-guardian" class="btn btn-info expandable-btn">
+          <i class="bi bi-person-plus icon"></i>
+          <span class="btn-text">إضافة وصي جديد</span>
+        </router-link>
+
+        <!-- زر عرض جدول الأوصياء -->
+        <router-link to="/guardians" class="btn btn-primary expandable-btn">
+          <i class="bi bi-people icon"></i>
+          <span class="btn-text">جدول الأوصياء</span>
+        </router-link>
       </div>
 
       <div class="flex-grow-1 mx-3 no-print">
@@ -26,8 +38,25 @@
           v-model="searchQuery"
           type="text"
           class="form-control custom-input"
-          placeholder="ابحث بالاسم أو الرقم التعريفي أو المستوى التعليمي..."
+          placeholder="ابحث بالاسم أو الرقم الوطني أو المستوى التعليمي..."
         />
+      </div>
+
+      <div class="no-print" style="min-width: 200px">
+        <select
+          v-model="sortBy"
+          class="form-select custom-input"
+          dir="rtl"
+          style="
+            max-width: 230px;
+            text-align: right;
+            padding-right: 2rem;
+            background-position: right 0.75rem center;
+            background-size: 12px 12px;
+          "
+        >
+          <option value="name">ترتيب حسب: الاسم</option>
+        </select>
       </div>
     </div>
 
@@ -46,12 +75,9 @@
       <table class="table table-striped table-hover">
         <thead class="table-header text-white">
           <tr>
-            <th>الرقم التعريفي</th>
+            <th>الرقم الوطني</th>
             <th>الجنس</th>
-            <th>الاسم الأول</th>
-            <th>اسم الأب</th>
-            <th>اسم الجد</th>
-            <th>الاسم العائلة</th>
+            <th>الاسم الكامل</th>
             <th>رقم الهاتف</th>
             <th>المستوى التعليمي</th>
             <th class="no-print">الإجراءات</th>
@@ -61,10 +87,10 @@
           <tr v-for="person in filteredOrphans" :key="person.id">
             <td>{{ person.id }}</td>
             <td>{{ person.gender }}</td>
-            <td>{{ person.firstName }}</td>
-            <td>{{ person.secondName }}</td>
-            <td>{{ person.thirdName }}</td>
-            <td>{{ person.lastName }}</td>
+            <td>
+              {{ person.firstName }} {{ person.secondName }}
+              {{ person.thirdName }} {{ person.lastName }}
+            </td>
             <td>{{ person.phoneNumber }}</td>
             <td>{{ person.educationalLevel }}</td>
             <td class="d-flex gap-2 justify-content-center no-print">
@@ -115,7 +141,7 @@
       <table class="table table-bordered print-table">
         <thead class="table-dark">
           <tr>
-            <th>الرقم التعريفي</th>
+            <th>الرقم الوطني</th>
             <th>الاسم الكامل</th>
             <th>الجنس</th>
             <th>رقم الهاتف</th>
@@ -161,6 +187,7 @@ const AUTH_TOKEN = localStorage.getItem("token");
 
 const orphans = ref([]);
 const searchQuery = ref("");
+const sortBy = ref("name"); // الترتيب الافتراضي حسب الاسم
 const loading = ref(false);
 const isDeleting = ref(false);
 const printArea = ref(null);
@@ -198,34 +225,45 @@ const fetchOrphans = async () => {
   }
 };
 
-// Enhanced search functionality
+// Enhanced search functionality with sorting
 const filteredOrphans = computed(() => {
-  if (!searchQuery.value) {
-    return orphans.value;
+  let result = orphans.value;
+
+  // تطبيق البحث
+  if (searchQuery.value) {
+    const query = searchQuery.value.toLowerCase().trim();
+
+    result = result.filter((person) => {
+      const fullName =
+        `${person.firstName} ${person.secondName} ${person.thirdName} ${person.lastName}`.toLowerCase();
+
+      const matchesName = fullName.includes(query);
+      const matchesId = person.id.toString().includes(query);
+      const matchesEducation = person.educationalLevel
+        ?.toLowerCase()
+        .includes(query);
+      const matchesPhone = person.phoneNumber?.includes(query);
+      const matchesGender = person.gender?.toLowerCase().includes(query);
+
+      return (
+        matchesName ||
+        matchesId ||
+        matchesEducation ||
+        matchesPhone ||
+        matchesGender
+      );
+    });
   }
 
-  const query = searchQuery.value.toLowerCase().trim();
-
-  return orphans.value.filter((person) => {
-    const fullName =
-      `${person.firstName} ${person.secondName} ${person.thirdName} ${person.lastName}`.toLowerCase();
-
-    const matchesName = fullName.includes(query);
-    const matchesId = person.id.toString().includes(query);
-    const matchesEducation = person.educationalLevel
-      ?.toLowerCase()
-      .includes(query);
-    const matchesPhone = person.phoneNumber?.includes(query);
-    const matchesGender = person.gender?.toLowerCase().includes(query);
-
-    return (
-      matchesName ||
-      matchesId ||
-      matchesEducation ||
-      matchesPhone ||
-      matchesGender
-    );
+  // تطبيق الترتيب
+  const sorted = [...result];
+  sorted.sort((a, b) => {
+    const nameA = `${a.firstName} ${a.lastName}`.toLowerCase();
+    const nameB = `${b.firstName} ${b.lastName}`.toLowerCase();
+    return nameA.localeCompare(nameB, "ar");
   });
+
+  return sorted;
 });
 
 // Navigation functions
@@ -313,7 +351,7 @@ const deletePerson = async (id) => {
 };
 
 const getCurrentDate = () => {
-  return new Date().toLocaleDateString("ar-EG", {
+  return new Date().toLocaleDateString("ar-JO", {
     year: "numeric",
     month: "long",
     day: "numeric",

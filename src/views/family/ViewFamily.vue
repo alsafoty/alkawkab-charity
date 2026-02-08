@@ -13,15 +13,31 @@
       <div class="card-body p-4" ref="printArea">
         <!-- Basic Family Information -->
         <div class="info-section mb-4">
-          <h4 class="section-title mb-3">معلومات الأسرة الأساسية</h4>
+          <h4 class="section-title mb-3">معلومات رب الأسرة</h4>
           <div class="info-grid">
             <div class="info-item">
-              <strong>رب الأسرة:</strong>
-              <span>{{ familyData.name }}</span>
+              <strong>الاسم الكامل:</strong>
+              <span>{{ getHeadOfFamilyName() }}</span>
             </div>
             <div class="info-item">
-              <strong>عدد الأفراد:</strong>
-              <span>{{ familyData.numberOfFamilyMembers || 0 }}</span>
+              <strong>رقم الهاتف:</strong>
+              <span>{{ getHeadOfFamilyPhone() }}</span>
+            </div>
+            <div class="info-item">
+              <strong>الرقم الوطني:</strong>
+              <span>{{ getHeadOfFamilyId() }}</span>
+            </div>
+            <div class="info-item">
+              <strong>الوظيفة:</strong>
+              <span>{{ getHeadOfFamilyJob() }}</span>
+            </div>
+            <div class="info-item">
+              <strong>المستوى التعليمي:</strong>
+              <span>{{ getHeadOfFamilyEducation() }}</span>
+            </div>
+            <div class="info-item">
+              <strong>عدد أفراد الأسرة:</strong>
+              <span>{{ familyData.numberOfFamilyMembers || 1 }}</span>
             </div>
             <div class="info-item">
               <strong>حالة المنزل:</strong>
@@ -30,8 +46,8 @@
           </div>
         </div>
 
-        <!-- Family Members -->
-        <div class="info-section mb-4">
+        <!-- Family Members (Hidden) -->
+        <div class="info-section mb-4 no-print" style="display: none">
           <h4 class="section-title mb-3">
             أفراد الأسرة (المسجلين: {{ memberDetails.length }})
           </h4>
@@ -203,6 +219,74 @@
         </div>
       </div>
     </div>
+
+    <!-- Hidden content for printing -->
+    <div id="printableContent" style="display: none">
+      <div class="print-header text-center mb-4">
+        <h2 class="fw-bold">تفاصيل الأسرة</h2>
+        <p class="text-muted">تاريخ الطباعة: {{ getCurrentDate() }}</p>
+      </div>
+
+      <div class="print-section mb-3">
+        <h4 class="section-title">معلومات رب الأسرة</h4>
+        <table class="print-info-table-two-columns">
+          <tr>
+            <td><strong>الاسم الكامل:</strong></td>
+            <td colspan="3">{{ getHeadOfFamilyName() }}</td>
+          </tr>
+          <tr>
+            <td><strong>الرقم الوطني:</strong></td>
+            <td>{{ getHeadOfFamilyId() }}</td>
+            <td><strong>رقم الهاتف:</strong></td>
+            <td>{{ getHeadOfFamilyPhone() }}</td>
+          </tr>
+          <tr>
+            <td><strong>الوظيفة:</strong></td>
+            <td>{{ getHeadOfFamilyJob() }}</td>
+            <td><strong>المستوى التعليمي:</strong></td>
+            <td>{{ getHeadOfFamilyEducation() }}</td>
+          </tr>
+          <tr>
+            <td><strong>عدد أفراد الأسرة:</strong></td>
+            <td>{{ familyData.numberOfFamilyMembers || 1 }}</td>
+            <td><strong>حالة المنزل:</strong></td>
+            <td>{{ familyData.isHouseOwned ? "ملك" : "إيجار" }}</td>
+          </tr>
+        </table>
+      </div>
+
+      <div
+        v-if="assistanceData && assistanceData.length > 0"
+        class="print-section mb-3"
+      >
+        <h4 class="section-title">المساعدات المُستلمة</h4>
+        <table class="table table-bordered print-table">
+          <thead>
+            <tr>
+              <th>رقم المساعدة</th>
+              <th>نوع المساعدة</th>
+              <th>عدد المساعدات</th>
+              <th>المستفيد</th>
+              <th>ملاحظات</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr
+              v-for="assistance in assistanceData"
+              :key="assistance.assistanceId"
+            >
+              <td>{{ assistance.assistanceId }}</td>
+              <td>{{ getAssistanceTypeName(assistance.assistanceTypeId) }}</td>
+              <td>{{ assistance.numberOfAssistance }}</td>
+              <td>
+                {{ getPersonName(assistance.personId) || "العائلة بأكملها" }}
+              </td>
+              <td>{{ assistance.note || "-" }}</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
   </div>
 </template>
 
@@ -243,6 +327,43 @@ const getPersonName = (personId) => {
   return person ? `${person.firstName} ${person.lastName}` : "غير معروف";
 };
 
+// دوال للحصول على معلومات رب الأسرة
+const getHeadOfFamilyName = () => {
+  if (memberDetails.value && memberDetails.value.length > 0) {
+    const head = memberDetails.value[0];
+    return `${head.firstName} ${head.secondName} ${head.thirdName} ${head.lastName}`;
+  }
+  return "-";
+};
+
+const getHeadOfFamilyPhone = () => {
+  if (memberDetails.value && memberDetails.value.length > 0) {
+    return memberDetails.value[0].phoneNumber || "-";
+  }
+  return "-";
+};
+
+const getHeadOfFamilyId = () => {
+  if (memberDetails.value && memberDetails.value.length > 0) {
+    return memberDetails.value[0].id || "-";
+  }
+  return "-";
+};
+
+const getHeadOfFamilyJob = () => {
+  if (memberDetails.value && memberDetails.value.length > 0) {
+    return memberDetails.value[0].job || "-";
+  }
+  return "-";
+};
+
+const getHeadOfFamilyEducation = () => {
+  if (memberDetails.value && memberDetails.value.length > 0) {
+    return memberDetails.value[0].educationalLevel || "-";
+  }
+  return "-";
+};
+
 // دالة لعرض تفاصيل المساعدة
 const viewAssistanceDetails = (assistanceId) => {
   router.push(`/view-assistance/${assistanceId}`);
@@ -265,8 +386,8 @@ const fetchAssistanceTypes = async () => {
   }
 };
 
-// دالة لجلب تفاصيل شخص واحد
-const fetchPersonDetails = async (personId) => {
+// دالة لجلب تفاصيل شخص واحد باستخدام الرقم الوطني مباشرة
+const fetchPersonDetailsByNationalId = async (personId) => {
   try {
     const response = await axios.get(
       `${process.env.VUE_APP_API_BASE_URL}/api/Person/${personId}`,
@@ -278,7 +399,7 @@ const fetchPersonDetails = async (personId) => {
     );
     return response.data;
   } catch (error) {
-    console.error(`Error fetching person ${personId}:`, error);
+    console.error(`Error fetching person with ID ${personId}:`, error);
     return null;
   }
 };
@@ -348,10 +469,9 @@ const fetchAllMemberDetails = async () => {
   memberLoadError.value = false;
 
   try {
-    const memberPromises = familyData.value.familyMembers.map((member) => {
-      // إذا كان member يحتوي على id مباشرة
-      const memberId = member.id || member;
-      return fetchPersonDetails(memberId);
+    // familyMembers عبارة عن مصفوفة من الأرقام الوطنية (IDs)
+    const memberPromises = familyData.value.familyMembers.map((personId) => {
+      return fetchPersonDetailsByNationalId(personId);
     });
 
     const results = await Promise.allSettled(memberPromises);
@@ -377,6 +497,134 @@ const fetchAllMemberDetails = async () => {
   } finally {
     loadingMembers.value = false;
   }
+};
+
+const getCurrentDate = () => {
+  return new Date().toLocaleDateString("ar-JO", {
+    year: "numeric",
+    month: "long",
+    day: "numeric",
+    weekday: "long",
+  });
+};
+
+const printContent = () => {
+  alertify.message("جاري تحضير الطباعة...");
+
+  const printContent = document.getElementById("printableContent").innerHTML;
+  const printWindow = window.open("", "_blank");
+
+  printWindow.document.write(`
+    <!DOCTYPE html>
+    <html dir="rtl">
+    <head>
+      <title>طباعة تفاصيل الأسرة</title>
+      <meta charset="utf-8">
+      <style>
+        body { 
+          font-family: 'Tajawal', Arial, sans-serif; 
+          direction: rtl; 
+          margin: 20px; 
+          color: #333; 
+        }
+        .print-header { 
+          text-align: center; 
+          margin-bottom: 30px; 
+          border-bottom: 2px solid #42b983; 
+          padding-bottom: 15px; 
+        }
+        .print-header h2 { 
+          color: #42b983; 
+          margin-bottom: 10px; 
+        }
+        .print-section {
+          margin-bottom: 20px;
+          page-break-inside: avoid;
+        }
+        .section-title {
+          color: #42b983;
+          font-size: 1.1rem;
+          border-bottom: 1px solid #42b983;
+          padding-bottom: 5px;
+          margin-bottom: 10px;
+        }
+        .print-info-table { 
+          width: 100%; 
+          border-collapse: collapse; 
+          margin: 10px 0; 
+          font-size: 11px; 
+        }
+        .print-info-table td { 
+          border: 1px solid #ddd; 
+          padding: 6px; 
+          text-align: right;
+        }
+        .print-info-table td:first-child {
+          width: 30%;
+          background-color: #f8f9fa;
+        }
+        .print-info-table strong { 
+          color: #42b983;
+        }
+        .print-info-table-two-columns {
+          width: 100%; 
+          border-collapse: collapse; 
+          margin: 10px 0; 
+          font-size: 11px; 
+        }
+        .print-info-table-two-columns td {
+          border: 1px solid #ddd; 
+          padding: 6px; 
+          text-align: right;
+        }
+        .print-info-table-two-columns td:nth-child(odd) {
+          width: 20%;
+          background-color: #f8f9fa;
+          font-weight: bold;
+        }
+        .print-info-table-two-columns td:nth-child(even) {
+          width: 30%;
+        }
+        .print-info-table-two-columns strong { 
+          color: #42b983;
+        }
+        .print-table { 
+          width: 100%; 
+          border-collapse: collapse; 
+          margin: 10px 0; 
+          font-size: 10px; 
+        }
+        .print-table th, .print-table td { 
+          border: 1px solid #ddd; 
+          padding: 6px; 
+          text-align: center; 
+        }
+        .print-table th { 
+          background-color: #42b983; 
+          color: white; 
+          font-weight: bold; 
+        }
+        .print-table tr:nth-child(even) { 
+          background-color: #f9f9f9; 
+        }
+        @media print { 
+          body { margin: 0; } 
+          .print-table { font-size: 10px; }
+          .print-info-table { font-size: 11px; }
+        }
+      </style>
+    </head>
+    <body>${printContent}</body>
+    </html>
+  `);
+
+  printWindow.document.close();
+  printWindow.focus();
+  setTimeout(() => {
+    printWindow.print();
+    printWindow.close();
+    alertify.success("تم فتح نافذة الطباعة");
+  }, 250);
 };
 
 onMounted(async () => {
@@ -420,10 +668,6 @@ const formatDate = (date) => {
     month: "long",
     day: "numeric",
   });
-};
-
-const printContent = () => {
-  window.print();
 };
 
 const goBack = () => {
