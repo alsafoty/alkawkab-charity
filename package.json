@@ -1,10 +1,21 @@
 {
-  "name": "charity",
-  "version": "0.1.0",
+  "name": "alkawkab-charity",
+  "version": "1.0.0",
+  "description": "نظام إدارة جمعية الكوكب الدري الخيرية - مساعدة الأيتام والأرامل والعائلات المحتاجة",
+  "author": "Al-Kawkab Al-Durri Charity Association",
+  "keywords": [
+    "charity",
+    "جمعية خيرية",
+    "الكوكب الدري",
+    "مساعدة الأيتام",
+    "vue.js",
+    "charitable organization"
+  ],
   "private": true,
   "scripts": {
     "serve": "vue-cli-service serve",
-    "build": "vue-cli-service build"
+    "build": "vue-cli-service build",
+    "postbuild": "echo 'Build completed successfully! Ready for Netlify deployment.'"
   },
   "dependencies": {
     "alertifyjs": "^1.14.0",

@@ -1,0 +1,20 @@
+# Robots.txt for Al-Kawkab Al-Durri Charity Association
+User-agent: *
+Allow: /
+Disallow: /admin
+Disallow: /enterdb
+Disallow: /individual
+Disallow: /widows
+Disallow: /orphans
+Disallow: /guardians
+Disallow: /family
+Disallow: /assistance
+Disallow: /add-*
+Disallow: /edit-*
+Disallow: /view-*
+
+# Sitemap location
+Sitemap: https://alkawkab-charity.netlify.app/sitemap.xml
+
+# Crawl delay
+Crawl-delay: 10

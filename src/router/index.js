@@ -6,16 +6,34 @@ const routes = [
     path: "/",
     name: "home",
     component: HomeView,
+    meta: {
+      title: "جمعية الكوكب الدري الخيرية - الصفحة الرئيسية",
+      description:
+        "جمعية الكوكب الدري الخيرية تقدم الدعم والمساعدة للأيتام والأرامل والعائلات المحتاجة",
+      keywords: "جمعية خيرية, الكوكب الدري, مساعدة الأيتام, الأعمال الخيرية",
+    },
   },
   {
     path: "/about",
     name: "about",
     component: () => import("../views/general/AboutView.vue"),
+    meta: {
+      title: "من نحن - جمعية الكوكب الدري الخيرية",
+      description:
+        "تعرف على جمعية الكوكب الدري الخيرية، رؤيتنا، رسالتنا، وأهدافنا في خدمة المجتمع والعائلات المحتاجة",
+      keywords: "من نحن, جمعية خيرية, رؤيتنا, رسالتنا",
+    },
   },
   {
     path: "/contact-us",
     name: "contact",
     component: () => import("../views/general/contact-us.vue"),
+    meta: {
+      title: "تواصل معنا - جمعية الكوكب الدري الخيرية",
+      description:
+        "تواصل مع جمعية الكوكب الدري الخيرية للاستفسارات والتبرعات والمشاركة في الأعمال الخيرية",
+      keywords: "تواصل معنا, اتصل بنا, جمعية خيرية",
+    },
   },
   {
     path: "/admin",
@@ -231,6 +249,29 @@ const router = createRouter({
 // Navigation guard to check authentication for protected routes
 router.beforeEach((to, from, next) => {
   const isLoggedIn = localStorage.getItem("isLoggedIn") === "true";
+
+  // Update document title and meta tags for SEO
+  if (to.meta.title) {
+    document.title = to.meta.title;
+  } else {
+    document.title = "جمعية الكوكب الدري الخيرية";
+  }
+
+  // Update meta description
+  if (to.meta.description) {
+    let metaDescription = document.querySelector('meta[name="description"]');
+    if (metaDescription) {
+      metaDescription.setAttribute("content", to.meta.description);
+    }
+  }
+
+  // Update meta keywords
+  if (to.meta.keywords) {
+    let metaKeywords = document.querySelector('meta[name="keywords"]');
+    if (metaKeywords) {
+      metaKeywords.setAttribute("content", to.meta.keywords);
+    }
+  }
 
   if (to.matched.some((record) => record.meta.requiresAuth)) {
     // This route requires auth, check if logged in
