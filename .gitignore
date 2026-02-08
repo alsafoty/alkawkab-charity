@@ -4,6 +4,10 @@ node_modules
 /Swagger UI_files
 swagger.json
 Swagger UI.html
+DEPLOYMENT_GUIDE.md
+SEO_CHECKLIST.md
+SEO_GUIDE.md
+QUICK_REFERENCE.md
 
 # local env files
 .env
