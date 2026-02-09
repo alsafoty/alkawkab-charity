@@ -38,8 +38,8 @@
             class="navbar-nav d-none d-lg-flex flex-row fs-6 fs-md-3 fw-bold position-absolute start-50 translate-middle-x"
           >
             <li class="nav-item">
-              <router-link class="nav-link text-dark" to="/contact-us"
-                >تواصل معنا</router-link
+              <router-link class="nav-link text-dark" to="/"
+                >الرئيسية</router-link
               >
             </li>
             <li class="nav-item">
@@ -48,8 +48,8 @@
               >
             </li>
             <li class="nav-item">
-              <router-link class="nav-link text-dark" to="/"
-                >الرئيسية</router-link
+              <router-link class="nav-link text-dark" to="/contact-us"
+                >تواصل معنا</router-link
               >
             </li>
           </ul>
@@ -140,7 +140,7 @@ watch(
   () => {
     checkLoginStatus();
     closeMobileMenu(); // إغلاق القائمة عند تغيير المسار
-  }
+  },
 );
 
 // التحقق من حالة تسجيل الدخول

@@ -63,12 +63,12 @@
         </h5>
         <div class="row text-center">
           <div class="col-md mb-3">
-            <i class="bi bi-telephone-fill text-success fs-4 me-2"></i>
-            <span class="fw-semibold fs-3">+962 77 974 7580</span>
+            <i class="bi bi-telephone-fill text-success fs-4 ms-2"></i>
+            <span class="fw-semibold fs-3" dir="ltr">+962 77 974 7580</span>
           </div>
           <div class="col-md mb-3">
-            <i class="bi bi-envelope-fill text-success fs-4 me-2"></i>
-            <span class="fw-semibold fs-3">info@alkawkab.org</span>
+            <i class="bi bi-envelope-fill text-success fs-4 ms-2"></i>
+            <span class="fw-semibold fs-3">Kawkabduriy@gmail.com</span>
           </div>
           <div class="col-md mb-3">
             <i class="bi bi-geo-alt-fill text-success fs-4 me-2"></i>
