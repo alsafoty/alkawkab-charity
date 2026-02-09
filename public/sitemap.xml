@@ -5,7 +5,7 @@
   <!-- Homepage -->
   <url>
     <loc>https://alkawkab-charity.netlify.app/</loc>
-    <lastmod>2026-02-08</lastmod>
+    <lastmod>2026-02-09</lastmod>
     <changefreq>daily</changefreq>
     <priority>1.0</priority>
   </url>
@@ -13,7 +13,7 @@
   <!-- About Page -->
   <url>
     <loc>https://alkawkab-charity.netlify.app/#/about</loc>
-    <lastmod>2026-02-08</lastmod>
+    <lastmod>2026-02-09</lastmod>
     <changefreq>monthly</changefreq>
     <priority>0.8</priority>
   </url>
@@ -21,7 +21,7 @@
   <!-- Contact Page -->
   <url>
     <loc>https://alkawkab-charity.netlify.app/#/contact-us</loc>
-    <lastmod>2026-02-08</lastmod>
+    <lastmod>2026-02-09</lastmod>
     <changefreq>monthly</changefreq>
     <priority>0.8</priority>
   </url>
