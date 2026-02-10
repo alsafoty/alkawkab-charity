@@ -207,7 +207,6 @@ const submitForm = async () => {
     "هل أنت متأكد من حفظ التعديلات؟",
     async function () {
       try {
-
         const payload = {
           guardianId: formData.guardianId.trim(),
           firstName: formData.firstName.trim(),

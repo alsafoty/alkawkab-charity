@@ -509,7 +509,6 @@ const getCurrentDate = () => {
 };
 
 const printContent = () => {
-
   const printContent = document.getElementById("printableContent").innerHTML;
   const printWindow = window.open("", "_blank");
 

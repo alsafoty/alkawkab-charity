@@ -119,7 +119,6 @@ const filteredTypes = computed(() => {
 // Methods
 const fetchAssistanceTypes = async () => {
   try {
-
     const response = await axios.get(`${API_BASE_URL}/AssistanceType`, {
       headers: { Authorization: `Bearer ${AUTH_TOKEN}` },
     });
@@ -159,7 +158,6 @@ const deleteType = async (id) => {
     async function () {
       // User clicked OK
       try {
-
         await axios.delete(`${API_BASE_URL}/AssistanceType/${id}`, {
           headers: { Authorization: `Bearer ${AUTH_TOKEN}` },
         });

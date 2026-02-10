@@ -165,7 +165,6 @@ const submitForm = async () => {
   }
 
   try {
-
     const payload = {
       id: formData.id.trim(),
       firstName: formData.firstName.trim(),

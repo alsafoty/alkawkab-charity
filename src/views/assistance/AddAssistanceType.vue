@@ -104,7 +104,7 @@ const submitForm = async () => {
         headers: {
           Authorization: `Bearer ${AUTH_TOKEN}`,
         },
-      }
+      },
     );
 
     if (response.status === 201 || response.status === 200) {

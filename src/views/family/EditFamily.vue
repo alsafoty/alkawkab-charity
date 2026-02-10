@@ -480,7 +480,6 @@ const removeMember = async (person) => {
       // User clicked OK
       removingIds.value.push(person.id);
       try {
-
         // استخدام البيانات بدون المساعدات
         const updatedPerson = {
           ...getPersonWithoutAssistances(person),

@@ -451,7 +451,6 @@ onMounted(async () => {
 
 const loadInitialData = async () => {
   try {
-
     // جلب العائلات
     const familyResponse = await axios.get(`${API_BASE_URL}/Family`, {
       headers: { Authorization: `Bearer ${AUTH_TOKEN}` },

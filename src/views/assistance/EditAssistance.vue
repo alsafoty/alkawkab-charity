@@ -195,7 +195,6 @@ onMounted(async () => {
 
 const loadInitialData = async () => {
   try {
-
     // جلب العائلات
     const familyResponse = await axios.get(`${API_BASE_URL}/Family`, {
       headers: {
@@ -211,7 +210,7 @@ const loadInitialData = async () => {
         headers: {
           Authorization: `Bearer ${AUTH_TOKEN}`,
         },
-      }
+      },
     );
     assistanceTypes.value = assistanceTypesResponse.data;
 
@@ -239,7 +238,6 @@ const loadInitialData = async () => {
 
 const loadAssistanceData = async () => {
   try {
-
     // جلب بيانات المساعدة الحالية
     const assistanceResponse = await axios.get(
       `${API_BASE_URL}/Assistance/${route.params.id}`,
@@ -247,7 +245,7 @@ const loadAssistanceData = async () => {
         headers: {
           Authorization: `Bearer ${AUTH_TOKEN}`,
         },
-      }
+      },
     );
 
     const assistanceData = assistanceResponse.data;
@@ -294,14 +292,13 @@ const loadFamilyMembers = async () => {
   }
 
   try {
-
     const response = await axios.get(
       `${API_BASE_URL}/Family/${formData.value.familyId}`,
       {
         headers: {
           Authorization: `Bearer ${AUTH_TOKEN}`,
         },
-      }
+      },
     );
     familyMembers.value = response.data.familyMembers || [];
 
@@ -368,7 +365,6 @@ const submitForm = async () => {
     async function () {
       // User clicked OK
       try {
-
         const dataToSend = {
           numberOfAssistance: Number(formData.value.numberOfAssistance),
           familyId:
@@ -391,7 +387,7 @@ const submitForm = async () => {
               Authorization: `Bearer ${AUTH_TOKEN}`,
               "Content-Type": "application/json",
             },
-          }
+          },
         );
 
         if (response.status === 200) {
@@ -411,7 +407,7 @@ const submitForm = async () => {
           alertify.error(`حدث خطأ أثناء تحديث المساعدة: ${errorMessage}`);
         } else if (error.request) {
           alertify.error(
-            "لا يمكن الاتصال بالخادم. يرجى التحقق من اتصال الإنترنت"
+            "لا يمكن الاتصال بالخادم. يرجى التحقق من اتصال الإنترنت",
           );
         } else {
           alertify.error("حدث خطأ أثناء تحديث المساعدة");
@@ -421,7 +417,7 @@ const submitForm = async () => {
     function () {
       // User clicked Cancel
       alertify.message("تم إلغاء عملية التحديث");
-    }
+    },
   );
 };
 </script>

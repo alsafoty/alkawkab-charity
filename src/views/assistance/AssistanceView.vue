@@ -651,7 +651,6 @@ const fetchData = async () => {
   const headers = { Authorization: `Bearer ${AUTH_TOKEN}` };
 
   try {
-
     const [assistanceTypesRes, familiesRes, personsRes, assistancesRes] =
       await Promise.all([
         axios.get(`${API_BASE_URL}/AssistanceType`, { headers }),
@@ -893,7 +892,6 @@ const getPrintTitle = () => {
 };
 
 const directPrint = () => {
-
   const printContent = document.getElementById("printableContent").innerHTML;
   const printWindow = window.open("", "_blank");
 
@@ -1003,7 +1001,6 @@ const deleteAssistance = async (assistanceId) => {
     async function () {
       // User clicked OK
       try {
-
         await axios.delete(`${API_BASE_URL}/Assistance/${assistanceId}`, {
           headers: { Authorization: `Bearer ${AUTH_TOKEN}` },
         });

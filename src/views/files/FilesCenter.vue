@@ -269,7 +269,6 @@ const uploadFile = async () => {
 // Download file
 const downloadFile = async (file) => {
   try {
-
     const response = await axios.get(
       `${FilesAPI}/${file.name}?year=${selectedYear.value}`,
       {

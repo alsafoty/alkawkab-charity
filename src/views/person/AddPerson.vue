@@ -540,7 +540,6 @@ onMounted(async () => {
 
 const fetchExistingFamilies = async () => {
   try {
-
     const response = await axios.get(FamilyAPI.value, {
       headers: {
         Authorization: `Bearer ${AUTH_TOKEN}`,
@@ -564,7 +563,6 @@ const fetchExistingFamilies = async () => {
 
 const fetchExistingGuardians = async () => {
   try {
-
     const response = await axios.get(GuardianAPI.value, {
       headers: {
         Authorization: `Bearer ${AUTH_TOKEN}`,
@@ -777,14 +775,12 @@ const submitForm = async () => {
     async function () {
       // User clicked OK
       try {
-
         let guardianId = null;
 
         // Step 1 & 2: إضافة الوصي أولاً إذا كان الشخص يتيماً ووصي جديد
         if (formData.isOrphan) {
           if (formData.isNewGuardian) {
             try {
-
               // إنشاء payload للوصي بناءً على الـ schema المُقدم
               const guardianPayload = {
                 guardianId: formData.guardian.guardianId,
@@ -849,7 +845,6 @@ const submitForm = async () => {
         // Handle family creation/selection
         if (formData.isPartOfFamily) {
           if (formData.isNewFamily) {
-
             // Create new family first
             const newFamilyData = {
               name: formData.newFamilyName,
@@ -892,7 +887,6 @@ const submitForm = async () => {
               `تم إنشاء العائلة الجديدة: ${formData.newFamilyName}`,
             );
           } else {
-
             // Use existing family
             familyId = formData.selectedFamilyId;
 

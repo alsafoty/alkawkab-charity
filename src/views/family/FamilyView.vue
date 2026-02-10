@@ -271,7 +271,6 @@ const getCurrentDate = () => {
 };
 
 const printContent = () => {
-
   const printContent = document.getElementById("printableContent").innerHTML;
   const printWindow = window.open("", "_blank");
 
@@ -384,7 +383,6 @@ const deleteFamily = async (id) => {
     async function () {
       // User clicked OK
       try {
-
         await axios.delete(`${API_BASE_URL}/Family/${id}`, {
           headers: {
             Authorization: `Bearer ${AUTH_TOKEN}`,

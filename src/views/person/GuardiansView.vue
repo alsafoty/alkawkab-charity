@@ -192,7 +192,6 @@ const printArea = ref(null);
 const fetchGuardians = async () => {
   loading.value = true;
   try {
-
     const response = await axios.get(`${API_BASE_URL}/Guardian`, {
       headers: {
         Authorization: `Bearer ${AUTH_TOKEN}`,
@@ -303,7 +302,6 @@ const deleteGuardian = async (id) => {
       isDeleting.value = true;
 
       try {
-
         await axios.delete(`${API_BASE_URL}/Guardian/${id}`, {
           headers: {
             Authorization: `Bearer ${AUTH_TOKEN}`,
@@ -359,7 +357,6 @@ const getCurrentDate = () => {
 };
 
 const printContent = () => {
-
   const printContent = document.getElementById("printableContent").innerHTML;
   const printWindow = window.open("", "_blank");
 

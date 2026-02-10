@@ -493,7 +493,6 @@ onMounted(async () => {
 
 const fetchExistingFamilies = async () => {
   try {
-
     const response = await axios.get(FamilyAPI.value, {
       headers: { Authorization: `Bearer ${AUTH_TOKEN}` },
     });
@@ -515,7 +514,6 @@ const fetchExistingFamilies = async () => {
 
 const fetchPersonData = async () => {
   try {
-
     const response = await axios.get(`${PersonAPI.value}/${route.params.id}`, {
       headers: { Authorization: `Bearer ${AUTH_TOKEN}` },
     });
@@ -583,7 +581,6 @@ const fetchPersonData = async () => {
 
 const fetchGuardianData = async (guardianId) => {
   try {
-
     const response = await axios.get(`${GuardianAPI.value}/${guardianId}`, {
       headers: { Authorization: `Bearer ${AUTH_TOKEN}` },
     });
@@ -620,7 +617,6 @@ const fetchGuardianData = async (guardianId) => {
 
 const fetchCurrentFamilyInfo = async () => {
   try {
-
     const response = await axios.get(
       `${FamilyAPI.value}/${formData.familyId}`,
       {
@@ -767,13 +763,11 @@ const submitForm = async () => {
     async function () {
       // User clicked OK
       try {
-
         let guardianId = formData.guardianId;
 
         // Handle guardian update/creation
         if (formData.isOrphan) {
           try {
-
             const guardianPayload = {
               guardianId:
                 formData.guardian.guardianId ||
@@ -834,7 +828,6 @@ const submitForm = async () => {
         // Handle family creation/selection
         if (formData.isPartOfFamily && formData.changeFamily) {
           if (formData.isNewFamily) {
-
             // Create new family first
             const newFamilyData = {
               name: formData.newFamilyName,
@@ -876,7 +869,6 @@ const submitForm = async () => {
             );
             console.log("New family created with ID:", familyId);
           } else {
-
             // Use existing family
             familyId = formData.selectedFamilyId;
 

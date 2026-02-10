@@ -90,14 +90,13 @@ const formData = ref({
 
 onMounted(async () => {
   try {
-
     const response = await axios.get(
       `${API_BASE_URL}/AssistanceType/${route.params.id}`,
       {
         headers: {
           Authorization: `Bearer ${AUTH_TOKEN}`,
         },
-      }
+      },
     );
 
     formData.value = {
@@ -141,7 +140,6 @@ const submitForm = async () => {
     async function () {
       // User clicked OK
       try {
-
         const response = await axios.put(
           `${API_BASE_URL}/AssistanceType/${route.params.id}`,
           formData.value,
@@ -149,7 +147,7 @@ const submitForm = async () => {
             headers: {
               Authorization: `Bearer ${AUTH_TOKEN}`,
             },
-          }
+          },
         );
 
         if (response.status === 200) {
@@ -169,7 +167,7 @@ const submitForm = async () => {
           alertify.error(`حدث خطأ أثناء تحديث نوع المساعدة: ${errorMessage}`);
         } else if (error.request) {
           alertify.error(
-            "لا يمكن الاتصال بالخادم. يرجى التحقق من اتصال الإنترنت"
+            "لا يمكن الاتصال بالخادم. يرجى التحقق من اتصال الإنترنت",
           );
         } else {
           alertify.error("حدث خطأ أثناء تحديث نوع المساعدة");
@@ -179,7 +177,7 @@ const submitForm = async () => {
     function () {
       // User clicked Cancel
       alertify.message("تم إلغاء عملية التحديث");
-    }
+    },
   );
 };
 </script>
