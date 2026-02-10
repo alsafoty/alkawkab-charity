@@ -293,7 +293,6 @@ const submitForm = async () => {
     "هل أنت متأكد من إضافة هذا الوصي؟",
     async function () {
       try {
-        alertify.message("جاري إضافة الوصي...");
 
         const payload = {
           guardianId: formData.guardianId.trim(),
@@ -320,9 +319,6 @@ const submitForm = async () => {
 
         // If orphans are selected, update them with the guardian ID
         if (formData.selectedOrphans.length > 0) {
-          alertify.message(
-            `جاري ربط ${formData.selectedOrphans.length} يتيم/أيتام بالوصي...`,
-          );
 
           try {
             const updatePromises = formData.selectedOrphans.map(

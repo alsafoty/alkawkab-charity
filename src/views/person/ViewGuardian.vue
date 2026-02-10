@@ -293,7 +293,6 @@ const getCurrentDate = () => {
 };
 
 const printContent = () => {
-  alertify.message("جاري تحضير الطباعة...");
 
   const printContent = document.getElementById("printableContent").innerHTML;
   const printWindow = window.open("", "_blank");

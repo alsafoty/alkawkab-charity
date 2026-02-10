@@ -82,7 +82,7 @@
                       </h6>
                       <small class="text-muted">
                         <i class="bi bi-hash me-1"></i>
-                        رقم الهوية: {{ member.id }}
+                        الرقم الوطني: {{ member.id }}
                       </small>
                       <div class="mt-1">
                         <small class="text-muted">
@@ -509,7 +509,6 @@ const getCurrentDate = () => {
 };
 
 const printContent = () => {
-  alertify.message("جاري تحضير الطباعة...");
 
   const printContent = document.getElementById("printableContent").innerHTML;
   const printWindow = window.open("", "_blank");

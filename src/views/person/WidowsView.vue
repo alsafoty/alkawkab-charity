@@ -184,7 +184,6 @@ const printArea = ref(null);
 const fetchWidows = async () => {
   loading.value = true;
   try {
-    alertify.message("جاري تحميل بيانات الأرامل...");
 
     const response = await axios.get(`${API_BASE_URL}/Person`, {
       headers: {
@@ -194,8 +193,6 @@ const fetchWidows = async () => {
 
     // Filter only widows
     widows.value = response.data.filter((person) => person.isWidow === true);
-
-    alertify.success(`تم تحميل ${widows.value.length} أرمل/أرملة بنجاح`);
   } catch (error) {
     console.error("Error fetching widows:", error);
 
@@ -291,7 +288,6 @@ const deletePerson = async (id) => {
       isDeleting.value = true;
 
       try {
-        alertify.message("جاري حذف الشخص...");
 
         await axios.delete(`${API_BASE_URL}/Person/${id}`, {
           headers: {
@@ -348,7 +344,6 @@ const getCurrentDate = () => {
 };
 
 const printContent = () => {
-  alertify.message("جاري تحضير الطباعة...");
 
   const printContent = document.getElementById("printableContent").innerHTML;
   const printWindow = window.open("", "_blank");

@@ -271,7 +271,6 @@ const getCurrentDate = () => {
 };
 
 const printContent = () => {
-  alertify.message("جاري تحضير الطباعة...");
 
   const printContent = document.getElementById("printableContent").innerHTML;
   const printWindow = window.open("", "_blank");
@@ -385,7 +384,6 @@ const deleteFamily = async (id) => {
     async function () {
       // User clicked OK
       try {
-        alertify.message("جاري حذف العائلة...");
 
         await axios.delete(`${API_BASE_URL}/Family/${id}`, {
           headers: {

@@ -651,7 +651,6 @@ const fetchData = async () => {
   const headers = { Authorization: `Bearer ${AUTH_TOKEN}` };
 
   try {
-    alertify.message("جاري تحميل بيانات المساعدات...");
 
     const [assistanceTypesRes, familiesRes, personsRes, assistancesRes] =
       await Promise.all([
@@ -665,8 +664,6 @@ const fetchData = async () => {
     families.value = familiesRes.data;
     persons.value = personsRes.data;
     assistances.value = assistancesRes.data;
-
-    alertify.success("تم تحميل جميع البيانات بنجاح");
   } catch (error) {
     console.error("Error fetching data:", error);
 
@@ -896,7 +893,6 @@ const getPrintTitle = () => {
 };
 
 const directPrint = () => {
-  alertify.message("جاري تحضير الطباعة...");
 
   const printContent = document.getElementById("printableContent").innerHTML;
   const printWindow = window.open("", "_blank");
@@ -1007,7 +1003,6 @@ const deleteAssistance = async (assistanceId) => {
     async function () {
       // User clicked OK
       try {
-        alertify.message("جاري حذف المساعدة...");
 
         await axios.delete(`${API_BASE_URL}/Assistance/${assistanceId}`, {
           headers: { Authorization: `Bearer ${AUTH_TOKEN}` },

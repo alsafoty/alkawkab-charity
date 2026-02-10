@@ -269,7 +269,6 @@ const uploadFile = async () => {
 // Download file
 const downloadFile = async (file) => {
   try {
-    alertify.message("جاري تحميل الملف...");
 
     const response = await axios.get(
       `${FilesAPI}/${file.name}?year=${selectedYear.value}`,
@@ -290,8 +289,6 @@ const downloadFile = async (file) => {
     link.click();
     link.remove();
     window.URL.revokeObjectURL(url);
-
-    alertify.success("تم تحميل الملف بنجاح");
   } catch (error) {
     console.error("Error downloading file:", error);
     alertify.error("حدث خطأ أثناء تحميل الملف");

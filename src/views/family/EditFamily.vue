@@ -65,17 +65,17 @@
                   <div class="row">
                     <div class="col-md-6">
                       <div class="form-group mb-3">
-                        <label class="form-label fw-bold">رقم الهوية</label>
+                        <label class="form-label fw-bold">الرقم الوطني</label>
                         <input
                           v-model="headOfFamily.id"
                           type="text"
                           class="form-control shadow-sm"
-                          placeholder="رقم الهوية"
+                          placeholder="الرقم الوطني"
                           readonly
                           disabled
                         />
                         <small class="text-muted"
-                          >لا يمكن تعديل رقم الهوية</small
+                          >لا يمكن تعديل الرقم الوطني</small
                         >
                       </div>
                     </div>
@@ -244,7 +244,7 @@
                         </span>
                       </div>
                       <small class="text-muted">
-                        يمكنك البحث بالاسم الأول أو الأخير أو رقم الهوية
+                        يمكنك البحث بالاسم الأول أو الأخير أو الرقم الوطني
                       </small>
                     </div>
 
@@ -480,7 +480,6 @@ const removeMember = async (person) => {
       // User clicked OK
       removingIds.value.push(person.id);
       try {
-        alertify.message("جاري إزالة العضو...");
 
         // استخدام البيانات بدون المساعدات
         const updatedPerson = {
@@ -522,9 +521,6 @@ const removeMember = async (person) => {
 // حفظ التعديلات
 const submitForm = async () => {
   loading.value = true;
-
-  // Show loading notification
-  alertify.message("جاري حفظ التعديلات...");
 
   try {
     // 1. تحديث بيانات رب الأسرة

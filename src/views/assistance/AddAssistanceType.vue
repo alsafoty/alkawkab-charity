@@ -93,7 +93,6 @@ const submitForm = async () => {
   }
 
   // Show loading notification
-  alertify.message("جاري إضافة نوع المساعدة...");
 
   console.log(formData.value);
 

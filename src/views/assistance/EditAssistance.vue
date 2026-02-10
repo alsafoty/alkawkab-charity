@@ -195,7 +195,6 @@ onMounted(async () => {
 
 const loadInitialData = async () => {
   try {
-    alertify.message("جاري تحميل البيانات الأولية...");
 
     // جلب العائلات
     const familyResponse = await axios.get(`${API_BASE_URL}/Family`, {
@@ -223,8 +222,6 @@ const loadInitialData = async () => {
       },
     });
     allPersons.value = personsResponse.data;
-
-    alertify.success("تم تحميل البيانات الأولية بنجاح");
   } catch (error) {
     console.error("Error fetching initial data:", error);
 
@@ -242,7 +239,6 @@ const loadInitialData = async () => {
 
 const loadAssistanceData = async () => {
   try {
-    alertify.message("جاري تحميل بيانات المساعدة...");
 
     // جلب بيانات المساعدة الحالية
     const assistanceResponse = await axios.get(
@@ -276,8 +272,6 @@ const loadAssistanceData = async () => {
     if (formData.value.familyId && selectionMode.value === "family") {
       await loadFamilyMembers();
     }
-
-    alertify.success("تم تحميل بيانات المساعدة بنجاح");
   } catch (error) {
     console.error("Error fetching assistance data:", error);
 
@@ -300,7 +294,6 @@ const loadFamilyMembers = async () => {
   }
 
   try {
-    alertify.message("جاري تحميل أعضاء العائلة...");
 
     const response = await axios.get(
       `${API_BASE_URL}/Family/${formData.value.familyId}`,
@@ -312,9 +305,7 @@ const loadFamilyMembers = async () => {
     );
     familyMembers.value = response.data.familyMembers || [];
 
-    if (familyMembers.value.length > 0) {
-      alertify.success(`تم تحميل ${familyMembers.value.length} عضو من العائلة`);
-    } else {
+    if (familyMembers.value.length === 0) {
       alertify.message("لا يوجد أعضاء في هذه العائلة");
     }
   } catch (error) {
@@ -377,7 +368,6 @@ const submitForm = async () => {
     async function () {
       // User clicked OK
       try {
-        alertify.message("جاري تحديث المساعدة...");
 
         const dataToSend = {
           numberOfAssistance: Number(formData.value.numberOfAssistance),

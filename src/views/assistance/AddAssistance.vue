@@ -451,7 +451,6 @@ onMounted(async () => {
 
 const loadInitialData = async () => {
   try {
-    alertify.message("جاري تحميل البيانات الأولية...");
 
     // جلب العائلات
     const familyResponse = await axios.get(`${API_BASE_URL}/Family`, {
@@ -473,8 +472,6 @@ const loadInitialData = async () => {
       headers: { Authorization: `Bearer ${AUTH_TOKEN}` },
     });
     allPersons.value = personsResponse.data;
-
-    alertify.success("تم تحميل البيانات بنجاح");
   } catch (error) {
     console.error("Error fetching initial data:", error);
     alertify.error("حدث خطأ أثناء جلب البيانات الأولية");
@@ -683,7 +680,6 @@ const submitForm = async () => {
     async function () {
       // User clicked OK
       isSubmitting.value = true;
-      alertify.message("جاري إضافة المساعدات...");
 
       try {
         const assistancesToSubmit = [];

@@ -165,7 +165,6 @@ const submitForm = async () => {
   }
 
   try {
-    alertify.message("جاري حفظ البيانات...");
 
     const payload = {
       id: formData.id.trim(),

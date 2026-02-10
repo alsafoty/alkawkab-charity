@@ -192,7 +192,6 @@ const printArea = ref(null);
 const fetchGuardians = async () => {
   loading.value = true;
   try {
-    alertify.message("جاري تحميل بيانات الأوصياء...");
 
     const response = await axios.get(`${API_BASE_URL}/Guardian`, {
       headers: {
@@ -201,7 +200,6 @@ const fetchGuardians = async () => {
     });
 
     guardians.value = response.data;
-    alertify.success(`تم تحميل ${guardians.value.length} وصي بنجاح`);
   } catch (error) {
     console.error("Error fetching guardians:", error);
 
@@ -305,7 +303,6 @@ const deleteGuardian = async (id) => {
       isDeleting.value = true;
 
       try {
-        alertify.message("جاري حذف الوصي...");
 
         await axios.delete(`${API_BASE_URL}/Guardian/${id}`, {
           headers: {
@@ -362,7 +359,6 @@ const getCurrentDate = () => {
 };
 
 const printContent = () => {
-  alertify.message("جاري تحضير الطباعة...");
 
   const printContent = document.getElementById("printableContent").innerHTML;
   const printWindow = window.open("", "_blank");

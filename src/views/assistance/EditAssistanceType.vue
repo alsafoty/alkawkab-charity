@@ -90,7 +90,6 @@ const formData = ref({
 
 onMounted(async () => {
   try {
-    alertify.message("جاري تحميل بيانات نوع المساعدة...");
 
     const response = await axios.get(
       `${API_BASE_URL}/AssistanceType/${route.params.id}`,
@@ -106,8 +105,6 @@ onMounted(async () => {
       isFinancial: response.data.isFinancial,
       assistanceValue: response.data.assistanceValue,
     };
-
-    alertify.success("تم تحميل بيانات نوع المساعدة بنجاح");
   } catch (error) {
     console.error("Error fetching assistance type:", error);
 
@@ -144,7 +141,6 @@ const submitForm = async () => {
     async function () {
       // User clicked OK
       try {
-        alertify.message("جاري تحديث نوع المساعدة...");
 
         const response = await axios.put(
           `${API_BASE_URL}/AssistanceType/${route.params.id}`,

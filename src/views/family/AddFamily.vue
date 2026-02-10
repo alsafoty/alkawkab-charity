@@ -13,7 +13,7 @@
                 معلومات الأسرة الأساسية
               </h4>
               <div class="row">
-                <div class="col-md-6">
+                <div class="col-md-4">
                   <div class="form-group mb-3">
                     <label class="form-label fw-bold">اسم الأسرة</label>
                     <input
@@ -25,7 +25,20 @@
                     />
                   </div>
                 </div>
-                <div class="col-md-6">
+                <div class="col-md-4">
+                  <div class="form-group mb-3">
+                    <label class="form-label fw-bold">عدد أفراد الأسرة</label>
+                    <input
+                      v-model.number="formData.numberOfFamilyMembers"
+                      type="number"
+                      min="1"
+                      class="form-control shadow-sm"
+                      placeholder="أدخل عدد الأفراد"
+                      required
+                    />
+                  </div>
+                </div>
+                <div class="col-md-4">
                   <div class="form-group mb-3">
                     <label class="form-label fw-bold mb-2">حالة السكن</label>
                     <div class="house-status p-3 bg-white rounded-3 border">
@@ -59,12 +72,12 @@
               <div class="row">
                 <div class="col-md-6">
                   <div class="form-group mb-3">
-                    <label class="form-label fw-bold">رقم الهوية *</label>
+                    <label class="form-label fw-bold">الرقم الوطني *</label>
                     <input
                       v-model="headOfFamily.id"
                       type="text"
                       class="form-control shadow-sm"
-                      placeholder="أدخل رقم الهوية"
+                      placeholder="أدخل الرقم الوطني"
                       required
                     />
                   </div>
@@ -222,12 +235,12 @@
                 <div class="row">
                   <div class="col-md-6">
                     <div class="form-group mb-3">
-                      <label class="form-label fw-bold">رقم الهوية *</label>
+                      <label class="form-label fw-bold">الرقم الوطني *</label>
                       <input
                         v-model="member.id"
                         type="text"
                         class="form-control shadow-sm"
-                        placeholder="أدخل رقم الهوية"
+                        placeholder="أدخل الرقم الوطني"
                         required
                       />
                     </div>
@@ -409,7 +422,7 @@
                     </span>
                   </div>
                   <small class="text-muted">
-                    يمكنك البحث بالاسم الأول أو الأخير أو رقم الهوية
+                    يمكنك البحث بالاسم الأول أو الأخير أو الرقم الوطني
                   </small>
                 </div>
 
@@ -501,6 +514,7 @@ const AUTH_TOKEN = localStorage.getItem("token");
 
 const formData = ref({
   name: "",
+  numberOfFamilyMembers: 1,
   isHouseOwned: false,
 });
 
@@ -655,17 +669,12 @@ const submitForm = async () => {
   }
 
   loading.value = true;
-  alertify.message("جاري إضافة الأسرة...");
 
   try {
-    // 1. حساب عدد الأفراد
-    const totalMembers =
-      1 + familyMembers.value.length + selectedPersons.value.length;
-
-    // 2. أضف العائلة
+    // 1. استخدام عدد الأفراد المدخل يدوياً
     const familyData = {
       name: formData.value.name.trim(),
-      numberOfFamilyMembers: totalMembers,
+      numberOfFamilyMembers: formData.value.numberOfFamilyMembers,
       isHouseOwned: formData.value.isHouseOwned,
     };
 
@@ -772,6 +781,7 @@ const submitForm = async () => {
     // إعادة تعيين النموذج
     formData.value = {
       name: "",
+      numberOfFamilyMembers: 1,
       isHouseOwned: false,
     };
     headOfFamily.value = {

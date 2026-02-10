@@ -493,14 +493,11 @@ onMounted(async () => {
 
 const fetchExistingFamilies = async () => {
   try {
-    alertify.message("جاري تحميل قائمة العائلات...");
 
     const response = await axios.get(FamilyAPI.value, {
       headers: { Authorization: `Bearer ${AUTH_TOKEN}` },
     });
     existingFamilies.value = response.data;
-
-    alertify.success("تم تحميل قائمة العائلات بنجاح");
   } catch (error) {
     console.error("Error fetching families:", error);
 
@@ -518,7 +515,6 @@ const fetchExistingFamilies = async () => {
 
 const fetchPersonData = async () => {
   try {
-    alertify.message("جاري تحميل بيانات الشخص...");
 
     const response = await axios.get(`${PersonAPI.value}/${route.params.id}`, {
       headers: { Authorization: `Bearer ${AUTH_TOKEN}` },
@@ -568,8 +564,6 @@ const fetchPersonData = async () => {
     if (formData.familyId && formData.isPartOfFamily) {
       await fetchCurrentFamilyInfo();
     }
-
-    alertify.success("تم تحميل بيانات الشخص بنجاح");
   } catch (error) {
     console.error("Error fetching person details:", error);
     if (error.response && error.response.status === 404) {
@@ -589,7 +583,6 @@ const fetchPersonData = async () => {
 
 const fetchGuardianData = async (guardianId) => {
   try {
-    alertify.message("جاري تحميل بيانات الوصي...");
 
     const response = await axios.get(`${GuardianAPI.value}/${guardianId}`, {
       headers: { Authorization: `Bearer ${AUTH_TOKEN}` },
@@ -606,8 +599,6 @@ const fetchGuardianData = async (guardianId) => {
       guardianJob: guardianData.guardianJob || "",
       guardianPhoneNumber: guardianData.guardianPhoneNumber || "",
     };
-
-    alertify.success("تم تحميل بيانات الوصي بنجاح");
   } catch (error) {
     console.error("Error fetching guardian data:", error);
 
@@ -629,7 +620,6 @@ const fetchGuardianData = async (guardianId) => {
 
 const fetchCurrentFamilyInfo = async () => {
   try {
-    alertify.message("جاري تحميل معلومات العائلة الحالية...");
 
     const response = await axios.get(
       `${FamilyAPI.value}/${formData.familyId}`,
@@ -641,7 +631,6 @@ const fetchCurrentFamilyInfo = async () => {
 
     if (currentFamilyInfo.value) {
       formData.isHouseOwned = currentFamilyInfo.value.isHouseOwned;
-      alertify.success("تم تحميل معلومات العائلة الحالية بنجاح");
     }
   } catch (error) {
     console.error("Error fetching current family info:", error);
@@ -778,14 +767,12 @@ const submitForm = async () => {
     async function () {
       // User clicked OK
       try {
-        alertify.message("جاري تحديث بيانات الشخص...");
 
         let guardianId = formData.guardianId;
 
         // Handle guardian update/creation
         if (formData.isOrphan) {
           try {
-            alertify.message("جاري تحديث بيانات الوصي...");
 
             const guardianPayload = {
               guardianId:
@@ -847,7 +834,6 @@ const submitForm = async () => {
         // Handle family creation/selection
         if (formData.isPartOfFamily && formData.changeFamily) {
           if (formData.isNewFamily) {
-            alertify.message("جاري إنشاء عائلة جديدة...");
 
             // Create new family first
             const newFamilyData = {
@@ -890,7 +876,6 @@ const submitForm = async () => {
             );
             console.log("New family created with ID:", familyId);
           } else {
-            alertify.message("جاري تحديث بيانات العائلة المختارة...");
 
             // Use existing family
             familyId = formData.selectedFamilyId;

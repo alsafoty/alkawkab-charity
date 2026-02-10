@@ -164,7 +164,6 @@ const getCurrentDate = () => {
 };
 
 const printContent = () => {
-  alertify.message("جاري تحضير الطباعة...");
 
   const printContent = document.getElementById("printableContent").innerHTML;
   const printWindow = window.open("", "_blank");
@@ -243,7 +242,6 @@ const printContent = () => {
 // Fetch persons data
 const fetchPersons = async () => {
   try {
-    alertify.message("جاري تحميل بيانات الأشخاص...");
 
     const response = await axios.get(`${API_BASE_URL}/Person`, {
       headers: {
@@ -251,8 +249,6 @@ const fetchPersons = async () => {
       },
     });
     persons.value = response.data;
-
-    alertify.success(`تم تحميل ${persons.value.length} شخص بنجاح`);
   } catch (error) {
     console.error("Error fetching persons:", error);
 
@@ -342,7 +338,6 @@ const deletePerson = async (id) => {
       isDeleting.value = true;
 
       try {
-        alertify.message("جاري حذف الشخص...");
 
         await axios.delete(`${API_BASE_URL}/Person/${id}`, {
           headers: {

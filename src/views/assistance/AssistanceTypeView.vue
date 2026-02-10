@@ -119,14 +119,12 @@ const filteredTypes = computed(() => {
 // Methods
 const fetchAssistanceTypes = async () => {
   try {
-    alertify.message("جاري تحميل أنواع المساعدات...");
 
     const response = await axios.get(`${API_BASE_URL}/AssistanceType`, {
       headers: { Authorization: `Bearer ${AUTH_TOKEN}` },
     });
 
     assistanceTypes.value = response.data;
-    alertify.success("تم تحميل أنواع المساعدات بنجاح");
   } catch (error) {
     console.error("Error fetching assistance types:", error);
 
@@ -161,7 +159,6 @@ const deleteType = async (id) => {
     async function () {
       // User clicked OK
       try {
-        alertify.message("جاري حذف نوع المساعدة...");
 
         await axios.delete(`${API_BASE_URL}/AssistanceType/${id}`, {
           headers: { Authorization: `Bearer ${AUTH_TOKEN}` },

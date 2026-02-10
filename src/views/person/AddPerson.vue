@@ -540,7 +540,6 @@ onMounted(async () => {
 
 const fetchExistingFamilies = async () => {
   try {
-    alertify.message("جاري تحميل قائمة العائلات...");
 
     const response = await axios.get(FamilyAPI.value, {
       headers: {
@@ -548,8 +547,6 @@ const fetchExistingFamilies = async () => {
       },
     });
     existingFamilies.value = response.data;
-
-    alertify.success("تم تحميل قائمة العائلات بنجاح");
   } catch (error) {
     console.error("Error fetching families:", error);
 
@@ -567,7 +564,6 @@ const fetchExistingFamilies = async () => {
 
 const fetchExistingGuardians = async () => {
   try {
-    alertify.message("جاري تحميل قائمة الأوصياء...");
 
     const response = await axios.get(GuardianAPI.value, {
       headers: {
@@ -575,8 +571,6 @@ const fetchExistingGuardians = async () => {
       },
     });
     existingGuardians.value = response.data;
-
-    alertify.success("تم تحميل قائمة الأوصياء بنجاح");
   } catch (error) {
     console.error("Error fetching guardians:", error);
 
@@ -783,7 +777,6 @@ const submitForm = async () => {
     async function () {
       // User clicked OK
       try {
-        alertify.message("جاري إضافة الشخص...");
 
         let guardianId = null;
 
@@ -791,7 +784,6 @@ const submitForm = async () => {
         if (formData.isOrphan) {
           if (formData.isNewGuardian) {
             try {
-              alertify.message("جاري إضافة بيانات الوصي...");
 
               // إنشاء payload للوصي بناءً على الـ schema المُقدم
               const guardianPayload = {
@@ -857,7 +849,6 @@ const submitForm = async () => {
         // Handle family creation/selection
         if (formData.isPartOfFamily) {
           if (formData.isNewFamily) {
-            alertify.message("جاري إنشاء عائلة جديدة...");
 
             // Create new family first
             const newFamilyData = {
@@ -901,7 +892,6 @@ const submitForm = async () => {
               `تم إنشاء العائلة الجديدة: ${formData.newFamilyName}`,
             );
           } else {
-            alertify.message("جاري تحديث بيانات العائلة المختارة...");
 
             // Use existing family
             familyId = formData.selectedFamilyId;

@@ -105,9 +105,9 @@
 @media (max-width: 768px) {
     .alertify-notifier {
         right: 15px;
-        left: 15px;
+        left: auto;
         bottom: 15px;
-        max-width: none;
+        max-width: 90%;
     }
 
     .alertify-notifier .ajs-message {
@@ -133,8 +133,9 @@
 @media (max-width: 480px) {
     .alertify-notifier {
         right: 10px;
-        left: 10px;
+        left: auto;
         bottom: 10px;
+        max-width: 85%;
     }
 
     .alertify-notifier .ajs-message {

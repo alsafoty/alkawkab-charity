@@ -196,7 +196,6 @@ const printArea = ref(null);
 const fetchOrphans = async () => {
   loading.value = true;
   try {
-    alertify.message("جاري تحميل بيانات الأيتام...");
 
     const response = await axios.get(`${API_BASE_URL}/Person`, {
       headers: {
@@ -206,8 +205,6 @@ const fetchOrphans = async () => {
 
     // Filter only orphans
     orphans.value = response.data.filter((person) => person.isOrphan === true);
-
-    alertify.success(`تم تحميل ${orphans.value.length} يتيم/يتيمة بنجاح`);
   } catch (error) {
     console.error("Error fetching orphans:", error);
 
@@ -303,7 +300,6 @@ const deletePerson = async (id) => {
       isDeleting.value = true;
 
       try {
-        alertify.message("جاري حذف الشخص...");
 
         await axios.delete(`${API_BASE_URL}/Person/${id}`, {
           headers: {
@@ -360,7 +356,6 @@ const getCurrentDate = () => {
 };
 
 const printContent = () => {
-  alertify.message("جاري تحضير الطباعة...");
 
   const printContent = document.getElementById("printableContent").innerHTML;
   const printWindow = window.open("", "_blank");
