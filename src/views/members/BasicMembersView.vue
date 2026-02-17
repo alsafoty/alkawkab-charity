@@ -144,6 +144,41 @@
         </div>
       </div>
     </div>
+
+    <!-- Hidden content for printing -->
+    <div id="printableContent" style="display: none">
+      <div class="print-header text-center mb-4">
+        <h2 class="fw-bold">قائمة الأعضاء الأساسيين</h2>
+        <p class="text-muted">تاريخ الطباعة: {{ getCurrentDate() }}</p>
+        <p class="text-muted">إجمالي الأعضاء: {{ filteredMembers.length }}</p>
+      </div>
+
+      <div class="print-section" v-if="filteredMembers.length > 0">
+        <table class="print-table">
+          <thead>
+            <tr>
+              <th>الرقم الوطني</th>
+              <th>الاسم الكامل</th>
+              <th>رقم الهاتف</th>
+              <th>رسوم الانتساب</th>
+              <th>رقم الإيصال</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr v-for="member in filteredMembers" :key="member.id">
+              <td>{{ member.id }}</td>
+              <td>
+                {{ member.firstName }} {{ member.secondName }}
+                {{ member.lastName }}
+              </td>
+              <td>{{ member.phoneNumber || "غير محدد" }}</td>
+              <td>{{ member.isMembershipPaid ? "مسددة" : "غير مسددة" }}</td>
+              <td>{{ member.receiptNo || "-" }}</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
   </div>
 </template>
 
@@ -312,8 +347,82 @@ const deleteMember = (id) => {
   );
 };
 
+const getCurrentDate = () => {
+  return new Date().toLocaleDateString("ar-JO", {
+    year: "numeric",
+    month: "long",
+    day: "numeric",
+    weekday: "long",
+  });
+};
+
 const printContent = () => {
-  window.print();
+  const printContent = document.getElementById("printableContent").innerHTML;
+  const printWindow = window.open("", "_blank");
+
+  printWindow.document.write(`
+    <!DOCTYPE html>
+    <html dir="rtl">
+    <head>
+      <title>طباعة قائمة الأعضاء الأساسيين</title>
+      <meta charset="utf-8">
+      <style>
+        body { 
+          font-family: 'Tajawal', Arial, sans-serif; 
+          direction: rtl; 
+          margin: 20px; 
+          color: #333; 
+        }
+        .print-header { 
+          text-align: center; 
+          margin-bottom: 30px; 
+          border-bottom: 2px solid #42b983; 
+          padding-bottom: 15px; 
+        }
+        .print-header h2 { 
+          color: #42b983; 
+          margin-bottom: 10px; 
+        }
+        .print-section {
+          margin-bottom: 20px;
+        }
+        .print-table { 
+          width: 100%; 
+          border-collapse: collapse; 
+          margin: 10px 0; 
+          font-size: 10px; 
+        }
+        .print-table th, .print-table td { 
+          border: 1px solid #ddd; 
+          padding: 6px; 
+          text-align: center; 
+        }
+        .print-table th { 
+          background-color: #42b983; 
+          color: white; 
+          font-weight: bold; 
+        }
+        .print-table tbody tr:nth-child(even) {
+          background-color: #f8f9fa;
+        }
+        @media print { 
+          body { margin: 0; } 
+          .print-table { font-size: 9px; }
+          .print-table th, .print-table td { padding: 4px; }
+        }
+      </style>
+    </head>
+    <body>${printContent}</body>
+    </html>
+  `);
+
+  printWindow.document.close();
+  printWindow.focus();
+  setTimeout(() => {
+    printWindow.print();
+    printWindow.close();
+    alertify.success("تم فتح نافذة الطباعة");
+  }, 250);
 };
 
 const goBack = () => {
@@ -340,15 +449,123 @@ onMounted(() => {
   vertical-align: middle;
 }
 
+/* Font family */
+* {
+  font-family: "Tajawal", sans-serif;
+}
+
 /* Print styles */
 @media print {
   .no-print {
     display: none !important;
   }
-}
 
-/* Font family */
-* {
-  font-family: "Tajawal", sans-serif;
+  @page {
+    size: A4;
+    margin: 1.5cm;
+  }
+
+  body {
+    margin: 0;
+    print-color-adjust: exact;
+    -webkit-print-color-adjust: exact;
+  }
+
+  .container {
+    width: 100% !important;
+    max-width: 100% !important;
+    padding: 0 !important;
+    margin: 0 !important;
+    background: white !important;
+  }
+
+  .card {
+    border: none !important;
+    box-shadow: none !important;
+  }
+
+  .card-header {
+    background-color: #42b983 !important;
+    color: white !important;
+    padding: 1rem !important;
+    text-align: center !important;
+    border: none !important;
+    -webkit-print-color-adjust: exact !important;
+    print-color-adjust: exact !important;
+  }
+
+  .card-header h2 {
+    font-size: 1.3rem !important;
+    margin: 0 !important;
+  }
+
+  .card-body {
+    padding: 1rem !important;
+  }
+
+  .table-responsive {
+    overflow: visible !important;
+    border: 1px solid #e0e0e0;
+    margin-bottom: 1rem;
+  }
+
+  .table {
+    width: 100% !important;
+    border-collapse: collapse !important;
+    font-size: 10px !important;
+    margin: 0 !important;
+  }
+
+  .table thead {
+    display: table-header-group;
+  }
+
+  .table tr {
+    page-break-inside: avoid;
+  }
+
+  .table th {
+    background-color: #42b983 !important;
+    color: white !important;
+    border: 1px solid #dee2e6 !important;
+    padding: 0.5rem 0.3rem !important;
+    font-size: 10px !important;
+    font-weight: bold !important;
+    -webkit-print-color-adjust: exact !important;
+    print-color-adjust: exact !important;
+  }
+
+  .table td {
+    border: 1px solid #dee2e6 !important;
+    padding: 0.4rem 0.3rem !important;
+    font-size: 9px !important;
+    color: #000 !important;
+  }
+
+  .table tbody tr:nth-child(even) {
+    background-color: #f8f9fa !important;
+    -webkit-print-color-adjust: exact !important;
+    print-color-adjust: exact !important;
+  }
+
+  .badge {
+    border: 1px solid #666 !important;
+    padding: 2px 6px !important;
+    font-size: 8px !important;
+  }
+
+  .badge.bg-success {
+    background-color: #d4edda !important;
+    color: #155724 !important;
+    -webkit-print-color-adjust: exact !important;
+    print-color-adjust: exact !important;
+  }
+
+  .badge.bg-danger {
+    background-color: #f8d7da !important;
+    color: #721c24 !important;
+    -webkit-print-color-adjust: exact !important;
+    print-color-adjust: exact !important;
+  }
 }
 </style>

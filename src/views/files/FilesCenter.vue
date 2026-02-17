@@ -46,7 +46,7 @@
           </h4>
           <div class="alert alert-info py-2 mb-3" style="font-size: 0.9rem">
             <i class="bi bi-info-circle me-2"></i>
-            <strong>ملاحظة:</strong> الحد الأقصى لحجم الملف: 10 ميجابايت. الملفات يتم رفعها مباشرة إلى سحابة Cloudinary بشكل آمن.
+            <strong>ملاحظة:</strong> الحد الأقصى لحجم الملف: 10 ميجابايت.
           </div>
           <div class="row align-items-end">
             <div class="col-md-8">
@@ -418,16 +418,16 @@ const uploadFiles = async () => {
     );
 
     const signatureData = signatureResponse.data.data;
-    
+
     // Upload each file directly to Cloudinary
     for (let i = 0; i < selectedFiles.value.length; i++) {
       const file = selectedFiles.value[i];
       uploadProgress.value.current = i + 1;
-      
+
       try {
         // Upload directly to Cloudinary
         const cloudinaryResult = await uploadToCloudinary(file, signatureData);
-        
+
         // Save file info to database via backend
         await axios.post(
           `${FilesAPI}/save-info?year=${selectedYear.value}`,
@@ -488,7 +488,7 @@ const uploadToCloudinary = async (file, signatureData) => {
 
   // Upload directly to Cloudinary (bypasses Vercel completely)
   const cloudinaryUrl = `https://api.cloudinary.com/v1_1/${signatureData.cloudName}/auto/upload`;
-  
+
   const response = await axios.post(cloudinaryUrl, formData, {
     headers: {
       "Content-Type": "multipart/form-data",

@@ -89,6 +89,45 @@
         </div>
       </div>
     </div>
+
+    <!-- Hidden content for printing -->
+    <div id="printableContent" style="display: none">
+      <div class="print-header text-center mb-4">
+        <h2 class="fw-bold">تفاصيل عضو الجمعية العمومية</h2>
+        <p class="text-muted">تاريخ الطباعة: {{ getCurrentDate() }}</p>
+      </div>
+
+      <div class="print-section mb-3" v-if="memberData">
+        <h4 class="section-title">المعلومات الأساسية</h4>
+        <table class="print-info-table">
+          <tr>
+            <td><strong>الرقم الوطني:</strong></td>
+            <td>{{ memberData.id }}</td>
+            <td><strong>رقم الهاتف:</strong></td>
+            <td>{{ memberData.phoneNumber || "غير محدد" }}</td>
+          </tr>
+          <tr>
+            <td><strong>الاسم الكامل:</strong></td>
+            <td colspan="3">
+              {{ memberData.firstName }} {{ memberData.secondName }}
+              {{ memberData.lastName }}
+            </td>
+          </tr>
+        </table>
+      </div>
+
+      <div class="print-section mb-3" v-if="memberData">
+        <h4 class="section-title">معلومات العضوية الإدارية</h4>
+        <table class="print-info-table">
+          <tr>
+            <td><strong>عضو إداري:</strong></td>
+            <td>{{ memberData.isAdministrativeMember ? "نعم" : "لا" }}</td>
+            <td><strong>المنصب الإداري:</strong></td>
+            <td>{{ memberData.administrativePosition || "لا يوجد" }}</td>
+          </tr>
+        </table>
+      </div>
+    </div>
   </div>
 </template>
 
@@ -139,8 +178,84 @@ const goBack = () => {
   router.back();
 };
 
+const getCurrentDate = () => {
+  return new Date().toLocaleDateString("ar-JO", {
+    year: "numeric",
+    month: "long",
+    day: "numeric",
+    weekday: "long",
+  });
+};
+
 const printContent = () => {
-  window.print();
+  const printContent = document.getElementById("printableContent").innerHTML;
+  const printWindow = window.open("", "_blank");
+
+  printWindow.document.write(`
+    <!DOCTYPE html>
+    <html dir="rtl">
+    <head>
+      <title>طباعة تفاصيل عضو الجمعية العمومية</title>
+      <meta charset="utf-8">
+      <style>
+        body { 
+          font-family: 'Tajawal', Arial, sans-serif; 
+          direction: rtl; 
+          margin: 20px; 
+          color: #333; 
+        }
+        .print-header { 
+          text-align: center; 
+          margin-bottom: 30px; 
+          border-bottom: 2px solid #ffc107; 
+          padding-bottom: 15px; 
+        }
+        .print-header h2 { 
+          color: #ffc107; 
+          margin-bottom: 10px; 
+        }
+        .print-section {
+          margin-bottom: 20px;
+          page-break-inside: avoid;
+        }
+        .section-title {
+          color: #ffc107;
+          font-size: 1.1rem;
+          border-bottom: 1px solid #ffc107;
+          padding-bottom: 5px;
+          margin-bottom: 10px;
+        }
+        .print-info-table { 
+          width: 100%; 
+          border-collapse: collapse; 
+          margin: 10px 0; 
+          font-size: 11px; 
+        }
+        .print-info-table td { 
+          border: 1px solid #ddd; 
+          padding: 6px; 
+          text-align: right;
+        }
+        .print-info-table strong { 
+          color: #ffc107;
+        }
+        @media print { 
+          body { margin: 0; } 
+          .print-info-table { font-size: 10px; }
+        }
+      </style>
+    </head>
+    <body>${printContent}</body>
+    </html>
+  `);
+
+  printWindow.document.close();
+  printWindow.focus();
+  setTimeout(() => {
+    printWindow.print();
+    printWindow.close();
+    alertify.success("تم فتح نافذة الطباعة");
+  }, 250);
 };
 
 onMounted(() => {
@@ -149,37 +264,158 @@ onMounted(() => {
 </script>
 
 <style scoped>
+.bg-warning {
+  background-color: #ffc107 !important;
+}
+
+.info-section {
+  background-color: rgba(255, 255, 255, 0.9);
+  padding: 1.5rem;
+  border-radius: 12px;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
+}
+
 .section-title {
-  color: #ffc107;
+  color: #2c3e50;
+  font-size: 1.25rem;
   border-bottom: 2px solid #ffc107;
   padding-bottom: 0.5rem;
 }
 
 .info-grid {
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
-  gap: 1.5rem;
+  gap: 1rem;
+  margin-top: 1rem;
 }
 
 .info-item {
+  padding: 0.75rem;
   background-color: #f8f9fa;
-  padding: 1rem;
   border-radius: 8px;
+  border: 1px solid #e9ecef;
 }
 
 .info-item strong {
   color: #ffc107;
-  display: block;
-  margin-bottom: 0.5rem;
-}
-
-@media print {
-  .no-print {
-    display: none !important;
-  }
+  margin-left: 0.5rem;
 }
 
 * {
   font-family: "Tajawal", sans-serif;
+}
+
+/* Print styles */
+@media print {
+  .no-print {
+    display: none !important;
+  }
+
+  @page {
+    size: A4;
+    margin: 1.5cm;
+  }
+
+  body {
+    margin: 0;
+    print-color-adjust: exact;
+    -webkit-print-color-adjust: exact;
+  }
+
+  .container {
+    width: 100% !important;
+    max-width: 100% !important;
+    padding: 0 !important;
+    margin: 0 !important;
+    background: white !important;
+  }
+
+  .card {
+    border: none !important;
+    box-shadow: none !important;
+  }
+
+  .card-header {
+    background-color: #ffc107 !important;
+    color: #000 !important;
+    padding: 1rem !important;
+    text-align: center !important;
+    border: none !important;
+    -webkit-print-color-adjust: exact !important;
+    print-color-adjust: exact !important;
+  }
+
+  .card-header h3 {
+    font-size: 1.3rem !important;
+    margin: 0 !important;
+  }
+
+  .card-body {
+    padding: 1rem !important;
+  }
+
+  .info-section {
+    margin-bottom: 1rem !important;
+    page-break-inside: avoid;
+    border: 1px solid #e0e0e0 !important;
+    box-shadow: none !important;
+  }
+
+  .section-title {
+    color: #ffc107 !important;
+    font-size: 1.1rem !important;
+    font-weight: bold !important;
+    border-bottom: 2px solid #ffc107 !important;
+    padding-bottom: 0.5rem !important;
+    margin-bottom: 1rem !important;
+    -webkit-print-color-adjust: exact !important;
+    print-color-adjust: exact !important;
+  }
+
+  .info-grid {
+    gap: 0.5rem !important;
+  }
+
+  .info-item {
+    background-color: #f8f9fa !important;
+    border: 1px solid #e9ecef !important;
+    padding: 0.5rem !important;
+    margin-bottom: 0 !important;
+    page-break-inside: avoid;
+    -webkit-print-color-adjust: exact !important;
+    print-color-adjust: exact !important;
+  }
+
+  .info-item strong {
+    color: #ffc107 !important;
+    font-size: 0.9rem !important;
+    font-weight: bold !important;
+    -webkit-print-color-adjust: exact !important;
+    print-color-adjust: exact !important;
+  }
+
+  .info-item span {
+    font-size: 0.85rem !important;
+    color: #000 !important;
+  }
+
+  .badge {
+    border: 1px solid #666 !important;
+    padding: 2px 6px !important;
+    font-size: 0.75rem !important;
+  }
+
+  .badge.bg-primary {
+    background-color: #007bff !important;
+    color: white !important;
+    -webkit-print-color-adjust: exact !important;
+    print-color-adjust: exact !important;
+  }
+
+  .badge.bg-secondary {
+    background-color: #6c757d !important;
+    color: white !important;
+    -webkit-print-color-adjust: exact !important;
+    print-color-adjust: exact !important;
+  }
 }
 </style>
