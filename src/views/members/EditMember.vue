@@ -55,15 +55,6 @@
               </div>
 
               <div class="col-md-6">
-                <label class="form-label">الموقع</label>
-                <input
-                  v-model="formData.location"
-                  type="text"
-                  class="form-control"
-                />
-              </div>
-
-              <div class="col-md-6">
                 <label class="form-label">رقم الهاتف</label>
                 <input
                   v-model="formData.phoneNumber"
@@ -73,7 +64,7 @@
               </div>
 
               <div class="col-md-6">
-                <label class="form-label fw-bold">حالة سداد العضوية</label>
+                <label class="form-label fw-bold">رسوم الانتساب</label>
                 <select v-model="formData.isMembershipPaid" class="form-select">
                   <option :value="true">مسددة</option>
                   <option :value="false">غير مسددة</option>
@@ -125,7 +116,8 @@ alertify.set("notifier", "delay", 5);
 
 const route = useRoute();
 const router = useRouter();
-const API_BASE_URL = process.env.VUE_APP_API_BASE_URL + "/api";
+// Node.js Backend API for Members
+const API_BASE_URL = process.env.VUE_APP_NODEJS_API_BASE_URL + "/api";
 const MemberAPI = API_BASE_URL + "/Member";
 const AUTH_TOKEN = localStorage.getItem("token");
 
@@ -136,10 +128,9 @@ const formData = reactive({
   firstName: "",
   secondName: "",
   lastName: "",
-  location: "",
   phoneNumber: "",
   isMembershipPaid: false,
-  receiptNO: null,
+  receiptNo: null,
 });
 
 const fetchMemberDetails = async () => {
@@ -150,7 +141,7 @@ const fetchMemberDetails = async () => {
         Authorization: `Bearer ${AUTH_TOKEN}`,
       },
     });
-    Object.assign(formData, response.data);
+    Object.assign(formData, response.data.data || response.data);
   } catch (error) {
     console.error("Error fetching member details:", error);
     alertify.error("حدث خطأ أثناء جلب بيانات العضو");
@@ -173,13 +164,12 @@ const submitForm = async () => {
       try {
         const payload = {
           id: formData.id,
-          firstName: formData.firstName.trim(),
-          secondName: formData.secondName.trim(),
-          lastName: formData.lastName.trim(),
-          location: formData.location.trim() || null,
-          phoneNumber: formData.phoneNumber.trim() || null,
+          firstName: formData.firstName?.trim() || formData.firstName,
+          secondName: formData.secondName?.trim() || formData.secondName,
+          lastName: formData.lastName?.trim() || formData.lastName,
+          phoneNumber: formData.phoneNumber?.trim() || null,
           isMembershipPaid: formData.isMembershipPaid,
-          receiptNO: formData.receiptNO || null,
+          receiptNo: formData.receiptNo || null,
         };
 
         await axios.put(`${MemberAPI}/${route.params.id}`, payload, {

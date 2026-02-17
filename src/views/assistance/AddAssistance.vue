@@ -9,8 +9,8 @@
           <!-- Instructions -->
           <div class="alert alert-info mb-4">
             <i class="bi bi-info-circle me-2"></i>
-            <strong>تعليمات:</strong> يمكنك اختيار عدة أسر أو أرامل أو أيتام في
-            كل صف، وسيتم توزيع المساعدة على جميع المختارين.
+            <strong>تعليمات:</strong> يمكنك اختيار عدة أسر أو أرامل/أوصياء أو
+            أيتام في كل صف، وسيتم توزيع المساعدة على جميع المختارين.
           </div>
 
           <!-- Table -->
@@ -20,7 +20,7 @@
                 <tr>
                   <th width="23%">نوع المساعدة</th>
                   <th width="18%">أسر</th>
-                  <th width="18%">أرامل</th>
+                  <th width="18%">أرامل / أوصياء</th>
                   <th width="18%">أيتام</th>
                   <th width="10%">الاستلام</th>
                   <th width="8%">ملاحظات</th>
@@ -192,7 +192,7 @@
                           <input
                             type="text"
                             class="form-control search-input"
-                            placeholder="البحث في الأرامل..."
+                            placeholder="البحث في الأرامل والأوصياء..."
                             v-model="row.widowSearchTerm"
                             @click.stop
                           />
@@ -221,6 +221,11 @@
                               :for="`widow-${index}-${widow.id}`"
                             >
                               {{ widow.firstName }} {{ widow.lastName }}
+                              <span
+                                v-if="widow.isGuardian"
+                                class="badge bg-info me-1"
+                                >وصي</span
+                              >
                             </label>
                           </div>
                         </li>
@@ -233,7 +238,7 @@
                             {{
                               row.widowSearchTerm
                                 ? "لا توجد نتائج"
-                                : "لا يوجد أرامل"
+                                : "لا يوجد أرامل أو أوصياء"
                             }}
                           </span>
                         </li>
@@ -427,6 +432,7 @@ const AUTH_TOKEN = localStorage.getItem("token");
 const families = ref([]);
 const assistanceTypes = ref([]);
 const allPersons = ref([]);
+const guardians = ref([]);
 const isSubmitting = ref(false);
 
 // Initialize with one row
@@ -471,6 +477,12 @@ const loadInitialData = async () => {
       headers: { Authorization: `Bearer ${AUTH_TOKEN}` },
     });
     allPersons.value = personsResponse.data;
+
+    // جلب الأوصياء
+    const guardiansResponse = await axios.get(`${API_BASE_URL}/Guardian`, {
+      headers: { Authorization: `Bearer ${AUTH_TOKEN}` },
+    });
+    guardians.value = guardiansResponse.data;
   } catch (error) {
     console.error("Error fetching initial data:", error);
     alertify.error("حدث خطأ أثناء جلب البيانات الأولية");
@@ -511,10 +523,25 @@ const getFilteredFamilies = (searchTerm) => {
 };
 
 const getFilteredWidows = (searchTerm) => {
+  // دمج الأرامل والأوصياء في قائمة واحدة
   const widows = allPersons.value.filter((person) => person.isWidow === true);
-  if (!searchTerm) return widows;
-  return widows.filter((widow) =>
-    `${widow.firstName} ${widow.lastName}`
+
+  // تحويل الأوصياء إلى نفس التنسيق
+  const guardiansAsPeople = guardians.value.map((guardian) => ({
+    id: guardian.guardianId,
+    firstName: guardian.firstName,
+    lastName: guardian.lastName,
+    isWidow: false,
+    isGuardian: true,
+    relationship: guardian.relationship,
+  }));
+
+  // دمج القائمتين
+  const combined = [...widows, ...guardiansAsPeople];
+
+  if (!searchTerm) return combined;
+  return combined.filter((person) =>
+    `${person.firstName} ${person.lastName}`
       .toLowerCase()
       .includes(searchTerm.toLowerCase()),
   );
@@ -594,12 +621,21 @@ const getSelectedFamiliesText = (selectedFamilies) => {
 };
 
 const getSelectedWidowsText = (selectedWidows) => {
-  if (selectedWidows.length === 0) return "اختر الأرامل";
+  if (selectedWidows.length === 0) return "اختر الأرامل/الأوصياء";
   if (selectedWidows.length === 1) {
+    // البحث في الأرامل أولاً
     const widow = allPersons.value.find((p) => p.id === selectedWidows[0]);
-    return widow ? `${widow.firstName} ${widow.lastName}` : "أرملة غير معروفة";
+    if (widow) return `${widow.firstName} ${widow.lastName}`;
+
+    // إذا لم يتم إيجاده، البحث في الأوصياء
+    const guardian = guardians.value.find(
+      (g) => g.guardianId === selectedWidows[0],
+    );
+    if (guardian) return `${guardian.firstName} ${guardian.lastName} (وصي)`;
+
+    return "شخص غير معروف";
   }
-  return `${selectedWidows.length} أرملة مختارة`;
+  return `${selectedWidows.length} شخص مختار`;
 };
 
 const getSelectedOrphansText = (selectedOrphans) => {

@@ -2,9 +2,9 @@
   <div class="container my-4 p-5 rounded-4" dir="rtl">
     <div class="card border-0 shadow">
       <div
-        class="card-header bg-warning text-dark py-3 d-flex justify-content-between align-items-center"
+        class="card-header bg-info text-white py-3 d-flex justify-content-between align-items-center"
       >
-        <h3 class="mb-0 fw-bold">تفاصيل عضو الجمعية العمومية</h3>
+        <h3 class="mb-0 fw-bold">تفاصيل الإيصال</h3>
         <button class="btn btn-light no-print" @click="printContent">
           <i class="bi bi-printer me-1"></i>
           طباعة
@@ -13,55 +13,40 @@
       <div class="card-body p-4" ref="printArea">
         <!-- Loading State -->
         <div v-if="loading" class="text-center py-5">
-          <div class="spinner-border text-warning" role="status">
+          <div class="spinner-border text-info" role="status">
             <span class="visually-hidden">جاري التحميل...</span>
           </div>
-          <p class="mt-2 text-muted">جاري تحميل بيانات العضو...</p>
+          <p class="mt-2 text-muted">جاري تحميل بيانات الإيصال...</p>
         </div>
 
-        <!-- Member Information -->
-        <div v-else-if="memberData">
+        <!-- Receipt Information -->
+        <div v-else-if="receiptData">
           <div class="info-section mb-4">
-            <h4 class="section-title mb-3">المعلومات الأساسية</h4>
+            <h4 class="section-title mb-3">معلومات الإيصال</h4>
             <div class="info-grid">
               <div class="info-item">
-                <strong>الرقم الوطني:</strong>
-                <span>{{ memberData.id }}</span>
+                <strong>رقم الإيصال:</strong>
+                <span>{{ receiptData.receiptNo }}</span>
               </div>
               <div class="info-item">
-                <strong>الاسم الكامل:</strong>
-                <span>
-                  {{ memberData.firstName }} {{ memberData.secondName }}
-                  {{ memberData.lastName }}
-                </span>
+                <strong>القيمة:</strong>
+                <span>{{ receiptData.value }} دينار</span>
               </div>
               <div class="info-item">
-                <strong>رقم الهاتف:</strong>
-                <span>{{ memberData.phoneNumber || "غير محدد" }}</span>
-              </div>
-            </div>
-          </div>
-
-          <div class="info-section mb-4">
-            <h4 class="section-title mb-3">معلومات العضوية الإدارية</h4>
-            <div class="info-grid">
-              <div class="info-item">
-                <strong>عضو إداري:</strong>
-                <span
-                  v-if="memberData.isAdministrativeMember"
-                  class="badge bg-primary"
-                >
-                  <i class="bi bi-star me-1"></i>
-                  نعم
-                </span>
-                <span v-else class="badge bg-secondary">لا</span>
+                <strong>السنة:</strong>
+                <span>{{ receiptData.year }}</span>
               </div>
               <div class="info-item">
-                <strong>المنصب الإداري:</strong>
-                <span v-if="memberData.administrativePosition" class="fw-bold">
-                  {{ memberData.administrativePosition }}
-                </span>
-                <span v-else class="text-muted">لا يوجد</span>
+                <strong>الشهر:</strong>
+                <span>{{ getMonthName(receiptData.month) }}</span>
+              </div>
+              <div class="info-item">
+                <strong>تاريخ الدفع:</strong>
+                <span>{{ formatDate(receiptData.paidDate) }}</span>
+              </div>
+              <div class="info-item">
+                <strong>رقم العضو الأساسي:</strong>
+                <span>{{ receiptData.basicMemberId }}</span>
               </div>
             </div>
           </div>
@@ -69,8 +54,8 @@
           <!-- Action Buttons -->
           <div class="text-center mt-4">
             <button
-              @click="editMember"
-              class="btn btn-warning px-4 me-2 no-print text-dark fw-bold"
+              @click="editReceipt"
+              class="btn btn-warning px-4 me-2 no-print"
             >
               <i class="bi bi-pencil me-1"></i>
               تعديل البيانات
@@ -85,7 +70,7 @@
         <!-- Error State -->
         <div v-else class="alert alert-danger">
           <i class="bi bi-exclamation-triangle me-2"></i>
-          حدث خطأ في تحميل بيانات العضو
+          حدث خطأ في تحميل بيانات الإيصال
         </div>
       </div>
     </div>
@@ -97,42 +82,73 @@ import { ref, onMounted } from "vue";
 import { useRoute, useRouter } from "vue-router";
 import axios from "axios";
 import alertify from "alertifyjs";
+import { getApiBaseUrl, getAuthToken } from "@/utils/api";
 
 alertify.set("notifier", "position", "bottom-right");
 alertify.set("notifier", "delay", 5);
 
-// Node.js Backend API for General Assembly Members
+// Node.js Backend API for Receipts
 const API_BASE_URL = process.env.VUE_APP_NODEJS_API_BASE_URL + "/api";
 const route = useRoute();
 const router = useRouter();
-const AUTH_TOKEN = localStorage.getItem("token");
+const AUTH_TOKEN = getAuthToken();
 
-const memberData = ref(null);
+const receiptData = ref(null);
 const loading = ref(false);
 const printArea = ref(null);
 
-const fetchMemberDetails = async () => {
+// Helper function to get month name in Arabic
+const getMonthName = (month) => {
+  const months = [
+    "يناير",
+    "فبراير",
+    "مارس",
+    "أبريل",
+    "مايو",
+    "يونيو",
+    "يوليو",
+    "أغسطس",
+    "سبتمبر",
+    "أكتوبر",
+    "نوفمبر",
+    "ديسمبر",
+  ];
+  return months[month - 1] || month;
+};
+
+// Helper function to format date
+const formatDate = (dateString) => {
+  if (!dateString) return "غير محدد";
+  const date = new Date(dateString);
+  return date.toLocaleDateString("ar-EG", {
+    year: "numeric",
+    month: "long",
+    day: "numeric",
+  });
+};
+
+const fetchReceiptDetails = async () => {
   loading.value = true;
   try {
     const response = await axios.get(
-      `${API_BASE_URL}/MemberGeneralAssembly/${route.params.id}`,
+      `${API_BASE_URL}/Receipt/${route.params.id}`,
       {
         headers: {
           Authorization: `Bearer ${AUTH_TOKEN}`,
         },
       },
     );
-    memberData.value = response.data.data || response.data;
+    receiptData.value = response.data.data || response.data;
   } catch (error) {
-    console.error("Error fetching member details:", error);
-    alertify.error("حدث خطأ أثناء جلب بيانات العضو");
+    console.error("Error fetching receipt details:", error);
+    alertify.error("حدث خطأ أثناء جلب بيانات الإيصال");
   } finally {
     loading.value = false;
   }
 };
 
-const editMember = () => {
-  router.push(`/edit-general-member/${route.params.id}`);
+const editReceipt = () => {
+  router.push(`/edit-receipt/${route.params.id}`);
 };
 
 const goBack = () => {
@@ -144,15 +160,19 @@ const printContent = () => {
 };
 
 onMounted(() => {
-  fetchMemberDetails();
+  fetchReceiptDetails();
 });
 </script>
 
 <style scoped>
 .section-title {
-  color: #ffc107;
-  border-bottom: 2px solid #ffc107;
+  color: #17a2b8;
+  border-bottom: 2px solid #17a2b8;
   padding-bottom: 0.5rem;
+}
+
+.bg-info {
+  background-color: #17a2b8 !important;
 }
 
 .info-grid {
@@ -168,7 +188,7 @@ onMounted(() => {
 }
 
 .info-item strong {
-  color: #ffc107;
+  color: #17a2b8;
   display: block;
   margin-bottom: 0.5rem;
 }

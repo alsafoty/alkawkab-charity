@@ -3,11 +3,11 @@
     <div class="card border-0 shadow-lg rounded-4">
       <!-- Header -->
       <div
-        class="card-header bg-warning text-dark py-3 d-flex justify-content-between align-items-center"
+        class="card-header bg-info text-white py-3 d-flex justify-content-between align-items-center"
       >
         <h2 class="mb-0 fw-bold">
-          <i class="bi bi-people-fill me-2"></i>
-          أعضاء الجمعية العمومية ({{ filteredMembers.length }})
+          <i class="bi bi-receipt me-2"></i>
+          إدارة الإيصالات ({{ filteredReceipts.length }})
         </h2>
         <div class="d-flex gap-2">
           <button
@@ -32,36 +32,36 @@
               v-model="searchQuery"
               type="text"
               class="form-control form-control-lg"
-              placeholder="🔍 بحث عن عضو (الاسم، الرقم، المنصب...)"
+              placeholder="🔍 بحث عن إيصال (رقم الإيصال، السنة، الشهر...)"
             />
           </div>
           <div class="col-md-4">
             <button
-              @click="router.push('/add-general-member')"
+              @click="router.push('/add-receipt')"
               class="btn btn-success btn-lg w-100"
             >
               <i class="bi bi-plus-circle me-2"></i>
-              إضافة عضو جديد
+              إضافة إيصال جديد
             </button>
           </div>
-          <div class="col-md-12 mt-2" v-if="selectedMembers.length > 0">
+          <div class="col-md-12 mt-2" v-if="selectedReceipts.length > 0">
             <button @click="deleteSelected" class="btn btn-danger btn-lg">
               <i class="bi bi-trash me-2"></i>
-              حذف المحدد ({{ selectedMembers.length }})
+              حذف المحدد ({{ selectedReceipts.length }})
             </button>
           </div>
         </div>
 
         <!-- Loading State -->
         <div v-if="loading" class="text-center py-5">
-          <div class="spinner-border text-warning" role="status">
+          <div class="spinner-border text-info" role="status">
             <span class="visually-hidden">جاري التحميل...</span>
           </div>
-          <p class="mt-2 text-muted">جاري تحميل بيانات الأعضاء...</p>
+          <p class="mt-2 text-muted">جاري تحميل بيانات الإيصالات...</p>
         </div>
 
-        <!-- Members Table -->
-        <div v-else-if="filteredMembers.length > 0" class="table-responsive">
+        <!-- Receipts Table -->
+        <div v-else-if="filteredReceipts.length > 0" class="table-responsive">
           <table class="table table-hover table-striped">
             <thead class="table-header text-white">
               <tr>
@@ -73,64 +73,49 @@
                     style="cursor: pointer"
                   />
                 </th>
-                <th>الرقم الوطني</th>
-                <th>الاسم الكامل</th>
-                <th>رقم الهاتف</th>
-                <th>عضو إداري</th>
-                <th>المنصب</th>
+                <th>رقم الإيصال</th>
+                <th>القيمة (دينار)</th>
+                <th>السنة</th>
+                <th>الشهر</th>
+                <th>تاريخ الدفع</th>
+                <th>رقم العضو</th>
                 <th class="no-print">الإجراءات</th>
               </tr>
             </thead>
             <tbody>
-              <tr v-for="member in filteredMembers" :key="member.id">
+              <tr v-for="receipt in filteredReceipts" :key="receipt.receiptId">
                 <td class="no-print">
                   <input
                     type="checkbox"
-                    :checked="isSelected(member.id)"
-                    @change="toggleSelection(member.id)"
+                    :checked="isSelected(receipt.receiptId)"
+                    @change="toggleSelection(receipt.receiptId)"
                     class="form-check-input"
                     style="cursor: pointer"
                   />
                 </td>
-                <td>{{ member.id }}</td>
-                <td>
-                  {{ member.firstName }} {{ member.secondName }}
-                  {{ member.lastName }}
-                </td>
-                <td>{{ member.phoneNumber || "غير محدد" }}</td>
-                <td>
-                  <span
-                    v-if="member.isAdministrativeMember"
-                    class="badge bg-primary"
-                  >
-                    <i class="bi bi-star me-1"></i>
-                    نعم
-                  </span>
-                  <span v-else class="badge bg-secondary">لا</span>
-                </td>
-                <td>
-                  <span v-if="member.administrativePosition" class="fw-bold">
-                    {{ member.administrativePosition }}
-                  </span>
-                  <span v-else class="text-muted">-</span>
-                </td>
+                <td>{{ receipt.receiptNo }}</td>
+                <td>{{ receipt.value }}</td>
+                <td>{{ receipt.year }}</td>
+                <td>{{ getMonthName(receipt.month) }}</td>
+                <td>{{ formatDate(receipt.paidDate) }}</td>
+                <td>{{ receipt.basicMemberId }}</td>
                 <td class="no-print">
                   <button
-                    @click="viewMember(member.id)"
+                    @click="viewReceipt(receipt.receiptId)"
                     class="btn btn-sm btn-primary me-1"
                     title="عرض"
                   >
                     <i class="bi bi-eye"></i>
                   </button>
                   <button
-                    @click="editMember(member.id)"
+                    @click="editReceipt(receipt.receiptId)"
                     class="btn btn-sm btn-warning me-1"
                     title="تعديل"
                   >
                     <i class="bi bi-pencil"></i>
                   </button>
                   <button
-                    @click="deleteMember(member.id)"
+                    @click="deleteReceipt(receipt.receiptId)"
                     class="btn btn-sm btn-danger"
                     title="حذف"
                   >
@@ -142,10 +127,10 @@
           </table>
         </div>
 
-        <!-- No Members Message -->
+        <!-- No Receipts Message -->
         <div v-else class="text-center py-5">
           <i class="bi bi-inbox text-muted" style="font-size: 4rem"></i>
-          <p class="text-muted mt-3 fs-5">لا توجد بيانات أعضاء</p>
+          <p class="text-muted mt-3 fs-5">لا توجد إيصالات مسجلة</p>
         </div>
       </div>
     </div>
@@ -157,63 +142,95 @@ import { ref, computed, onMounted } from "vue";
 import { useRouter } from "vue-router";
 import axios from "axios";
 import alertify from "alertifyjs";
+import { getApiBaseUrl, getAuthToken } from "@/utils/api";
 
 // Configure alertify
 alertify.set("notifier", "position", "bottom-right");
 alertify.set("notifier", "delay", 5);
 
 const router = useRouter();
-// Node.js Backend API for General Assembly Members
+// Node.js Backend API for Receipts
 const API_BASE_URL = process.env.VUE_APP_NODEJS_API_BASE_URL + "/api";
-const MemberAPI = API_BASE_URL + "/MemberGeneralAssembly";
-const AUTH_TOKEN = localStorage.getItem("token");
+const ReceiptAPI = API_BASE_URL + "/Receipt";
+const AUTH_TOKEN = getAuthToken();
 
 const loading = ref(false);
-const members = ref([]);
+const receipts = ref([]);
 const searchQuery = ref("");
 const printArea = ref(null);
-const selectedMembers = ref([]);
+const selectedReceipts = ref([]);
 
 // Computed property for select all state
 const allSelected = computed({
   get: () =>
-    filteredMembers.value.length > 0 &&
-    selectedMembers.value.length === filteredMembers.value.length,
+    filteredReceipts.value.length > 0 &&
+    selectedReceipts.value.length === filteredReceipts.value.length,
   set: (value) => {
-    selectedMembers.value = value ? filteredMembers.value.map((m) => m.id) : [];
+    selectedReceipts.value = value
+      ? filteredReceipts.value.map((r) => r.receiptId)
+      : [];
   },
 });
 
-// Check if a member is selected
-const isSelected = (id) => selectedMembers.value.includes(id);
+// Check if a receipt is selected
+const isSelected = (id) => selectedReceipts.value.includes(id);
 
-// Toggle selection of a member
+// Toggle selection of a receipt
 const toggleSelection = (id) => {
-  const index = selectedMembers.value.indexOf(id);
+  const index = selectedReceipts.value.indexOf(id);
   if (index > -1) {
-    selectedMembers.value.splice(index, 1);
+    selectedReceipts.value.splice(index, 1);
   } else {
-    selectedMembers.value.push(id);
+    selectedReceipts.value.push(id);
   }
 };
 
-// Filtered members based on search
-const filteredMembers = computed(() => {
-  if (!searchQuery.value) return members.value;
+// Filtered receipts based on search
+const filteredReceipts = computed(() => {
+  if (!searchQuery.value) return receipts.value;
   const query = searchQuery.value.toLowerCase();
-  return members.value.filter(
-    (member) =>
-      member.id?.toLowerCase().includes(query) ||
-      member.firstName?.toLowerCase().includes(query) ||
-      member.secondName?.toLowerCase().includes(query) ||
-      member.lastName?.toLowerCase().includes(query) ||
-      member.phoneNumber?.toLowerCase().includes(query) ||
-      member.administrativePosition?.toLowerCase().includes(query),
+  return receipts.value.filter(
+    (receipt) =>
+      receipt.receiptNo?.toString().includes(query) ||
+      receipt.year?.toString().includes(query) ||
+      receipt.month?.toString().includes(query) ||
+      receipt.value?.toString().includes(query) ||
+      receipt.basicMemberId?.toString().includes(query),
   );
 });
 
-// Fetch members
-const fetchMembers = async () => {
+// Helper function to get month name in Arabic
+const getMonthName = (month) => {
+  const months = [
+    "يناير",
+    "فبراير",
+    "مارس",
+    "أبريل",
+    "مايو",
+    "يونيو",
+    "يوليو",
+    "أغسطس",
+    "سبتمبر",
+    "أكتوبر",
+    "نوفمبر",
+    "ديسمبر",
+  ];
+  return months[month - 1] || month;
+};
+
+// Helper function to format date
+const formatDate = (dateString) => {
+  if (!dateString) return "غير محدد";
+  const date = new Date(dateString);
+  return date.toLocaleDateString("ar-EG", {
+    year: "numeric",
+    month: "long",
+    day: "numeric",
+  });
+};
+
+// Fetch receipts
+const fetchReceipts = async () => {
   if (!AUTH_TOKEN) {
     alertify.error("الرجاء تسجيل الدخول أولاً");
     return;
@@ -221,33 +238,33 @@ const fetchMembers = async () => {
 
   loading.value = true;
   try {
-    const response = await axios.get(MemberAPI, {
+    const response = await axios.get(ReceiptAPI, {
       headers: {
         Authorization: `Bearer ${AUTH_TOKEN}`,
       },
     });
-    members.value = response.data.data || response.data;
-    console.log("General Assembly members fetched:", members.value);
+    receipts.value = response.data.data || response.data;
+    console.log("Receipts fetched:", receipts.value);
   } catch (error) {
-    console.error("Error fetching members:", error);
-    alertify.error("حدث خطأ أثناء جلب بيانات الأعضاء");
+    console.error("Error fetching receipts:", error);
+    alertify.error("حدث خطأ أثناء جلب بيانات الإيصالات");
   } finally {
     loading.value = false;
   }
 };
 
-const viewMember = (id) => {
-  router.push(`/view-general-member/${id}`);
+const viewReceipt = (id) => {
+  router.push(`/view-receipt/${id}`);
 };
 
-const editMember = (id) => {
-  router.push(`/edit-general-member/${id}`);
+const editReceipt = (id) => {
+  router.push(`/edit-receipt/${id}`);
 };
 
-// Bulk delete selected members
+// Bulk delete selected receipts
 const deleteSelected = async () => {
-  if (selectedMembers.value.length === 0) {
-    alertify.warning("الرجاء اختيار عضو واحد على الأقل للحذف");
+  if (selectedReceipts.value.length === 0) {
+    alertify.warning("الرجاء اختيار إيصال واحد على الأقل للحذف");
     return;
   }
 
@@ -256,36 +273,36 @@ const deleteSelected = async () => {
     return;
   }
 
-  const count = selectedMembers.value.length;
+  const count = selectedReceipts.value.length;
   alertify.confirm(
     "تأكيد الحذف",
-    `هل أنت متأكد من حذف ${count} عضو؟`,
+    `هل أنت متأكد من حذف ${count} إيصال؟`,
     async function () {
       let successCount = 0;
       let failCount = 0;
 
-      for (const id of selectedMembers.value) {
+      for (const id of selectedReceipts.value) {
         try {
-          await axios.delete(`${MemberAPI}/${id}`, {
+          await axios.delete(`${ReceiptAPI}/${id}`, {
             headers: {
               Authorization: `Bearer ${AUTH_TOKEN}`,
             },
           });
           successCount++;
         } catch (error) {
-          console.error(`Error deleting member ${id}:`, error);
+          console.error(`Error deleting receipt ${id}:`, error);
           failCount++;
         }
       }
 
-      await fetchMembers();
-      selectedMembers.value = [];
+      await fetchReceipts();
+      selectedReceipts.value = [];
 
       if (successCount > 0) {
-        alertify.success(`تم حذف ${successCount} عضو بنجاح`);
+        alertify.success(`تم حذف ${successCount} إيصال بنجاح`);
       }
       if (failCount > 0) {
-        alertify.error(`فشل حذف ${failCount} عضو`);
+        alertify.error(`فشل حذف ${failCount} إيصال`);
       }
     },
     function () {
@@ -294,22 +311,22 @@ const deleteSelected = async () => {
   );
 };
 
-const deleteMember = (id) => {
+const deleteReceipt = (id) => {
   alertify.confirm(
     "تأكيد الحذف",
-    "هل أنت متأكد من حذف هذا العضو؟",
+    "هل أنت متأكد من حذف هذا الإيصال؟",
     async function () {
       try {
-        await axios.delete(`${MemberAPI}/${id}`, {
+        await axios.delete(`${ReceiptAPI}/${id}`, {
           headers: {
             Authorization: `Bearer ${AUTH_TOKEN}`,
           },
         });
-        alertify.success("تم حذف العضو بنجاح");
-        await fetchMembers();
+        alertify.success("تم حذف الإيصال بنجاح");
+        await fetchReceipts();
       } catch (error) {
-        console.error("Error deleting member:", error);
-        alertify.error("حدث خطأ أثناء حذف العضو");
+        console.error("Error deleting receipt:", error);
+        alertify.error("حدث خطأ أثناء حذف الإيصال");
       }
     },
     function () {
@@ -327,14 +344,17 @@ const goBack = () => {
 };
 
 onMounted(() => {
-  fetchMembers();
+  fetchReceipts();
 });
 </script>
 
 <style scoped>
 .table-header {
-  background-color: #ffc107 !important;
-  color: #000 !important;
+  background-color: #17a2b8 !important;
+}
+
+.bg-info {
+  background-color: #17a2b8 !important;
 }
 
 .table th,

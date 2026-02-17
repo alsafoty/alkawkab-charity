@@ -11,9 +11,9 @@
       </button>
     </div>
 
-    <div class="d-flex justify-content-between align-items-center mb-4">
-      <div class="d-flex gap-2">
-        <!-- زر إضافة مساعدة مع تأثير التوسع -->
+    <!-- شريط الإجراءات -->
+    <div class="d-flex justify-content-between align-items-center mb-3">
+      <div class="d-flex gap-2 align-items-center">
         <router-link
           to="/add-assistance"
           class="btn btn-success expandable-btn"
@@ -21,8 +21,6 @@
           <i class="bi bi-plus-circle icon"></i>
           <span class="btn-text">إضافة مساعدة</span>
         </router-link>
-
-        <!-- زر أنواع المساعدات مع تأثير التوسع -->
         <router-link
           to="/assistance-types"
           class="btn btn-info text-white expandable-btn"
@@ -31,130 +29,152 @@
           <span class="btn-text">أنواع المساعدات</span>
         </router-link>
 
-        <!-- زر فلترة الفترة الزمنية مع تأثير التوسع -->
         <button
-          @click="toggleDateFilter"
-          class="btn btn-outline-primary expandable-btn"
-          :class="{ active: showDateFilter }"
+          v-if="selectedAssistances.length > 0"
+          @click="deleteSelected"
+          class="btn btn-danger expandable-btn"
         >
-          <i class="bi bi-calendar-range icon"></i>
-          <span class="btn-text">فلترة بالتاريخ</span>
+          <i class="bi bi-trash icon"></i>
+          <span class="btn-text"
+            >حذف المحدد ({{ selectedAssistances.length }})</span
+          >
         </button>
       </div>
-
-      <div class="flex-grow-1 me-2 d-flex gap-2">
-        <!-- فلتر نوع المستفيد -->
-
+      <div class="d-flex gap-2 flex-grow-1 me-3">
         <input
           v-model="searchQuery"
           type="text"
           class="form-control custom-input"
           placeholder="ابحث في المساعدات..."
         />
-
-        <select
-          v-model="beneficiaryTypeFilter"
-          class="form-select custom-input"
-          @change="applyBeneficiaryFilter"
-          dir="rtl"
-          style="
-            max-width: 200px;
-            text-align: right;
-            padding-right: 2rem;
-            background-position: right 0.75rem center;
-            background-size: 12px 12px;
-          "
-        >
-          <option value="all">جميع المستفيدين</option>
-          <option value="family">أسر</option>
-          <option value="widow">أرامل</option>
-          <option value="orphan">أيتام</option>
-          <option value="other">أخرى</option>
-        </select>
-
-        <select
-          v-model="assistanceTypeFilter"
-          class="form-select custom-input"
-          @change="applyAssistanceTypeFilter"
-          dir="rtl"
-          style="
-            max-width: 200px;
-            text-align: right;
-            padding-right: 2rem;
-            background-position: right 0.75rem center;
-            background-size: 12px 12px;
-          "
-        >
-          <option value="all">جميع أنواع المساعدات</option>
-          <option
-            v-for="type in assistanceTypes"
-            :key="type.assistanceTypeId"
-            :value="type.assistanceTypeId"
-          >
-            {{ type.assistanceTypeName }}
-          </option>
-        </select>
-
-        <select
-          v-model="sortBy"
-          class="form-select custom-input"
-          dir="rtl"
-          style="
-            max-width: 230px;
-            text-align: right;
-            padding-right: 2rem;
-            background-position: right 0.75rem center;
-            background-size: 12px 12px;
-          "
-        >
-          <option value="date-desc">ترتيب حسب: الأحدث</option>
-          <option value="date-asc">ترتيب حسب: الأقدم</option>
-          <option value="beneficiary">ترتيب حسب: المستفيد</option>
-          <option value="type">ترتيب حسب: نوع المساعدة</option>
-          <option value="received">ترتيب حسب: حالة الاستلام</option>
-        </select>
       </div>
     </div>
 
-    <!-- شريط فلترة التاريخ -->
-    <div
-      v-if="showDateFilter"
-      class="date-filter-section card p-3 mb-4 bg-light"
-    >
-      <div class="row g-3 align-items-end">
-        <div class="col-md-4">
-          <label class="form-label fw-bold">من تاريخ:</label>
-          <input v-model="filterDateFrom" type="date" class="form-control" />
-        </div>
-        <div class="col-md-4">
-          <label class="form-label fw-bold">إلى تاريخ:</label>
-          <input v-model="filterDateTo" type="date" class="form-control" />
-        </div>
-        <div class="col-md-4">
-          <div class="d-flex gap-2">
-            <button
-              @click="applyDateFilter"
-              class="btn btn-primary expandable-btn"
+    <!-- لوحة الفلاتر -->
+    <div class="filter-panel card mb-4">
+      <div class="card-body p-3">
+        <div class="d-flex justify-content-between align-items-center mb-3">
+          <h6 class="mb-0 fw-bold text-secondary">
+            <i class="bi bi-funnel me-1"></i> خيارات الفلترة
+          </h6>
+          <button
+            @click="clearAllFilters"
+            class="btn btn-sm btn-danger"
+            :class="{ 'btn-outline-danger': activeFilterCount === 0 }"
+          >
+            <i class="bi bi-x-circle me-1"></i>
+            مسح الفلاتر
+            <span
+              v-if="activeFilterCount > 0"
+              class="badge bg-white text-danger ms-1"
+              >{{ activeFilterCount }}</span
             >
-              <i class="bi bi-funnel icon"></i>
-              <span class="btn-text">تطبيق الفلتر</span>
-            </button>
-            <button
-              @click="clearDateFilter"
-              class="btn btn-outline-secondary expandable-btn"
-            >
-              <i class="bi bi-x-circle icon"></i>
-              <span class="btn-text">مسح</span>
-            </button>
+          </button>
+        </div>
+
+        <div class="row g-4">
+          <!-- نوع المستفيد -->
+          <div class="col-md-6 col-lg-3">
+            <label class="filter-label">
+              <i class="bi bi-people me-1"></i> نوع المستفيد
+            </label>
+            <div class="filter-chips">
+              <label
+                v-for="opt in beneficiaryOptions"
+                :key="opt.value"
+                class="filter-chip"
+                :class="{
+                  active: selectedBeneficiaryTypes.includes(opt.value),
+                }"
+              >
+                <input
+                  type="checkbox"
+                  v-model="selectedBeneficiaryTypes"
+                  :value="opt.value"
+                  class="d-none"
+                />
+                <i :class="opt.icon" class="me-1"></i>
+                {{ opt.label }}
+              </label>
+            </div>
+          </div>
+
+          <!-- نوع المساعدة -->
+          <div class="col-md-6 col-lg-3">
+            <label class="filter-label">
+              <i class="bi bi-box me-1"></i> نوع المساعدة
+            </label>
+            <div class="filter-chips">
+              <label
+                v-for="type in assistanceTypes"
+                :key="type.assistanceTypeId"
+                class="filter-chip"
+                :class="{
+                  active: selectedAssistanceTypes.includes(
+                    type.assistanceTypeId,
+                  ),
+                }"
+              >
+                <input
+                  type="checkbox"
+                  v-model="selectedAssistanceTypes"
+                  :value="type.assistanceTypeId"
+                  class="d-none"
+                />
+                {{ type.assistanceTypeName }}
+              </label>
+            </div>
+          </div>
+
+          <!-- الفترة الزمنية -->
+          <div class="col-md-6 col-lg-3">
+            <label class="filter-label">
+              <i class="bi bi-calendar-range me-1"></i> الفترة الزمنية
+            </label>
+            <div class="d-flex flex-column gap-2">
+              <div class="input-group input-group-sm">
+                <span class="input-group-text">من</span>
+                <input
+                  v-model="filterDateFrom"
+                  type="date"
+                  class="form-control"
+                />
+              </div>
+              <div class="input-group input-group-sm">
+                <span class="input-group-text">إلى</span>
+                <input
+                  v-model="filterDateTo"
+                  type="date"
+                  class="form-control"
+                />
+              </div>
+            </div>
+          </div>
+
+          <!-- الترتيب -->
+          <div class="col-md-6 col-lg-3">
+            <label class="filter-label">
+              <i class="bi bi-sort-down me-1"></i> الترتيب
+            </label>
+            <div class="filter-chips">
+              <label
+                v-for="opt in sortOptions"
+                :key="opt.value"
+                class="filter-chip"
+                :class="{ active: sortBy === opt.value }"
+              >
+                <input
+                  type="radio"
+                  v-model="sortBy"
+                  :value="opt.value"
+                  class="d-none"
+                />
+                <i :class="opt.icon" class="me-1"></i>
+                {{ opt.label }}
+              </label>
+            </div>
           </div>
         </div>
-      </div>
-      <div v-if="activeDateFilter" class="mt-2">
-        <small class="text-success">
-          <i class="bi bi-check-circle me-1"></i>
-          الفلتر مطبق: {{ formatDate(activeDateFilter.from) }} -
-          {{ formatDate(activeDateFilter.to) }}
-        </small>
       </div>
     </div>
 
@@ -164,21 +184,18 @@
       <table class="table table-striped table-hover">
         <thead class="table-header text-white">
           <tr>
+            <th style="width: 50px">
+              <input
+                type="checkbox"
+                v-model="allSelected"
+                class="form-check-input"
+                style="cursor: pointer"
+              />
+            </th>
             <th>نوع المستفيد</th>
             <th>المستفيد</th>
             <th>نوع المساعدة</th>
-            <th class="sortable-header" @click="toggleDateSort">
-              <div class="header-content">
-                <span class="header-text">تاريخ المساعدة</span>
-                <button
-                  class="sort-btn expandable-sort-btn"
-                  :class="getSortIconClass()"
-                >
-                  <i :class="getSortIcon()" class="icon"></i>
-                  <span class="sort-text">{{ getSortText() }}</span>
-                </button>
-              </div>
-            </th>
+            <th>تاريخ المساعدة</th>
             <th>الاستلام</th>
             <th>ملاحظات</th>
             <th>الإجراءات</th>
@@ -189,6 +206,15 @@
             v-for="assistance in paginatedAssistances"
             :key="assistance.assistanceId"
           >
+            <td>
+              <input
+                type="checkbox"
+                :checked="isSelected(assistance.assistanceId)"
+                @change="toggleSelection(assistance.assistanceId)"
+                class="form-check-input"
+                style="cursor: pointer"
+              />
+            </td>
             <td>{{ getBeneficiaryType(assistance) }}</td>
             <td>
               {{
@@ -353,10 +379,11 @@
           {{ getPrintTitle() }}
         </h4>
         <p class="text-muted">تاريخ الطباعة: {{ getCurrentDate() }}</p>
-        <div v-if="activeDateFilter" class="text-muted">
+        <div v-if="filterDateFrom || filterDateTo" class="text-muted">
           <small
-            >الفترة : {{ formatDate(activeDateFilter.from) }} -
-            {{ formatDate(activeDateFilter.to) }}</small
+            >الفترة :
+            {{ filterDateFrom ? formatDate(filterDateFrom) : "..." }} -
+            {{ filterDateTo ? formatDate(filterDateTo) : "..." }}</small
           >
         </div>
       </div>
@@ -425,24 +452,75 @@ const assistanceTypes = ref([]);
 const families = ref([]);
 const persons = ref([]);
 const searchQuery = ref("");
-
-// متغيرات فلترة التاريخ
-const showDateFilter = ref(false);
 const filterDateFrom = ref("");
 const filterDateTo = ref("");
-const activeDateFilter = ref(null);
+const selectedAssistances = ref([]);
 
-// متغير فلتر نوع المستفيد
-const beneficiaryTypeFilter = ref("all");
+// Computed property for select all state (for current page)
+const allSelected = computed({
+  get: () =>
+    paginatedAssistances.value.length > 0 &&
+    paginatedAssistances.value.every((a) =>
+      selectedAssistances.value.includes(a.assistanceId),
+    ),
+  set: (value) => {
+    if (value) {
+      // Add all items from current page
+      paginatedAssistances.value.forEach((a) => {
+        if (!selectedAssistances.value.includes(a.assistanceId)) {
+          selectedAssistances.value.push(a.assistanceId);
+        }
+      });
+    } else {
+      // Remove all items from current page
+      paginatedAssistances.value.forEach((a) => {
+        const index = selectedAssistances.value.indexOf(a.assistanceId);
+        if (index > -1) {
+          selectedAssistances.value.splice(index, 1);
+        }
+      });
+    }
+  },
+});
 
-// متغير فلتر نوع المساعدة
-const assistanceTypeFilter = ref("all");
+// Check if an assistance is selected
+const isSelected = (id) => selectedAssistances.value.includes(id);
+
+// Toggle selection of an assistance
+const toggleSelection = (id) => {
+  const index = selectedAssistances.value.indexOf(id);
+  if (index > -1) {
+    selectedAssistances.value.splice(index, 1);
+  } else {
+    selectedAssistances.value.push(id);
+  }
+};
+
+// فلتر نوع المستفيد (مصفوفة للاختيار المتعدد)
+const selectedBeneficiaryTypes = ref([]);
+
+// فلتر نوع المساعدة (مصفوفة للاختيار المتعدد)
+const selectedAssistanceTypes = ref([]);
 
 // متغير الترتيب
-const sortBy = ref("date-desc"); // الترتيب الافتراضي حسب الأحدث
+const sortBy = ref("date-desc");
 
-// متغيرات ترتيب التاريخ
-const dateSortOrder = ref("none"); // "none", "asc", "desc"
+// خيارات نوع المستفيد
+const beneficiaryOptions = [
+  { value: "family", label: "أسر", icon: "bi bi-house-door" },
+  { value: "widow", label: "أرامل", icon: "bi bi-person" },
+  { value: "orphan", label: "أيتام", icon: "bi bi-person-heart" },
+  { value: "other", label: "أخرى", icon: "bi bi-three-dots" },
+];
+
+// خيارات الترتيب
+const sortOptions = [
+  { value: "date-desc", label: "الأحدث", icon: "bi bi-sort-down" },
+  { value: "date-asc", label: "الأقدم", icon: "bi bi-sort-up" },
+  { value: "beneficiary", label: "المستفيد", icon: "bi bi-person" },
+  { value: "type", label: "النوع", icon: "bi bi-tag" },
+  { value: "received", label: "الاستلام", icon: "bi bi-check-circle" },
+];
 
 // متغيرات pagination
 const currentPage = ref(1);
@@ -522,29 +600,24 @@ const getBeneficiaryType = (assistance) => {
   return "غير محدد";
 };
 
-// دالة تطبيق فلتر نوع المستفيد
-const applyBeneficiaryFilter = () => {
-  const filterLabels = {
-    all: "جميع المستفيدين",
-    family: "أسر",
-    widow: "أرامل",
-    orphan: "أيتام",
-    other: "أخرى",
-  };
+// عدد الفلاتر النشطة
+const activeFilterCount = computed(() => {
+  let count = 0;
+  if (selectedBeneficiaryTypes.value.length > 0) count++;
+  if (selectedAssistanceTypes.value.length > 0) count++;
+  if (filterDateFrom.value || filterDateTo.value) count++;
+  return count;
+});
 
-  if (beneficiaryTypeFilter.value !== "all") {
-    alertify.success(
-      `تم تطبيق فلتر: ${filterLabels[beneficiaryTypeFilter.value]}`,
-    );
-  }
-};
-
-// دالة تطبيق فلتر نوع المساعدة
-const applyAssistanceTypeFilter = () => {
-  if (assistanceTypeFilter.value !== "all") {
-    const typeName = getAssistanceTypeName(assistanceTypeFilter.value);
-    alertify.success(`تم تطبيق فلتر: ${typeName}`);
-  }
+// مسح جميع الفلاتر
+const clearAllFilters = () => {
+  selectedBeneficiaryTypes.value = [];
+  selectedAssistanceTypes.value = [];
+  filterDateFrom.value = "";
+  filterDateTo.value = "";
+  searchQuery.value = "";
+  sortBy.value = "date-desc";
+  alertify.message("تم مسح جميع الفلاتر");
 };
 
 const formatDate = (dateString) => {
@@ -569,82 +642,6 @@ const getCurrentDate = () => {
     day: "numeric",
     weekday: "long",
   });
-};
-
-// دوال فلترة التاريخ
-const toggleDateFilter = () => {
-  showDateFilter.value = !showDateFilter.value;
-  if (!showDateFilter.value) {
-    clearDateFilter();
-  }
-};
-
-const applyDateFilter = () => {
-  if (filterDateFrom.value && filterDateTo.value) {
-    activeDateFilter.value = {
-      from: filterDateFrom.value,
-      to: filterDateTo.value,
-    };
-    alertify.success("تم تطبيق فلتر التاريخ بنجاح");
-  } else if (filterDateFrom.value) {
-    activeDateFilter.value = {
-      from: filterDateFrom.value,
-      to: null,
-    };
-    alertify.success(
-      "تم تطبيق فلتر التاريخ من: " + formatDate(filterDateFrom.value),
-    );
-  } else if (filterDateTo.value) {
-    activeDateFilter.value = {
-      from: null,
-      to: filterDateTo.value,
-    };
-    alertify.success(
-      "تم تطبيق فلتر التاريخ إلى: " + formatDate(filterDateTo.value),
-    );
-  } else {
-    alertify.warning("يرجى اختيار تاريخ واحد على الأقل");
-  }
-};
-
-const clearDateFilter = () => {
-  filterDateFrom.value = "";
-  filterDateTo.value = "";
-  activeDateFilter.value = null;
-  alertify.message("تم مسح فلتر التاريخ");
-};
-
-// دوال ترتيب التاريخ
-const toggleDateSort = () => {
-  if (dateSortOrder.value === "none") {
-    dateSortOrder.value = "asc";
-    alertify.message("تم ترتيب التواريخ تصاعدياً");
-  } else if (dateSortOrder.value === "asc") {
-    dateSortOrder.value = "desc";
-    alertify.message("تم ترتيب التواريخ تنازلياً");
-  } else {
-    dateSortOrder.value = "none";
-    alertify.message("تم إلغاء ترتيب التواريخ");
-  }
-};
-
-const getSortIcon = () => {
-  if (dateSortOrder.value === "asc") return "bi bi-sort-up";
-  if (dateSortOrder.value === "desc") return "bi bi-sort-down";
-  return "bi bi-arrow-down-up";
-};
-
-const getSortText = () => {
-  if (dateSortOrder.value === "asc") return "تصاعدي";
-  if (dateSortOrder.value === "desc") return "تنازلي";
-  return "ترتيب";
-};
-
-const getSortIconClass = () => {
-  return {
-    "btn-primary": dateSortOrder.value !== "none",
-    "btn-outline-secondary": dateSortOrder.value === "none",
-  };
 };
 
 const fetchData = async () => {
@@ -683,29 +680,24 @@ const sortedAndFilteredAssistances = computed(() => {
   let result = assistances.value;
 
   // تطبيق فلتر نوع المستفيد
-  if (beneficiaryTypeFilter.value !== "all") {
+  if (selectedBeneficiaryTypes.value.length > 0) {
     result = result.filter((assistance) => {
       const beneficiaryType = getBeneficiaryType(assistance);
-
-      if (beneficiaryTypeFilter.value === "family") {
-        return beneficiaryType === "أسرة";
-      } else if (beneficiaryTypeFilter.value === "widow") {
-        return beneficiaryType === "أرمل/ة";
-      } else if (beneficiaryTypeFilter.value === "orphan") {
-        return beneficiaryType === "يتيم/ة";
-      } else if (beneficiaryTypeFilter.value === "other") {
-        return beneficiaryType === "فرد" || beneficiaryType === "غير محدد";
-      }
-
-      return true;
+      return selectedBeneficiaryTypes.value.some((filter) => {
+        if (filter === "family") return beneficiaryType === "أسرة";
+        if (filter === "widow") return beneficiaryType === "أرمل/ة";
+        if (filter === "orphan") return beneficiaryType === "يتيم/ة";
+        if (filter === "other")
+          return beneficiaryType === "فرد" || beneficiaryType === "غير محدد";
+        return false;
+      });
     });
   }
 
   // تطبيق فلتر نوع المساعدة
-  if (assistanceTypeFilter.value !== "all") {
-    result = result.filter(
-      (assistance) =>
-        assistance.assistanceTypeId === assistanceTypeFilter.value,
+  if (selectedAssistanceTypes.value.length > 0) {
+    result = result.filter((assistance) =>
+      selectedAssistanceTypes.value.includes(assistance.assistanceTypeId),
     );
   }
 
@@ -726,17 +718,14 @@ const sortedAndFilteredAssistances = computed(() => {
   }
 
   // تطبيق فلتر التاريخ
-  if (activeDateFilter.value) {
+  if (filterDateFrom.value || filterDateTo.value) {
     result = result.filter((assistance) => {
       if (!assistance.date) return false;
-
       const assistanceDate = new Date(assistance.date);
-      const fromDate = activeDateFilter.value.from
-        ? new Date(activeDateFilter.value.from)
+      const fromDate = filterDateFrom.value
+        ? new Date(filterDateFrom.value)
         : null;
-      const toDate = activeDateFilter.value.to
-        ? new Date(activeDateFilter.value.to)
-        : null;
+      const toDate = filterDateTo.value ? new Date(filterDateTo.value) : null;
 
       if (fromDate && toDate) {
         return assistanceDate >= fromDate && assistanceDate <= toDate;
@@ -745,26 +734,11 @@ const sortedAndFilteredAssistances = computed(() => {
       } else if (toDate) {
         return assistanceDate <= toDate;
       }
-
       return true;
     });
   }
 
-  // تطبيق ترتيب التاريخ
-  if (dateSortOrder.value !== "none") {
-    result = [...result].sort((a, b) => {
-      const dateA = a.date ? new Date(a.date) : new Date(0);
-      const dateB = b.date ? new Date(b.date) : new Date(0);
-
-      if (dateSortOrder.value === "asc") {
-        return dateA - dateB;
-      } else {
-        return dateB - dateA;
-      }
-    });
-  }
-
-  // تطبيق الترتيب من القائمة المنسدلة
+  // تطبيق الترتيب
   const sorted = [...result];
   if (sortBy.value === "date-desc") {
     sorted.sort((a, b) => {
@@ -795,10 +769,7 @@ const sortedAndFilteredAssistances = computed(() => {
       return typeA.localeCompare(typeB, "ar");
     });
   } else if (sortBy.value === "received") {
-    sorted.sort((a, b) => {
-      // ترتيب حسب حالة الاستلام (المستلم أولاً)
-      return b.received - a.received;
-    });
+    sorted.sort((a, b) => b.received - a.received);
   }
 
   return sorted;
@@ -840,9 +811,10 @@ const prevPage = () => {
 watch(
   [
     searchQuery,
-    beneficiaryTypeFilter,
-    assistanceTypeFilter,
-    activeDateFilter,
+    selectedBeneficiaryTypes,
+    selectedAssistanceTypes,
+    filterDateFrom,
+    filterDateTo,
     sortBy,
   ],
   () => {
@@ -870,24 +842,24 @@ const getSortedPrintAssistances = () => {
 const getPrintTitle = () => {
   const filters = [];
 
-  // Add assistance type filter if active
-  if (assistanceTypeFilter.value !== "all") {
-    const typeName = getAssistanceTypeName(assistanceTypeFilter.value);
-    filters.push(typeName);
+  if (selectedAssistanceTypes.value.length > 0) {
+    const typeNames = selectedAssistanceTypes.value.map((id) =>
+      getAssistanceTypeName(id),
+    );
+    filters.push(typeNames.join("، "));
   }
 
-  // Add beneficiary type filter if active
-  if (beneficiaryTypeFilter.value !== "all") {
+  if (selectedBeneficiaryTypes.value.length > 0) {
     const filterLabels = {
       family: "أسر",
       widow: "أرامل",
       orphan: "أيتام",
       other: "أخرى",
     };
-    filters.push(filterLabels[beneficiaryTypeFilter.value]);
+    const labels = selectedBeneficiaryTypes.value.map((v) => filterLabels[v]);
+    filters.push(labels.join("، "));
   }
 
-  // Return filter text or empty string
   return filters.length > 0 ? filters.join(" - ") : "";
 };
 
@@ -983,6 +955,54 @@ const viewDetails = (assistanceId) =>
   router.push(`/view-assistance/${assistanceId}`);
 const editAssistance = (assistanceId) =>
   router.push(`/edit-assistance/${assistanceId}`);
+
+// Bulk delete selected assistances
+const deleteSelected = async () => {
+  if (selectedAssistances.value.length === 0) {
+    alertify.warning("الرجاء اختيار مساعدة واحدة على الأقل للحذف");
+    return;
+  }
+
+  if (!AUTH_TOKEN) {
+    alertify.error("الرجاء تسجيل الدخول أولاً");
+    return;
+  }
+
+  const count = selectedAssistances.value.length;
+  alertify.confirm(
+    "تأكيد الحذف",
+    `هل أنت متأكد من حذف ${count} مساعدة؟`,
+    async function () {
+      let successCount = 0;
+      let failCount = 0;
+
+      for (const id of selectedAssistances.value) {
+        try {
+          await axios.delete(`${API_BASE_URL}/Assistance/${id}`, {
+            headers: { Authorization: `Bearer ${AUTH_TOKEN}` },
+          });
+          successCount++;
+        } catch (error) {
+          console.error(`Error deleting assistance ${id}:`, error);
+          failCount++;
+        }
+      }
+
+      await fetchData();
+      selectedAssistances.value = [];
+
+      if (successCount > 0) {
+        alertify.success(`تم حذف ${successCount} مساعدة بنجاح`);
+      }
+      if (failCount > 0) {
+        alertify.error(`فشل حذف ${failCount} مساعدة`);
+      }
+    },
+    function () {
+      alertify.message("تم إلغاء عملية الحذف");
+    },
+  );
+};
 
 const deleteAssistance = async (assistanceId) => {
   // Get assistance details for better confirmation message
@@ -1138,60 +1158,68 @@ onMounted(fetchData);
   transform: translateY(0) !important;
 }
 
-/* تنسيق زر الترتيب في رأس الجدول */
-.header-content {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  gap: 0.5rem;
+/* تنسيق لوحة الفلاتر */
+.filter-panel {
+  border: 1px solid #e0e0e0;
+  border-radius: 12px;
+  background: linear-gradient(135deg, #f8f9fa 0%, #ffffff 100%);
+  animation: slideDown 0.3s ease;
 }
 
-.expandable-sort-btn {
-  border: none;
-  background: none;
-  color: white;
+.filter-label {
+  display: block;
+  font-weight: 600;
+  font-size: 0.85rem;
+  color: #495057;
+  margin-bottom: 0.5rem;
+}
+
+.filter-chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.4rem;
+}
+
+.filter-chip {
+  display: inline-flex;
+  align-items: center;
+  padding: 0.35rem 0.75rem;
+  border: 1.5px solid #dee2e6;
+  border-radius: 20px;
   font-size: 0.8rem;
-  padding: 2px 6px;
-  border-radius: 4px;
-  transition: all 0.3s ease;
-  overflow: hidden;
-  white-space: nowrap;
-  min-width: 25px;
-  display: flex;
+  cursor: pointer;
+  transition: all 0.25s ease;
+  background: #fff;
+  color: #495057;
+  user-select: none;
+}
+
+.filter-chip:hover {
+  border-color: #42b983;
+  color: #42b983;
+  background: rgba(66, 185, 131, 0.05);
+}
+
+.filter-chip.active {
+  background: #42b983;
+  color: #fff;
+  border-color: #42b983;
+  box-shadow: 0 2px 6px rgba(66, 185, 131, 0.3);
+}
+
+.filter-badge {
+  display: inline-flex;
   align-items: center;
   justify-content: center;
-}
-
-.expandable-sort-btn .icon {
-  transition: margin 0.3s ease;
-}
-
-.expandable-sort-btn .sort-text {
-  opacity: 0;
-  max-width: 0;
-  overflow: hidden;
-  transition: all 0.3s ease;
-  margin-right: 0;
-  font-size: 0.75rem;
-}
-
-.expandable-sort-btn:hover {
-  background-color: rgba(255, 255, 255, 0.2);
-  min-width: auto;
-}
-
-.expandable-sort-btn:hover .icon {
-  margin-left: 0.3rem;
-}
-
-.expandable-sort-btn:hover .sort-text {
-  opacity: 1;
-  max-width: 60px;
-  margin-right: 0.3rem;
-}
-
-.expandable-sort-btn.btn-primary {
-  background-color: rgba(255, 255, 255, 0.3);
+  min-width: 18px;
+  height: 18px;
+  padding: 0 5px;
+  border-radius: 50%;
+  background: #dc3545;
+  color: #fff;
+  font-size: 0.7rem;
+  font-weight: bold;
+  margin-right: 0.4rem;
 }
 
 .form-control::placeholder {
@@ -1199,9 +1227,10 @@ onMounted(fetchData);
 }
 
 /* تنسيق فلترة التاريخ */
-.date-filter-section {
-  border: 1px solid #dee2e6;
-  animation: slideDown 0.3s ease;
+.filter-panel .input-group-text {
+  font-size: 0.8rem;
+  background-color: #f8f9fa;
+  border-color: #dee2e6;
 }
 
 @keyframes slideDown {
@@ -1221,15 +1250,17 @@ onMounted(fetchData);
   color: white;
 }
 
-/* تنسيق ترتيب التاريخ */
-.sortable-header {
-  cursor: pointer;
-  position: relative;
-  user-select: none;
+/* تأثيرات الانتقال للوحة الفلاتر */
+.slide-fade-enter-active {
+  transition: all 0.3s ease;
 }
-
-.sortable-header:hover {
-  background-color: rgba(255, 255, 255, 0.1);
+.slide-fade-leave-active {
+  transition: all 0.2s ease;
+}
+.slide-fade-enter-from,
+.slide-fade-leave-to {
+  opacity: 0;
+  transform: translateY(-10px);
 }
 
 .form-label {

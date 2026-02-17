@@ -18,7 +18,6 @@
                   type="text"
                   class="form-control"
                   placeholder="أدخل الرقم الوطني"
-                  required
                 />
                 <small class="text-muted">يجب أن يكون رقماً فريداً</small>
               </div>
@@ -28,7 +27,6 @@
                   v-model="formData.firstName"
                   type="text"
                   class="form-control"
-                  required
                 />
               </div>
               <div class="col-md-6">
@@ -37,7 +35,6 @@
                   v-model="formData.secondName"
                   type="text"
                   class="form-control"
-                  required
                 />
               </div>
               <div class="col-md-6">
@@ -46,7 +43,6 @@
                   v-model="formData.thirdName"
                   type="text"
                   class="form-control"
-                  required
                 />
               </div>
               <div class="col-md-6">
@@ -55,13 +51,12 @@
                   v-model="formData.lastName"
                   type="text"
                   class="form-control"
-                  required
                 />
               </div>
 
               <div class="col-md-6">
                 <label class="form-label">الجنس</label>
-                <select v-model="formData.gender" class="form-select" required>
+                <select v-model="formData.gender" class="form-select">
                   <option value="ذكر">ذكر</option>
                   <option value="أنثى">أنثى</option>
                 </select>
@@ -73,7 +68,6 @@
                   v-model="formData.phoneNumber"
                   type="tel"
                   class="form-control"
-                  required
                 />
               </div>
 
@@ -83,7 +77,6 @@
                   v-model="formData.educationalLevel"
                   type="text"
                   class="form-control"
-                  required
                 />
               </div>
 
@@ -93,7 +86,6 @@
                   v-model="formData.job"
                   type="text"
                   class="form-control"
-                  required
                 />
               </div>
 
@@ -212,7 +204,6 @@
                         type="text"
                         class="form-control"
                         placeholder="أدخل اسم العائلة"
-                        required
                       />
                     </div>
                     <div class="col-md-6">
@@ -225,7 +216,6 @@
                         class="form-control"
                         min="1"
                         placeholder="أدخل عدد أفراد العائلة"
-                        required
                       />
                     </div>
                     <div class="col-12">
@@ -252,7 +242,6 @@
                       <select
                         v-model="formData.selectedFamilyId"
                         class="form-select"
-                        required
                         @change="onFamilySelect"
                       >
                         <option value="">اختر عائلة...</option>
@@ -337,7 +326,6 @@
                         v-model="formData.selectedGuardianId"
                         @change="onGuardianSelect"
                         class="form-select"
-                        required
                       >
                         <option value="">-- اختر وصياً --</option>
                         <option
@@ -389,7 +377,6 @@
                         v-model="formData.guardian.guardianId"
                         type="text"
                         class="form-control"
-                        required
                       />
                     </div>
                     <div class="col-md-6">
@@ -398,7 +385,6 @@
                         v-model="formData.guardian.firstName"
                         type="text"
                         class="form-control"
-                        required
                       />
                     </div>
                     <div class="col-md-6">
@@ -407,7 +393,6 @@
                         v-model="formData.guardian.secondName"
                         type="text"
                         class="form-control"
-                        required
                       />
                     </div>
                     <div class="col-md-6">
@@ -416,7 +401,6 @@
                         v-model="formData.guardian.thirdName"
                         type="text"
                         class="form-control"
-                        required
                       />
                     </div>
                     <div class="col-md-6">
@@ -425,16 +409,29 @@
                         v-model="formData.guardian.lastName"
                         type="text"
                         class="form-control"
-                        required
                       />
                     </div>
                     <div class="col-md-6">
                       <label class="form-label">صلة القرابة</label>
+                      <select
+                        v-model="formData.guardian.relationshipType"
+                        class="form-select"
+                      >
+                        <option value="">-- اختر صلة القرابة --</option>
+                        <option value="أم">أم</option>
+                        <option value="أخرى">أخرى</option>
+                      </select>
+                    </div>
+                    <div
+                      v-if="formData.guardian.relationshipType === 'أخرى'"
+                      class="col-md-6"
+                    >
+                      <label class="form-label">حدد صلة القرابة</label>
                       <input
-                        v-model="formData.guardian.relationship"
+                        v-model="formData.guardian.relationshipOther"
                         type="text"
                         class="form-control"
-                        required
+                        placeholder="مثال: عم، خال، جد..."
                       />
                     </div>
                     <div class="col-md-6">
@@ -443,7 +440,6 @@
                         v-model="formData.guardian.guardianJob"
                         type="text"
                         class="form-control"
-                        required
                       />
                     </div>
                     <div class="col-md-6">
@@ -452,7 +448,6 @@
                         v-model="formData.guardian.guardianPhoneNumber"
                         type="tel"
                         class="form-control"
-                        required
                       />
                     </div>
                   </div>
@@ -526,6 +521,8 @@ const formData = reactive({
     thirdName: "",
     lastName: "",
     relationship: "",
+    relationshipType: "",
+    relationshipOther: "",
     guardianJob: "",
     guardianPhoneNumber: "",
   },
@@ -693,6 +690,8 @@ watch(
         thirdName: "",
         lastName: "",
         relationship: "",
+        relationshipType: "",
+        relationshipOther: "",
         guardianJob: "",
         guardianPhoneNumber: "",
       };
@@ -715,9 +714,37 @@ watch(
         thirdName: "",
         lastName: "",
         relationship: "",
+        relationshipType: "",
+        relationshipOther: "",
         guardianJob: "",
         guardianPhoneNumber: "",
       };
+    }
+  },
+);
+
+// Watch for relationship type changes
+watch(
+  () => formData.guardian.relationshipType,
+  (newVal) => {
+    if (newVal === "أم") {
+      formData.guardian.relationship = "أم";
+      formData.guardian.relationshipOther = "";
+    } else if (newVal === "أخرى") {
+      formData.guardian.relationship = "";
+    } else {
+      formData.guardian.relationship = "";
+      formData.guardian.relationshipOther = "";
+    }
+  },
+);
+
+// Watch for other relationship input
+watch(
+  () => formData.guardian.relationshipOther,
+  (newVal) => {
+    if (formData.guardian.relationshipType === "أخرى") {
+      formData.guardian.relationship = newVal;
     }
   },
 );
@@ -750,9 +777,22 @@ const submitForm = async () => {
   }
 
   if (formData.isOrphan) {
-    if (formData.isNewGuardian && !formData.guardian.firstName.trim()) {
-      alertify.warning("يرجى إدخال بيانات الوصي للشخص اليتيم");
-      return;
+    if (formData.isNewGuardian) {
+      if (!formData.guardian.firstName.trim()) {
+        alertify.warning("يرجى إدخال بيانات الوصي للشخص اليتيم");
+        return;
+      }
+      if (!formData.guardian.relationshipType) {
+        alertify.warning("يرجى اختيار صلة القرابة");
+        return;
+      }
+      if (
+        formData.guardian.relationshipType === "أخرى" &&
+        !formData.guardian.relationshipOther.trim()
+      ) {
+        alertify.warning("يرجى تحديد صلة القرابة");
+        return;
+      }
     }
     if (!formData.isNewGuardian && !formData.selectedGuardianId) {
       alertify.warning("يرجى اختيار وصي للشخص اليتيم");
@@ -834,9 +874,6 @@ const submitForm = async () => {
             // Use existing guardian
             guardianId = formData.selectedGuardianId;
             alertify.success(`تم اختيار الوصي الموجود: ${guardianId}`);
-            // Use existing guardian
-            guardianId = formData.selectedGuardianId;
-            alertify.success(`تم اختيار الوصي الموجود: ${guardianId}`);
           }
         }
 
@@ -915,6 +952,65 @@ const submitForm = async () => {
                 updatedFamilyData.numberOfFamilyMembers;
 
               alertify.success("تم تحديث بيانات العائلة بنجاح");
+            }
+          }
+        }
+
+        // إضافة الأم كأرملة بعد إنشاء/اختيار العائلة
+        if (
+          formData.isOrphan &&
+          formData.isNewGuardian &&
+          formData.guardian.relationshipType === "أم"
+        ) {
+          try {
+            const motherPayload = {
+              id: formData.guardian.guardianId,
+              gender: "أنثى",
+              firstName: formData.guardian.firstName,
+              secondName: formData.guardian.secondName,
+              thirdName: formData.guardian.thirdName,
+              lastName: formData.guardian.lastName,
+              phoneNumber: formData.guardian.guardianPhoneNumber || "",
+              educationalLevel: "غير محدد",
+              isWidow: true,
+              isOrphan: false,
+              job: formData.guardian.guardianJob || "",
+              isPartOfFamily: formData.isPartOfFamily,
+              numberOfFamilyMembers: formData.numberOfFamilyMembers,
+              isHouseOwned: formData.isHouseOwned,
+              assistances: [],
+            };
+
+            // إضافة familyId إذا كان الشخص جزءاً من عائلة
+            if (formData.isPartOfFamily && familyId) {
+              motherPayload.familyId = familyId;
+            }
+
+            console.log("Adding mother as widow:", motherPayload);
+
+            await axios.post(AddAPI.value, motherPayload, {
+              headers: {
+                Authorization: `Bearer ${AUTH_TOKEN}`,
+                "Content-Type": "application/json",
+              },
+            });
+
+            console.log("Mother added as widow successfully");
+            alertify.success("تم إضافة الأم كأرملة بنجاح");
+          } catch (motherError) {
+            console.error("Error adding mother as widow:", motherError);
+            // لا نوقف العملية، فقط نسجل الخطأ ونخبر المستخدم
+            if (motherError.response) {
+              const errorMessage =
+                motherError.response.data.message ||
+                motherError.response.statusText;
+              alertify.warning(
+                `تم إضافة الوصي ولكن حدث خطأ أثناء إضافة الأم كأرملة: ${errorMessage}`,
+              );
+            } else {
+              alertify.warning(
+                "تم إضافة الوصي ولكن حدث خطأ أثناء إضافة الأم كأرملة",
+              );
             }
           }
         }

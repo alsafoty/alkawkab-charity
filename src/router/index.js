@@ -239,6 +239,30 @@ const routes = [
     component: () => import("../views/members/ViewGeneralMember.vue"),
     meta: { requiresAuth: true },
   },
+  {
+    path: "/receipts",
+    name: "receipts",
+    component: () => import("../views/members/ReceiptsView.vue"),
+    meta: { requiresAuth: true },
+  },
+  {
+    path: "/add-receipt",
+    name: "add-receipt",
+    component: () => import("../views/members/AddReceipt.vue"),
+    meta: { requiresAuth: true },
+  },
+  {
+    path: "/edit-receipt/:id",
+    name: "edit-receipt",
+    component: () => import("../views/members/EditReceipt.vue"),
+    meta: { requiresAuth: true },
+  },
+  {
+    path: "/view-receipt/:id",
+    name: "view-receipt",
+    component: () => import("../views/members/ViewReceipt.vue"),
+    meta: { requiresAuth: true },
+  },
 ];
 
 const router = createRouter({

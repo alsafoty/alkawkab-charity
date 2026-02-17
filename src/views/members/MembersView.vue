@@ -18,7 +18,7 @@
       <div class="card-body p-4">
         <!-- Quick Actions -->
         <div class="row mb-4 g-3">
-          <div class="col-md-6">
+          <div class="col-md-4">
             <button
               @click="router.push('/basic-members')"
               class="btn btn-primary btn-lg w-100"
@@ -27,7 +27,7 @@
               الأعضاء الأساسيين
             </button>
           </div>
-          <div class="col-md-6">
+          <div class="col-md-4">
             <button
               @click="router.push('/general-assembly')"
               class="btn btn-warning btn-lg w-100"
@@ -36,11 +36,20 @@
               أعضاء الجمعية العمومية
             </button>
           </div>
+          <div class="col-md-4">
+            <button
+              @click="router.push('/receipts')"
+              class="btn btn-info btn-lg w-100"
+            >
+              <i class="bi bi-receipt me-2"></i>
+              الإيصالات
+            </button>
+          </div>
         </div>
 
         <!-- Info Cards -->
         <div class="row">
-          <div class="col-md-6 mb-3">
+          <div class="col-md-4 mb-3">
             <div class="info-card p-4 rounded-3">
               <i class="bi bi-person-badge display-4 text-primary mb-3"></i>
               <h4>الأعضاء الأساسيين</h4>
@@ -50,13 +59,23 @@
               </p>
             </div>
           </div>
-          <div class="col-md-6 mb-3">
+          <div class="col-md-4 mb-3">
             <div class="info-card p-4 rounded-3">
               <i class="bi bi-people-fill display-4 text-warning mb-3"></i>
               <h4>أعضاء الجمعية العمومية</h4>
               <p class="text-muted">
                 إدارة بيانات أعضاء الجمعية العمومية، تحديد الأعضاء الإداريين
                 ومناصبهم
+              </p>
+            </div>
+          </div>
+          <div class="col-md-4 mb-3">
+            <div class="info-card p-4 rounded-3">
+              <i class="bi bi-receipt display-4 text-info mb-3"></i>
+              <h4>الإيصالات</h4>
+              <p class="text-muted">
+                إدارة إيصالات الدفع، متابعة المدفوعات، إصدار وطباعة الإيصالات
+                للأعضاء
               </p>
             </div>
           </div>

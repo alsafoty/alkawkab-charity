@@ -2,6 +2,19 @@ const { defineConfig } = require("@vue/cli-service");
 module.exports = defineConfig({
   transpileDependencies: true,
 
+  // Development server configuration
+  devServer: {
+    proxy: {
+      "/api": {
+        target:
+          process.env.VUE_APP_API_BASE_URL || "https://charityapp.runasp.net",
+        changeOrigin: true,
+        secure: false,
+        logLevel: "debug",
+      },
+    },
+  },
+
   // Production optimization
   productionSourceMap: false,
 

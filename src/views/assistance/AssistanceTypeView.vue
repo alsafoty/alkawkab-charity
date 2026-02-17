@@ -7,10 +7,21 @@
 
     <!-- Add and Search Section -->
     <div class="d-flex justify-content-between align-items-center mb-4">
-      <router-link to="/add-assistance-type" class="btn btn-success">
-        <i class="bi bi-plus-circle me-1"></i>
-        إضافة نوع مساعدة
-      </router-link>
+      <div class="d-flex gap-2">
+        <router-link to="/add-assistance-type" class="btn btn-success">
+          <i class="bi bi-plus-circle me-1"></i>
+          إضافة نوع مساعدة
+        </router-link>
+
+        <button
+          v-if="selectedTypes.length > 0"
+          @click="deleteSelected"
+          class="btn btn-danger"
+        >
+          <i class="bi bi-trash me-1"></i>
+          حذف المحدد ({{ selectedTypes.length }})
+        </button>
+      </div>
 
       <div class="flex-grow-1 me-3">
         <input
@@ -29,6 +40,14 @@
       <table class="table table-striped table-hover">
         <thead class="table-header text-white">
           <tr>
+            <th style="width: 50px">
+              <input
+                type="checkbox"
+                v-model="allSelected"
+                class="form-check-input"
+                style="cursor: pointer"
+              />
+            </th>
             <th>نوع المساعدة</th>
             <th>نوع مالي</th>
             <th>القيمة</th>
@@ -37,6 +56,15 @@
         </thead>
         <tbody>
           <tr v-for="type in filteredTypes" :key="type.assistanceTypeId">
+            <td>
+              <input
+                type="checkbox"
+                :checked="isSelected(type.assistanceTypeId)"
+                @change="toggleSelection(type.assistanceTypeId)"
+                class="form-check-input"
+                style="cursor: pointer"
+              />
+            </td>
             <td>{{ type.assistanceTypeName }}</td>
             <td>
               <i
@@ -105,6 +133,32 @@ const router = useRouter();
 // Data
 const assistanceTypes = ref([]);
 const searchQuery = ref("");
+const selectedTypes = ref([]);
+
+// Computed property for select all state
+const allSelected = computed({
+  get: () =>
+    filteredTypes.value.length > 0 &&
+    selectedTypes.value.length === filteredTypes.value.length,
+  set: (value) => {
+    selectedTypes.value = value
+      ? filteredTypes.value.map((t) => t.assistanceTypeId)
+      : [];
+  },
+});
+
+// Check if a type is selected
+const isSelected = (id) => selectedTypes.value.includes(id);
+
+// Toggle selection of a type
+const toggleSelection = (id) => {
+  const index = selectedTypes.value.indexOf(id);
+  if (index > -1) {
+    selectedTypes.value.splice(index, 1);
+  } else {
+    selectedTypes.value.push(id);
+  }
+};
 
 // Computed
 const filteredTypes = computed(() => {
@@ -141,6 +195,67 @@ const fetchAssistanceTypes = async () => {
 
 const viewDetails = (assistanceTypeId) => {
   router.push(`/view-assistance-type/${assistanceTypeId}`);
+};
+
+// Bulk delete selected assistance types
+const deleteSelected = async () => {
+  if (selectedTypes.value.length === 0) {
+    alertify.warning("الرجاء اختيار نوع واحد على الأقل للحذف");
+    return;
+  }
+
+  if (!AUTH_TOKEN) {
+    alertify.error("الرجاء تسجيل الدخول أولاً");
+    return;
+  }
+
+  // Check if any selected type has assistances
+  const typesWithAssistances = selectedTypes.value.filter((id) => {
+    const type = assistanceTypes.value.find((t) => t.assistanceTypeId === id);
+    return type?.assistances?.length > 0;
+  });
+
+  if (typesWithAssistances.length > 0) {
+    alertify.error(
+      `لا يمكن حذف ${typesWithAssistances.length} نوع/أنواع لأنهم مرتبطون بمساعدات`,
+    );
+    return;
+  }
+
+  const count = selectedTypes.value.length;
+  alertify.confirm(
+    "تأكيد الحذف",
+    `هل أنت متأكد من حذف ${count} نوع؟`,
+    async function () {
+      let successCount = 0;
+      let failCount = 0;
+
+      for (const id of selectedTypes.value) {
+        try {
+          await axios.delete(`${API_BASE_URL}/AssistanceType/${id}`, {
+            headers: { Authorization: `Bearer ${AUTH_TOKEN}` },
+          });
+          successCount++;
+        } catch (error) {
+          console.error(`Error deleting assistance type ${id}:`, error);
+          failCount++;
+        }
+      }
+
+      await fetchAssistanceTypes();
+      selectedTypes.value = [];
+
+      if (successCount > 0) {
+        alertify.success(`تم حذف ${successCount} نوع بنجاح`);
+      }
+      if (failCount > 0) {
+        alertify.error(`فشل حذف ${failCount} نوع`);
+      }
+    },
+    function () {
+      alertify.message("تم إلغاء عملية الحذف");
+    },
+  );
 };
 
 const deleteType = async (id) => {

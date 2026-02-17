@@ -19,6 +19,17 @@
           <i class="bi bi-plus-circle icon"></i>
           <span class="btn-text">إضافة شخص جديد</span>
         </router-link>
+
+        <!-- Bulk Delete Button -->
+        <button
+          @click="deleteSelected"
+          class="btn btn-danger expandable-btn"
+          :disabled="selectedWidows.length === 0"
+          v-if="selectedWidows.length > 0"
+        >
+          <i class="bi bi-trash icon"></i>
+          <span class="btn-text">حذف المحدد ({{ selectedWidows.length }})</span>
+        </button>
       </div>
 
       <div class="flex-grow-1 mx-3 no-print">
@@ -63,6 +74,14 @@
       <table class="table table-striped table-hover">
         <thead class="table-header text-white">
           <tr>
+            <th class="no-print" style="width: 50px">
+              <input
+                type="checkbox"
+                v-model="allSelected"
+                class="form-check-input"
+                style="cursor: pointer"
+              />
+            </th>
             <th>الرقم الوطني</th>
             <th>الجنس</th>
             <th>الاسم الكامل</th>
@@ -73,6 +92,15 @@
         </thead>
         <tbody>
           <tr v-for="person in filteredWidows" :key="person.id">
+            <td class="no-print">
+              <input
+                type="checkbox"
+                :checked="isSelected(person.id)"
+                @change="toggleSelection(person.id)"
+                class="form-check-input"
+                style="cursor: pointer"
+              />
+            </td>
             <td>{{ person.id }}</td>
             <td>{{ person.gender }}</td>
             <td>
@@ -179,6 +207,30 @@ const sortBy = ref("name"); // الترتيب الافتراضي حسب الاس
 const loading = ref(false);
 const isDeleting = ref(false);
 const printArea = ref(null);
+const selectedWidows = ref([]);
+
+// Computed property for select all state
+const allSelected = computed({
+  get: () =>
+    filteredWidows.value.length > 0 &&
+    selectedWidows.value.length === filteredWidows.value.length,
+  set: (value) => {
+    selectedWidows.value = value ? filteredWidows.value.map((p) => p.id) : [];
+  },
+});
+
+// Check if a widow is selected
+const isSelected = (id) => selectedWidows.value.includes(id);
+
+// Toggle selection of a widow
+const toggleSelection = (id) => {
+  const index = selectedWidows.value.indexOf(id);
+  if (index > -1) {
+    selectedWidows.value.splice(index, 1);
+  } else {
+    selectedWidows.value.push(id);
+  }
+};
 
 // Fetch widows data
 const fetchWidows = async () => {
@@ -257,6 +309,63 @@ const viewDetails = (id) => {
 
 const editPerson = (id) => {
   router.push(`/edit-person/${id}`);
+};
+
+// Bulk delete selected widows
+const deleteSelected = async () => {
+  if (selectedWidows.value.length === 0) {
+    alertify.warning("الرجاء اختيار عنصر واحد على الأقل للحذف");
+    return;
+  }
+
+  if (!AUTH_TOKEN) {
+    alertify.error("الرجاء تسجيل الدخول أولاً");
+    return;
+  }
+
+  if (isDeleting.value) {
+    alertify.warning("جاري تنفيذ عملية حذف، يرجى الانتظار");
+    return;
+  }
+
+  const count = selectedWidows.value.length;
+  alertify.confirm(
+    "تأكيد الحذف",
+    `هل أنت متأكد من حذف ${count} عنصر؟`,
+    async function () {
+      isDeleting.value = true;
+      let successCount = 0;
+      let failCount = 0;
+
+      for (const id of selectedWidows.value) {
+        try {
+          await axios.delete(`${API_BASE_URL}/Person/${id}`, {
+            headers: {
+              Authorization: `Bearer ${AUTH_TOKEN}`,
+            },
+          });
+          successCount++;
+        } catch (error) {
+          console.error(`Error deleting person ${id}:`, error);
+          failCount++;
+        }
+      }
+
+      await fetchWidows();
+      selectedWidows.value = [];
+      isDeleting.value = false;
+
+      if (successCount > 0) {
+        alertify.success(`تم حذف ${successCount} عنصر بنجاح`);
+      }
+      if (failCount > 0) {
+        alertify.error(`فشل حذف ${failCount} عنصر`);
+      }
+    },
+    function () {
+      alertify.message("تم إلغاء عملية الحذف");
+    },
+  );
 };
 
 const deletePerson = async (id) => {

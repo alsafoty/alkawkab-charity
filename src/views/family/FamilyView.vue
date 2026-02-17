@@ -19,6 +19,19 @@
           <i class="bi bi-plus-circle icon"></i>
           <span class="btn-text">إضافة أسرة</span>
         </router-link>
+
+        <!-- Bulk Delete Button -->
+        <button
+          @click="deleteSelected"
+          class="btn btn-danger expandable-btn"
+          :disabled="selectedFamilies.length === 0"
+          v-if="selectedFamilies.length > 0"
+        >
+          <i class="bi bi-trash icon"></i>
+          <span class="btn-text"
+            >حذف المحدد ({{ selectedFamilies.length }})</span
+          >
+        </button>
       </div>
 
       <div class="flex-grow-1 mx-3 no-print">
@@ -65,6 +78,14 @@
       <table class="table table-striped table-hover">
         <thead class="table-header text-white">
           <tr>
+            <th class="no-print" style="width: 50px">
+              <input
+                type="checkbox"
+                v-model="allSelected"
+                class="form-check-input"
+                style="cursor: pointer"
+              />
+            </th>
             <th>رقم الأسرة</th>
             <th>رب الأسرة</th>
             <th>الرقم الوطني</th>
@@ -76,6 +97,15 @@
         </thead>
         <tbody>
           <tr v-for="family in filteredFamilies" :key="family.familyId">
+            <td class="no-print">
+              <input
+                type="checkbox"
+                :checked="isSelected(family.familyId)"
+                @change="toggleSelection(family.familyId)"
+                class="form-check-input"
+                style="cursor: pointer"
+              />
+            </td>
             <td>{{ family.familyId }}</td>
             <td>{{ getHeadOfFamilyName(family) }}</td>
             <td>{{ getHeadOfFamilyId(family) }}</td>
@@ -177,6 +207,32 @@ const sortBy = ref("familyId"); // الترتيب الافتراضي حسب رق
 const loading = ref(false);
 const AUTH_TOKEN = localStorage.getItem("token");
 const printArea = ref(null);
+const selectedFamilies = ref([]);
+
+// Computed property for select all state
+const allSelected = computed({
+  get: () =>
+    filteredFamilies.value.length > 0 &&
+    selectedFamilies.value.length === filteredFamilies.value.length,
+  set: (value) => {
+    selectedFamilies.value = value
+      ? filteredFamilies.value.map((f) => f.familyId)
+      : [];
+  },
+});
+
+// Check if a family is selected
+const isSelected = (id) => selectedFamilies.value.includes(id);
+
+// Toggle selection of a family
+const toggleSelection = (id) => {
+  const index = selectedFamilies.value.indexOf(id);
+  if (index > -1) {
+    selectedFamilies.value.splice(index, 1);
+  } else {
+    selectedFamilies.value.push(id);
+  }
+};
 
 const filteredFamilies = computed(() => {
   let result = families.value;
@@ -373,6 +429,57 @@ const viewDetails = (id) => {
 
 const editFamily = (id) => {
   router.push(`/edit-family/${id}`);
+};
+
+// Bulk delete selected families
+const deleteSelected = async () => {
+  if (selectedFamilies.value.length === 0) {
+    alertify.warning("الرجاء اختيار أسرة واحدة على الأقل للحذف");
+    return;
+  }
+
+  if (!AUTH_TOKEN) {
+    alertify.error("الرجاء تسجيل الدخول أولاً");
+    return;
+  }
+
+  const count = selectedFamilies.value.length;
+  alertify.confirm(
+    "تأكيد الحذف",
+    `هل أنت متأكد من حذف ${count} أسرة؟`,
+    async function () {
+      let successCount = 0;
+      let failCount = 0;
+
+      for (const id of selectedFamilies.value) {
+        try {
+          await axios.delete(`${API_BASE_URL}/Family/${id}`, {
+            headers: {
+              Authorization: `Bearer ${AUTH_TOKEN}`,
+              "Content-Type": "application/json",
+            },
+          });
+          successCount++;
+        } catch (error) {
+          console.error(`Error deleting family ${id}:`, error);
+          failCount++;
+        }
+      }
+
+      await fetchFamilies();
+      selectedFamilies.value = [];
+
+      if (successCount > 0) {
+        alertify.success(`تم حذف ${successCount} أسرة بنجاح`);
+      }
+      if (failCount > 0) {
+        alertify.error(`فشل حذف ${failCount} أسرة`);
+      }
+    },
+    function () {
+      alertify.message("تم إلغاء عملية الحذف");
+    },
+  );
 };
 
 const deleteFamily = async (id) => {

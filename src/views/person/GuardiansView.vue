@@ -19,6 +19,19 @@
           <i class="bi bi-plus-circle icon"></i>
           <span class="btn-text">إضافة وصي جديد</span>
         </router-link>
+
+        <!-- Bulk Delete Button -->
+        <button
+          @click="deleteSelected"
+          class="btn btn-danger expandable-btn"
+          :disabled="selectedGuardians.length === 0"
+          v-if="selectedGuardians.length > 0"
+        >
+          <i class="bi bi-trash icon"></i>
+          <span class="btn-text"
+            >حذف المحدد ({{ selectedGuardians.length }})</span
+          >
+        </button>
       </div>
 
       <div class="flex-grow-1 mx-3 no-print">
@@ -63,6 +76,14 @@
       <table class="table table-striped table-hover">
         <thead class="table-header text-white">
           <tr>
+            <th class="no-print" style="width: 50px">
+              <input
+                type="checkbox"
+                v-model="allSelected"
+                class="form-check-input"
+                style="cursor: pointer"
+              />
+            </th>
             <th>الرقم الوطني</th>
             <th>الاسم الكامل</th>
             <th>صلة القرابة</th>
@@ -74,6 +95,15 @@
         </thead>
         <tbody>
           <tr v-for="guardian in filteredGuardians" :key="guardian.guardianId">
+            <td class="no-print">
+              <input
+                type="checkbox"
+                :checked="isSelected(guardian.guardianId)"
+                @change="toggleSelection(guardian.guardianId)"
+                class="form-check-input"
+                style="cursor: pointer"
+              />
+            </td>
             <td>{{ guardian.guardianId }}</td>
             <td>
               {{ guardian.firstName }} {{ guardian.secondName }}
@@ -187,6 +217,32 @@ const sortBy = ref("name"); // الترتيب الافتراضي حسب الاس
 const loading = ref(false);
 const isDeleting = ref(false);
 const printArea = ref(null);
+const selectedGuardians = ref([]);
+
+// Computed property for select all state
+const allSelected = computed({
+  get: () =>
+    filteredGuardians.value.length > 0 &&
+    selectedGuardians.value.length === filteredGuardians.value.length,
+  set: (value) => {
+    selectedGuardians.value = value
+      ? filteredGuardians.value.map((g) => g.guardianId)
+      : [];
+  },
+});
+
+// Check if a guardian is selected
+const isSelected = (id) => selectedGuardians.value.includes(id);
+
+// Toggle selection of a guardian
+const toggleSelection = (id) => {
+  const index = selectedGuardians.value.indexOf(id);
+  if (index > -1) {
+    selectedGuardians.value.splice(index, 1);
+  } else {
+    selectedGuardians.value.push(id);
+  }
+};
 
 // Fetch guardians data
 const fetchGuardians = async () => {
@@ -264,6 +320,76 @@ const viewGuardianDetails = (id) => {
 
 const editGuardian = (id) => {
   router.push(`/edit-guardian/${id}`);
+};
+
+// Bulk delete selected guardians
+const deleteSelected = async () => {
+  if (selectedGuardians.value.length === 0) {
+    alertify.warning("الرجاء اختيار عنصر واحد على الأقل للحذف");
+    return;
+  }
+
+  if (!AUTH_TOKEN) {
+    alertify.error("الرجاء تسجيل الدخول أولاً");
+    return;
+  }
+
+  if (isDeleting.value) {
+    alertify.warning("جاري تنفيذ عملية حذف، يرجى الانتظار");
+    return;
+  }
+
+  // Check if any selected guardian has orphans under guardianship
+  const guardiansWithOrphans = selectedGuardians.value.filter((id) => {
+    const guardian = guardians.value.find((g) => g.guardianId === id);
+    return guardian?.peopleUnderGuardianship?.length > 0;
+  });
+
+  if (guardiansWithOrphans.length > 0) {
+    alertify.error(
+      `لا يمكن حذف ${guardiansWithOrphans.length} وصي/أوصياء لأنهم يرعون أيتام`,
+    );
+    return;
+  }
+
+  const count = selectedGuardians.value.length;
+  alertify.confirm(
+    "تأكيد الحذف",
+    `هل أنت متأكد من حذف ${count} عنصر؟`,
+    async function () {
+      isDeleting.value = true;
+      let successCount = 0;
+      let failCount = 0;
+
+      for (const id of selectedGuardians.value) {
+        try {
+          await axios.delete(`${API_BASE_URL}/Guardian/${id}`, {
+            headers: {
+              Authorization: `Bearer ${AUTH_TOKEN}`,
+            },
+          });
+          successCount++;
+        } catch (error) {
+          console.error(`Error deleting guardian ${id}:`, error);
+          failCount++;
+        }
+      }
+
+      await fetchGuardians();
+      selectedGuardians.value = [];
+      isDeleting.value = false;
+
+      if (successCount > 0) {
+        alertify.success(`تم حذف ${successCount} عنصر بنجاح`);
+      }
+      if (failCount > 0) {
+        alertify.error(`فشل حذف ${failCount} عنصر`);
+      }
+    },
+    function () {
+      alertify.message("تم إلغاء عملية الحذف");
+    },
+  );
 };
 
 const deleteGuardian = async (id) => {

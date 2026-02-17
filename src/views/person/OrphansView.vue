@@ -20,6 +20,19 @@
           <span class="btn-text">إضافة شخص جديد</span>
         </router-link>
 
+        <!-- Bulk Delete Button -->
+        <button
+          @click="deleteSelected"
+          class="btn btn-danger expandable-btn"
+          :disabled="selectedOrphans.length === 0"
+          v-if="selectedOrphans.length > 0"
+        >
+          <i class="bi bi-trash icon"></i>
+          <span class="btn-text"
+            >حذف المحدد ({{ selectedOrphans.length }})</span
+          >
+        </button>
+
         <!-- زر إضافة وصي جديد -->
         <router-link to="/add-guardian" class="btn btn-info expandable-btn">
           <i class="bi bi-person-plus icon"></i>
@@ -38,7 +51,7 @@
           v-model="searchQuery"
           type="text"
           class="form-control custom-input"
-          placeholder="ابحث بالاسم أو الرقم الوطني أو المستوى التعليمي..."
+          placeholder="ابحث بالاسم أو الرقم الوطني أو اسم الوصي أو المستوى التعليمي..."
         />
       </div>
 
@@ -75,16 +88,34 @@
       <table class="table table-striped table-hover">
         <thead class="table-header text-white">
           <tr>
+            <th class="no-print" style="width: 50px">
+              <input
+                type="checkbox"
+                v-model="allSelected"
+                class="form-check-input"
+                style="cursor: pointer"
+              />
+            </th>
             <th>الرقم الوطني</th>
             <th>الجنس</th>
             <th>الاسم الكامل</th>
             <th>رقم الهاتف</th>
             <th>المستوى التعليمي</th>
+            <th>اسم الوصي</th>
             <th class="no-print">الإجراءات</th>
           </tr>
         </thead>
         <tbody>
           <tr v-for="person in filteredOrphans" :key="person.id">
+            <td class="no-print">
+              <input
+                type="checkbox"
+                :checked="isSelected(person.id)"
+                @change="toggleSelection(person.id)"
+                class="form-check-input"
+                style="cursor: pointer"
+              />
+            </td>
             <td>{{ person.id }}</td>
             <td>{{ person.gender }}</td>
             <td>
@@ -93,6 +124,7 @@
             </td>
             <td>{{ person.phoneNumber }}</td>
             <td>{{ person.educationalLevel }}</td>
+            <td>{{ getGuardianName(person.guardianId) }}</td>
             <td class="d-flex gap-2 justify-content-center no-print">
               <button
                 @click="viewDetails(person.id)"
@@ -146,6 +178,7 @@
             <th>الجنس</th>
             <th>رقم الهاتف</th>
             <th>المستوى التعليمي</th>
+            <th>اسم الوصي</th>
           </tr>
         </thead>
         <tbody>
@@ -158,6 +191,7 @@
             <td>{{ person.gender }}</td>
             <td>{{ person.phoneNumber }}</td>
             <td>{{ person.educationalLevel }}</td>
+            <td>{{ getGuardianName(person.guardianId) }}</td>
           </tr>
         </tbody>
       </table>
@@ -186,16 +220,69 @@ const router = useRouter();
 const AUTH_TOKEN = localStorage.getItem("token");
 
 const orphans = ref([]);
+const guardians = ref([]);
+const guardiansMap = ref({});
 const searchQuery = ref("");
 const sortBy = ref("name"); // الترتيب الافتراضي حسب الاسم
 const loading = ref(false);
 const isDeleting = ref(false);
 const printArea = ref(null);
+const selectedOrphans = ref([]);
+
+// Computed property for select all state
+const allSelected = computed({
+  get: () =>
+    filteredOrphans.value.length > 0 &&
+    selectedOrphans.value.length === filteredOrphans.value.length,
+  set: (value) => {
+    selectedOrphans.value = value ? filteredOrphans.value.map((p) => p.id) : [];
+  },
+});
+
+// Check if an orphan is selected
+const isSelected = (id) => selectedOrphans.value.includes(id);
+
+// Toggle selection of an orphan
+const toggleSelection = (id) => {
+  const index = selectedOrphans.value.indexOf(id);
+  if (index > -1) {
+    selectedOrphans.value.splice(index, 1);
+  } else {
+    selectedOrphans.value.push(id);
+  }
+};
+
+// Fetch guardians data
+const fetchGuardians = async () => {
+  try {
+    const response = await axios.get(`${API_BASE_URL}/Guardian`, {
+      headers: {
+        Authorization: `Bearer ${AUTH_TOKEN}`,
+      },
+    });
+
+    guardians.value = response.data;
+
+    // Create a map for quick lookup
+    guardiansMap.value = {};
+    response.data.forEach((guardian) => {
+      if (guardian.guardianId) {
+        guardiansMap.value[guardian.guardianId] = guardian;
+      }
+    });
+  } catch (error) {
+    console.error("Error fetching guardians:", error);
+    // Don't show error to user as this is a supporting data fetch
+  }
+};
 
 // Fetch orphans data
 const fetchOrphans = async () => {
   loading.value = true;
   try {
+    // Fetch guardians first
+    await fetchGuardians();
+
     const response = await axios.get(`${API_BASE_URL}/Person`, {
       headers: {
         Authorization: `Bearer ${AUTH_TOKEN}`,
@@ -221,6 +308,20 @@ const fetchOrphans = async () => {
   }
 };
 
+// Helper function to get guardian name
+const getGuardianName = (guardianId) => {
+  if (!guardianId) return "لا يوجد";
+
+  const guardian = guardiansMap.value[guardianId];
+  if (!guardian) return "لا يوجد";
+
+  return (
+    `${guardian.firstName || ""} ${guardian.secondName || ""} ${
+      guardian.thirdName || ""
+    } ${guardian.lastName || ""}`.trim() || "لا يوجد"
+  );
+};
+
 // Enhanced search functionality with sorting
 const filteredOrphans = computed(() => {
   let result = orphans.value;
@@ -232,6 +333,7 @@ const filteredOrphans = computed(() => {
     result = result.filter((person) => {
       const fullName =
         `${person.firstName} ${person.secondName} ${person.thirdName} ${person.lastName}`.toLowerCase();
+      const guardianName = getGuardianName(person.guardianId).toLowerCase();
 
       const matchesName = fullName.includes(query);
       const matchesId = person.id.toString().includes(query);
@@ -240,13 +342,15 @@ const filteredOrphans = computed(() => {
         .includes(query);
       const matchesPhone = person.phoneNumber?.includes(query);
       const matchesGender = person.gender?.toLowerCase().includes(query);
+      const matchesGuardian = guardianName.includes(query);
 
       return (
         matchesName ||
         matchesId ||
         matchesEducation ||
         matchesPhone ||
-        matchesGender
+        matchesGender ||
+        matchesGuardian
       );
     });
   }
@@ -269,6 +373,63 @@ const viewDetails = (id) => {
 
 const editPerson = (id) => {
   router.push(`/edit-person/${id}`);
+};
+
+// Bulk delete selected orphans
+const deleteSelected = async () => {
+  if (selectedOrphans.value.length === 0) {
+    alertify.warning("الرجاء اختيار عنصر واحد على الأقل للحذف");
+    return;
+  }
+
+  if (!AUTH_TOKEN) {
+    alertify.error("الرجاء تسجيل الدخول أولاً");
+    return;
+  }
+
+  if (isDeleting.value) {
+    alertify.warning("جاري تنفيذ عملية حذف، يرجى الانتظار");
+    return;
+  }
+
+  const count = selectedOrphans.value.length;
+  alertify.confirm(
+    "تأكيد الحذف",
+    `هل أنت متأكد من حذف ${count} عنصر؟`,
+    async function () {
+      isDeleting.value = true;
+      let successCount = 0;
+      let failCount = 0;
+
+      for (const id of selectedOrphans.value) {
+        try {
+          await axios.delete(`${API_BASE_URL}/Person/${id}`, {
+            headers: {
+              Authorization: `Bearer ${AUTH_TOKEN}`,
+            },
+          });
+          successCount++;
+        } catch (error) {
+          console.error(`Error deleting person ${id}:`, error);
+          failCount++;
+        }
+      }
+
+      await fetchOrphans();
+      selectedOrphans.value = [];
+      isDeleting.value = false;
+
+      if (successCount > 0) {
+        alertify.success(`تم حذف ${successCount} عنصر بنجاح`);
+      }
+      if (failCount > 0) {
+        alertify.error(`فشل حذف ${failCount} عنصر`);
+      }
+    },
+    function () {
+      alertify.message("تم إلغاء عملية الحذف");
+    },
+  );
 };
 
 const deletePerson = async (id) => {

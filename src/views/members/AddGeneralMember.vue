@@ -58,17 +58,6 @@
                 />
               </div>
 
-              <!-- Location -->
-              <div class="col-md-6">
-                <label class="form-label">الموقع</label>
-                <input
-                  v-model="formData.location"
-                  type="text"
-                  class="form-control"
-                  placeholder="أدخل الموقع"
-                />
-              </div>
-
               <!-- Phone Number -->
               <div class="col-md-6">
                 <label class="form-label">رقم الهاتف</label>
@@ -141,7 +130,8 @@ alertify.set("notifier", "position", "bottom-right");
 alertify.set("notifier", "delay", 5);
 
 const router = useRouter();
-const API_BASE_URL = process.env.VUE_APP_API_BASE_URL + "/api";
+// Node.js Backend API for General Assembly Members
+const API_BASE_URL = process.env.VUE_APP_NODEJS_API_BASE_URL + "/api";
 const MemberAPI = API_BASE_URL + "/MemberGeneralAssembly";
 const AUTH_TOKEN = localStorage.getItem("token");
 
@@ -150,7 +140,6 @@ const formData = reactive({
   firstName: "",
   secondName: "",
   lastName: "",
-  location: "",
   phoneNumber: "",
   isAdministrativeMember: false,
   administrativePosition: "",
@@ -174,7 +163,6 @@ const submitForm = async () => {
       firstName: formData.firstName.trim(),
       secondName: formData.secondName.trim(),
       lastName: formData.lastName.trim(),
-      location: formData.location.trim() || null,
       phoneNumber: formData.phoneNumber.trim() || null,
       isAdministrativeMember: formData.isAdministrativeMember,
       administrativePosition: formData.isAdministrativeMember

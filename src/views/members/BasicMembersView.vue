@@ -32,7 +32,7 @@
               v-model="searchQuery"
               type="text"
               class="form-control form-control-lg"
-              placeholder="🔍 بحث عن عضو (الاسم، الرقم، الموقع...)"
+              placeholder="🔍 بحث عن عضو (الاسم، الرقم...)"
             />
           </div>
           <div class="col-md-4">
@@ -42,6 +42,12 @@
             >
               <i class="bi bi-plus-circle me-2"></i>
               إضافة عضو جديد
+            </button>
+          </div>
+          <div class="col-md-12 mt-2" v-if="selectedMembers.length > 0">
+            <button @click="deleteSelected" class="btn btn-danger btn-lg">
+              <i class="bi bi-trash me-2"></i>
+              حذف المحدد ({{ selectedMembers.length }})
             </button>
           </div>
         </div>
@@ -59,23 +65,38 @@
           <table class="table table-hover table-striped">
             <thead class="table-header text-white">
               <tr>
+                <th class="no-print" style="width: 50px">
+                  <input
+                    type="checkbox"
+                    v-model="allSelected"
+                    class="form-check-input"
+                    style="cursor: pointer"
+                  />
+                </th>
                 <th>الرقم الوطني</th>
                 <th>الاسم الكامل</th>
-                <th>الموقع</th>
                 <th>رقم الهاتف</th>
-                <th>حالة العضوية</th>
+                <th>رسوم الانتساب</th>
                 <th>رقم الإيصال</th>
                 <th class="no-print">الإجراءات</th>
               </tr>
             </thead>
             <tbody>
               <tr v-for="member in filteredMembers" :key="member.id">
+                <td class="no-print">
+                  <input
+                    type="checkbox"
+                    :checked="isSelected(member.id)"
+                    @change="toggleSelection(member.id)"
+                    class="form-check-input"
+                    style="cursor: pointer"
+                  />
+                </td>
                 <td>{{ member.id }}</td>
                 <td>
                   {{ member.firstName }} {{ member.secondName }}
                   {{ member.lastName }}
                 </td>
-                <td>{{ member.location || "غير محدد" }}</td>
                 <td>{{ member.phoneNumber || "غير محدد" }}</td>
                 <td>
                   <span v-if="member.isMembershipPaid" class="badge bg-success">
@@ -87,7 +108,7 @@
                     غير مسددة
                   </span>
                 </td>
-                <td>{{ member.receiptNO || "-" }}</td>
+                <td>{{ member.receiptNo || "-" }}</td>
                 <td class="no-print">
                   <button
                     @click="viewMember(member.id)"
@@ -137,7 +158,8 @@ alertify.set("notifier", "position", "bottom-right");
 alertify.set("notifier", "delay", 5);
 
 const router = useRouter();
-const API_BASE_URL = process.env.VUE_APP_API_BASE_URL + "/api";
+// Node.js Backend API for Members
+const API_BASE_URL = process.env.VUE_APP_NODEJS_API_BASE_URL + "/api";
 const MemberAPI = API_BASE_URL + "/Member";
 const AUTH_TOKEN = localStorage.getItem("token");
 
@@ -145,6 +167,30 @@ const loading = ref(false);
 const members = ref([]);
 const searchQuery = ref("");
 const printArea = ref(null);
+const selectedMembers = ref([]);
+
+// Computed property for select all state
+const allSelected = computed({
+  get: () =>
+    filteredMembers.value.length > 0 &&
+    selectedMembers.value.length === filteredMembers.value.length,
+  set: (value) => {
+    selectedMembers.value = value ? filteredMembers.value.map((m) => m.id) : [];
+  },
+});
+
+// Check if a member is selected
+const isSelected = (id) => selectedMembers.value.includes(id);
+
+// Toggle selection of a member
+const toggleSelection = (id) => {
+  const index = selectedMembers.value.indexOf(id);
+  if (index > -1) {
+    selectedMembers.value.splice(index, 1);
+  } else {
+    selectedMembers.value.push(id);
+  }
+};
 
 // Filtered members based on search
 const filteredMembers = computed(() => {
@@ -156,7 +202,6 @@ const filteredMembers = computed(() => {
       member.firstName?.toLowerCase().includes(query) ||
       member.secondName?.toLowerCase().includes(query) ||
       member.lastName?.toLowerCase().includes(query) ||
-      member.location?.toLowerCase().includes(query) ||
       member.phoneNumber?.toLowerCase().includes(query),
   );
 });
@@ -175,7 +220,7 @@ const fetchMembers = async () => {
         Authorization: `Bearer ${AUTH_TOKEN}`,
       },
     });
-    members.value = response.data;
+    members.value = response.data.data || response.data;
     console.log("Members fetched:", members.value);
   } catch (error) {
     console.error("Error fetching members:", error);
@@ -191,6 +236,56 @@ const viewMember = (id) => {
 
 const editMember = (id) => {
   router.push(`/edit-member/${id}`);
+};
+
+// Bulk delete selected members
+const deleteSelected = async () => {
+  if (selectedMembers.value.length === 0) {
+    alertify.warning("الرجاء اختيار عضو واحد على الأقل للحذف");
+    return;
+  }
+
+  if (!AUTH_TOKEN) {
+    alertify.error("الرجاء تسجيل الدخول أولاً");
+    return;
+  }
+
+  const count = selectedMembers.value.length;
+  alertify.confirm(
+    "تأكيد الحذف",
+    `هل أنت متأكد من حذف ${count} عضو؟`,
+    async function () {
+      let successCount = 0;
+      let failCount = 0;
+
+      for (const id of selectedMembers.value) {
+        try {
+          await axios.delete(`${MemberAPI}/${id}`, {
+            headers: {
+              Authorization: `Bearer ${AUTH_TOKEN}`,
+            },
+          });
+          successCount++;
+        } catch (error) {
+          console.error(`Error deleting member ${id}:`, error);
+          failCount++;
+        }
+      }
+
+      await fetchMembers();
+      selectedMembers.value = [];
+
+      if (successCount > 0) {
+        alertify.success(`تم حذف ${successCount} عضو بنجاح`);
+      }
+      if (failCount > 0) {
+        alertify.error(`فشل حذف ${failCount} عضو`);
+      }
+    },
+    function () {
+      alertify.message("تم إلغاء عملية الحذف");
+    },
+  );
 };
 
 const deleteMember = (id) => {

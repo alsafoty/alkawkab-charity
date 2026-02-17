@@ -58,17 +58,6 @@
                 />
               </div>
 
-              <!-- Location -->
-              <div class="col-md-6">
-                <label class="form-label">الموقع</label>
-                <input
-                  v-model="formData.location"
-                  type="text"
-                  class="form-control"
-                  placeholder="أدخل الموقع"
-                />
-              </div>
-
               <!-- Phone Number -->
               <div class="col-md-6">
                 <label class="form-label">رقم الهاتف</label>
@@ -82,7 +71,7 @@
 
               <!-- Membership Status -->
               <div class="col-md-6">
-                <label class="form-label fw-bold">حالة سداد العضوية</label>
+                <label class="form-label fw-bold">رسوم الانتساب</label>
                 <select v-model="formData.isMembershipPaid" class="form-select">
                   <option :value="true">مسددة</option>
                   <option :value="false">غير مسددة</option>
@@ -93,7 +82,7 @@
               <div class="col-md-6">
                 <label class="form-label">رقم الإيصال</label>
                 <input
-                  v-model.number="formData.receiptNO"
+                  v-model.number="formData.receiptNo"
                   type="number"
                   class="form-control"
                   placeholder="أدخل رقم الإيصال"
@@ -131,25 +120,26 @@ import { reactive } from "vue";
 import { useRouter } from "vue-router";
 import axios from "axios";
 import alertify from "alertifyjs";
+import { getApiBaseUrl, getAuthToken, handleApiError } from "@/utils/api";
 
 // Configure alertify
 alertify.set("notifier", "position", "bottom-right");
 alertify.set("notifier", "delay", 5);
 
 const router = useRouter();
-const API_BASE_URL = process.env.VUE_APP_API_BASE_URL + "/api";
+// Node.js Backend API for Members
+const API_BASE_URL = process.env.VUE_APP_NODEJS_API_BASE_URL + "/api";
 const MemberAPI = API_BASE_URL + "/Member";
-const AUTH_TOKEN = localStorage.getItem("token");
+const AUTH_TOKEN = getAuthToken();
 
 const formData = reactive({
   id: "",
   firstName: "",
   secondName: "",
   lastName: "",
-  location: "",
   phoneNumber: "",
   isMembershipPaid: false,
-  receiptNO: null,
+  receiptNo: null,
 });
 
 const submitForm = async () => {
@@ -159,7 +149,12 @@ const submitForm = async () => {
   }
 
   // Validation
-  if (!formData.id.trim() || !formData.firstName.trim()) {
+  if (
+    !formData.id.trim() ||
+    !formData.firstName.trim() ||
+    !formData.secondName.trim() ||
+    !formData.lastName.trim()
+  ) {
     alertify.warning("الرجاء ملء الحقول الإلزامية");
     return;
   }
@@ -170,10 +165,9 @@ const submitForm = async () => {
       firstName: formData.firstName.trim(),
       secondName: formData.secondName.trim(),
       lastName: formData.lastName.trim(),
-      location: formData.location.trim() || null,
       phoneNumber: formData.phoneNumber.trim() || null,
       isMembershipPaid: formData.isMembershipPaid,
-      receiptNO: formData.receiptNO || null,
+      receiptNo: formData.receiptNo || null,
     };
 
     await axios.post(MemberAPI, payload, {
@@ -188,7 +182,16 @@ const submitForm = async () => {
   } catch (error) {
     console.error("Error adding member:", error);
     if (error.response) {
-      alertify.error(`فشل في إضافة العضو: ${error.response.data.message}`);
+      // Server responded with error
+      const errorMsg =
+        error.response.data?.message ||
+        error.response.data?.title ||
+        error.response.statusText;
+      alertify.error(`فشل في إضافة العضو: ${errorMsg}`);
+      console.error("Response data:", error.response.data);
+    } else if (error.request) {
+      // Request made but no response
+      alertify.error("لم يتم الاتصال بالسيرفر. تحقق من الاتصال بالإنترنت");
     } else {
       alertify.error("حدث خطأ أثناء إضافة العضو");
     }

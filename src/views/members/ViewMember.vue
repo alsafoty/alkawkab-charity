@@ -36,10 +36,6 @@
                 </span>
               </div>
               <div class="info-item">
-                <strong>الموقع:</strong>
-                <span>{{ memberData.location || "غير محدد" }}</span>
-              </div>
-              <div class="info-item">
                 <strong>رقم الهاتف:</strong>
                 <span>{{ memberData.phoneNumber || "غير محدد" }}</span>
               </div>
@@ -50,7 +46,7 @@
             <h4 class="section-title mb-3">معلومات العضوية</h4>
             <div class="info-grid">
               <div class="info-item">
-                <strong>حالة السداد:</strong>
+                <strong>رسوم الانتساب:</strong>
                 <span
                   v-if="memberData.isMembershipPaid"
                   class="badge bg-success"
@@ -65,7 +61,7 @@
               </div>
               <div class="info-item">
                 <strong>رقم الإيصال:</strong>
-                <span>{{ memberData.receiptNO || "غير متوفر" }}</span>
+                <span>{{ memberData.receiptNo || "غير متوفر" }}</span>
               </div>
             </div>
           </div>
@@ -105,7 +101,8 @@ import alertify from "alertifyjs";
 alertify.set("notifier", "position", "bottom-right");
 alertify.set("notifier", "delay", 5);
 
-const API_BASE_URL = process.env.VUE_APP_API_BASE_URL + "/api";
+// Node.js Backend API for Members
+const API_BASE_URL = process.env.VUE_APP_NODEJS_API_BASE_URL + "/api";
 const route = useRoute();
 const router = useRouter();
 const AUTH_TOKEN = localStorage.getItem("token");
@@ -125,7 +122,7 @@ const fetchMemberDetails = async () => {
         },
       },
     );
-    memberData.value = response.data;
+    memberData.value = response.data.data || response.data;
   } catch (error) {
     console.error("Error fetching member details:", error);
     alertify.error("حدث خطأ أثناء جلب بيانات العضو");
