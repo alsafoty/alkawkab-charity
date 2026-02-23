@@ -3,13 +3,13 @@
     <div class="row justify-content-center">
       <div class="col-12 col-lg-10">
         <div class="card shadow-lg rounded-4 border-0">
-          <div class="card-header bg-warning text-dark text-center py-3">
+          <div class="card-header bg-success text-white text-center py-3">
             <h2 class="mb-0 fw-bold">تعديل بيانات عضو الجمعية العمومية</h2>
           </div>
 
           <div class="card-body p-4">
             <div v-if="loading" class="text-center py-5">
-              <div class="spinner-border text-warning" role="status"></div>
+              <div class="spinner-border text-success" role="status"></div>
               <p class="mt-2 text-muted">جاري تحميل البيانات...</p>
             </div>
 
@@ -88,7 +88,7 @@
               <div class="col-12 text-center mt-4">
                 <button
                   type="submit"
-                  class="btn btn-warning btn-lg px-5 rounded-pill text-dark fw-bold"
+                  class="btn btn-success btn-lg px-5 rounded-pill fw-bold"
                 >
                   <i class="bi bi-save me-1"></i>
                   حفظ التعديلات

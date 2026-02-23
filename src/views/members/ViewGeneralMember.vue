@@ -2,7 +2,7 @@
   <div class="container my-4 p-5 rounded-4" dir="rtl">
     <div class="card border-0 shadow">
       <div
-        class="card-header bg-warning text-dark py-3 d-flex justify-content-between align-items-center"
+        class="card-header bg-success text-white py-3 d-flex justify-content-between align-items-center"
       >
         <h3 class="mb-0 fw-bold">تفاصيل عضو الجمعية العمومية</h3>
         <button class="btn btn-light no-print" @click="printContent">
@@ -13,7 +13,7 @@
       <div class="card-body p-4" ref="printArea">
         <!-- Loading State -->
         <div v-if="loading" class="text-center py-5">
-          <div class="spinner-border text-warning" role="status">
+          <div class="spinner-border text-success" role="status">
             <span class="visually-hidden">جاري التحميل...</span>
           </div>
           <p class="mt-2 text-muted">جاري تحميل بيانات العضو...</p>
@@ -70,7 +70,7 @@
           <div class="text-center mt-4">
             <button
               @click="editMember"
-              class="btn btn-warning px-4 me-2 no-print text-dark fw-bold"
+              class="btn btn-success px-4 me-2 no-print fw-bold"
             >
               <i class="bi bi-pencil me-1"></i>
               تعديل البيانات
@@ -207,11 +207,11 @@ const printContent = () => {
         .print-header { 
           text-align: center; 
           margin-bottom: 30px; 
-          border-bottom: 2px solid #ffc107; 
+          border-bottom: 2px solid #198754; 
           padding-bottom: 15px; 
         }
         .print-header h2 { 
-          color: #ffc107; 
+          color: #198754; 
           margin-bottom: 10px; 
         }
         .print-section {
@@ -219,9 +219,9 @@ const printContent = () => {
           page-break-inside: avoid;
         }
         .section-title {
-          color: #ffc107;
+          color: #198754;
           font-size: 1.1rem;
-          border-bottom: 1px solid #ffc107;
+          border-bottom: 1px solid #198754;
           padding-bottom: 5px;
           margin-bottom: 10px;
         }
@@ -237,7 +237,7 @@ const printContent = () => {
           text-align: right;
         }
         .print-info-table strong { 
-          color: #ffc107;
+          color: #198754;
         }
         @media print { 
           body { margin: 0; } 
@@ -264,8 +264,8 @@ onMounted(() => {
 </script>
 
 <style scoped>
-.bg-warning {
-  background-color: #ffc107 !important;
+.bg-success {
+  background-color: #198754 !important;
 }
 
 .info-section {
@@ -278,7 +278,7 @@ onMounted(() => {
 .section-title {
   color: #2c3e50;
   font-size: 1.25rem;
-  border-bottom: 2px solid #ffc107;
+  border-bottom: 2px solid #198754;
   padding-bottom: 0.5rem;
 }
 
@@ -296,7 +296,7 @@ onMounted(() => {
 }
 
 .info-item strong {
-  color: #ffc107;
+  color: #198754;
   margin-left: 0.5rem;
 }
 
@@ -335,8 +335,8 @@ onMounted(() => {
   }
 
   .card-header {
-    background-color: #ffc107 !important;
-    color: #000 !important;
+    background-color: #198754 !important;
+    color: #fff !important;
     padding: 1rem !important;
     text-align: center !important;
     border: none !important;
@@ -361,10 +361,10 @@ onMounted(() => {
   }
 
   .section-title {
-    color: #ffc107 !important;
+    color: #198754 !important;
     font-size: 1.1rem !important;
     font-weight: bold !important;
-    border-bottom: 2px solid #ffc107 !important;
+    border-bottom: 2px solid #198754 !important;
     padding-bottom: 0.5rem !important;
     margin-bottom: 1rem !important;
     -webkit-print-color-adjust: exact !important;
@@ -386,7 +386,7 @@ onMounted(() => {
   }
 
   .info-item strong {
-    color: #ffc107 !important;
+    color: #198754 !important;
     font-size: 0.9rem !important;
     font-weight: bold !important;
     -webkit-print-color-adjust: exact !important;

@@ -18,25 +18,16 @@
       <div class="card-body p-4">
         <!-- Quick Actions -->
         <div class="row mb-4 g-3">
-          <div class="col-md-4">
-            <button
-              @click="router.push('/basic-members')"
-              class="btn btn-primary btn-lg w-100"
-            >
-              <i class="bi bi-person-badge me-2"></i>
-              الأعضاء الأساسيين
-            </button>
-          </div>
-          <div class="col-md-4">
+          <div class="col-md-6">
             <button
               @click="router.push('/general-assembly')"
-              class="btn btn-warning btn-lg w-100"
+              class="btn btn-success btn-lg w-100"
             >
               <i class="bi bi-people-fill me-2"></i>
               أعضاء الجمعية العمومية
             </button>
           </div>
-          <div class="col-md-4">
+          <div class="col-md-6">
             <button
               @click="router.push('/receipts')"
               class="btn btn-info btn-lg w-100"
@@ -49,19 +40,9 @@
 
         <!-- Info Cards -->
         <div class="row">
-          <div class="col-md-4 mb-3">
+          <div class="col-md-6 mb-3">
             <div class="info-card p-4 rounded-3">
-              <i class="bi bi-person-badge display-4 text-primary mb-3"></i>
-              <h4>الأعضاء الأساسيين</h4>
-              <p class="text-muted">
-                إدارة بيانات الأعضاء الأساسيين في الجمعية، متابعة سداد رسوم
-                العضوية، إصدار الإيصالات
-              </p>
-            </div>
-          </div>
-          <div class="col-md-4 mb-3">
-            <div class="info-card p-4 rounded-3">
-              <i class="bi bi-people-fill display-4 text-warning mb-3"></i>
+              <i class="bi bi-people-fill display-4 text-success mb-3"></i>
               <h4>أعضاء الجمعية العمومية</h4>
               <p class="text-muted">
                 إدارة بيانات أعضاء الجمعية العمومية، تحديد الأعضاء الإداريين
@@ -69,7 +50,7 @@
               </p>
             </div>
           </div>
-          <div class="col-md-4 mb-3">
+          <div class="col-md-6 mb-3">
             <div class="info-card p-4 rounded-3">
               <i class="bi bi-receipt display-4 text-info mb-3"></i>
               <h4>الإيصالات</h4>

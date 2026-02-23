@@ -4,7 +4,7 @@
       <div class="col-12 col-lg-10">
         <div class="card shadow-lg rounded-4 border-0">
           <!-- Header -->
-          <div class="card-header bg-warning text-dark text-center py-3">
+          <div class="card-header bg-success text-white text-center py-3">
             <h2 class="mb-0 fw-bold">إضافة عضو جمعية عمومية</h2>
           </div>
 
@@ -97,7 +97,7 @@
               <div class="col-12 text-center mt-4">
                 <button
                   type="submit"
-                  class="btn btn-warning btn-lg px-5 rounded-pill shadow-sm text-dark fw-bold"
+                  class="btn btn-success btn-lg px-5 rounded-pill shadow-sm fw-bold"
                 >
                   <i class="bi bi-save me-1"></i>
                   حفظ البيانات

@@ -3,7 +3,7 @@
     <div class="card border-0 shadow-lg rounded-4">
       <!-- Header -->
       <div
-        class="card-header bg-warning text-dark py-3 d-flex justify-content-between align-items-center"
+        class="card-header bg-success text-white py-3 d-flex justify-content-between align-items-center"
       >
         <h2 class="mb-0 fw-bold">
           <i class="bi bi-people-fill me-2"></i>
@@ -54,7 +54,7 @@
 
         <!-- Loading State -->
         <div v-if="loading" class="text-center py-5">
-          <div class="spinner-border text-warning" role="status">
+          <div class="spinner-border text-success" role="status">
             <span class="visually-hidden">جاري التحميل...</span>
           </div>
           <p class="mt-2 text-muted">جاري تحميل بيانات الأعضاء...</p>
@@ -124,7 +124,7 @@
                   </button>
                   <button
                     @click="editMember(member.id)"
-                    class="btn btn-sm btn-warning me-1"
+                    class="btn btn-sm btn-success me-1"
                     title="تعديل"
                   >
                     <i class="bi bi-pencil"></i>
@@ -382,11 +382,11 @@ const printContent = () => {
         .print-header { 
           text-align: center; 
           margin-bottom: 30px; 
-          border-bottom: 2px solid #ffc107; 
+          border-bottom: 2px solid #198754; 
           padding-bottom: 15px; 
         }
         .print-header h2 { 
-          color: #ffc107; 
+          color: #198754; 
           margin-bottom: 10px; 
         }
         .print-section {
@@ -404,8 +404,8 @@ const printContent = () => {
           text-align: center; 
         }
         .print-table th { 
-          background-color: #ffc107; 
-          color: #000; 
+          background-color: #198754; 
+          color: #fff; 
           font-weight: bold; 
         }
         .print-table tbody tr:nth-child(even) {
@@ -442,8 +442,8 @@ onMounted(() => {
 
 <style scoped>
 .table-header {
-  background-color: #ffc107 !important;
-  color: #000 !important;
+  background-color: #198754 !important;
+  color: #fff !important;
 }
 
 .table th,
@@ -488,8 +488,8 @@ onMounted(() => {
   }
 
   .card-header {
-    background-color: #ffc107 !important;
-    color: #000 !important;
+    background-color: #198754 !important;
+    color: #fff !important;
     padding: 1rem !important;
     text-align: center !important;
     border: none !important;
@@ -528,8 +528,8 @@ onMounted(() => {
   }
 
   .table th {
-    background-color: #ffc107 !important;
-    color: #000 !important;
+    background-color: #198754 !important;
+    color: #fff !important;
     border: 1px solid #dee2e6 !important;
     padding: 0.5rem 0.3rem !important;
     font-size: 10px !important;
