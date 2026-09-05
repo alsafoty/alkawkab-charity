@@ -69,6 +69,18 @@
                 />
               </div>
 
+              <!-- Location -->
+              <div class="col-md-6">
+                <label class="form-label fw-bold">مكان الإقامة *</label>
+                <input
+                  v-model="formData.location"
+                  type="text"
+                  class="form-control"
+                  placeholder="أدخل مكان الإقامة"
+                  required
+                />
+              </div>
+
               <!-- Membership Status -->
               <div class="col-md-6">
                 <label class="form-label fw-bold">رسوم الانتساب</label>
@@ -137,6 +149,7 @@ const formData = reactive({
   firstName: "",
   secondName: "",
   lastName: "",
+  location: "",
   phoneNumber: "",
   isMembershipPaid: false,
   receiptNo: null,
@@ -153,7 +166,8 @@ const submitForm = async () => {
     !formData.id.trim() ||
     !formData.firstName.trim() ||
     !formData.secondName.trim() ||
-    !formData.lastName.trim()
+    !formData.lastName.trim() ||
+    !formData.location.trim()
   ) {
     alertify.warning("الرجاء ملء الحقول الإلزامية");
     return;
@@ -165,6 +179,7 @@ const submitForm = async () => {
       firstName: formData.firstName.trim(),
       secondName: formData.secondName.trim(),
       lastName: formData.lastName.trim(),
+      location: formData.location.trim(),
       phoneNumber: formData.phoneNumber.trim() || null,
       isMembershipPaid: formData.isMembershipPaid,
       receiptNo: formData.receiptNo || null,

@@ -133,10 +133,7 @@ alertify.set("notifier", "position", "bottom-right");
 alertify.set("notifier", "delay", 5);
 
 const router = useRouter();
-// Node.js Backend API for Receipts
-const API_BASE_URL = process.env.VUE_APP_NODEJS_API_BASE_URL + "/api";
-const ReceiptAPI = API_BASE_URL + "/Receipt";
-const AUTH_TOKEN = getAuthToken();
+const ReceiptAPI = `${getApiBaseUrl()}/Receipt`;
 
 const formData = reactive({
   receiptNo: null,
@@ -148,7 +145,8 @@ const formData = reactive({
 });
 
 const submitForm = async () => {
-  if (!AUTH_TOKEN) {
+  const token = getAuthToken();
+  if (!token) {
     alertify.error("الرجاء تسجيل الدخول أولاً");
     return;
   }
@@ -177,7 +175,7 @@ const submitForm = async () => {
 
     await axios.post(ReceiptAPI, payload, {
       headers: {
-        Authorization: `Bearer ${AUTH_TOKEN}`,
+        Authorization: `Bearer ${token}`,
         "Content-Type": "application/json",
       },
     });
@@ -190,7 +188,8 @@ const submitForm = async () => {
       const errorMsg =
         error.response.data?.message ||
         error.response.data?.title ||
-        error.response.statusText;
+        error.response.statusText ||
+        "حدث خطأ في السيرفر";
       alertify.error(`فشل في إضافة الإيصال: ${errorMsg}`);
       console.error("Response data:", error.response.data);
     } else if (error.request) {

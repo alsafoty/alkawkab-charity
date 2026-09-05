@@ -64,6 +64,16 @@
               </div>
 
               <div class="col-md-6">
+                <label class="form-label fw-bold">مكان الإقامة</label>
+                <input
+                  v-model="formData.location"
+                  type="text"
+                  class="form-control"
+                  placeholder="أدخل مكان الإقامة"
+                />
+              </div>
+
+              <div class="col-md-6">
                 <label class="form-label fw-bold">عضو إداري</label>
                 <select
                   v-model="formData.isAdministrativeMember"
@@ -133,6 +143,7 @@ const formData = reactive({
   firstName: "",
   secondName: "",
   lastName: "",
+  location: "",
   phoneNumber: "",
   isAdministrativeMember: false,
   administrativePosition: "",
@@ -172,6 +183,7 @@ const submitForm = async () => {
           firstName: formData.firstName?.trim() || formData.firstName,
           secondName: formData.secondName?.trim() || formData.secondName,
           lastName: formData.lastName?.trim() || formData.lastName,
+          location: formData.location?.trim() || formData.location || "",
           phoneNumber: formData.phoneNumber?.trim() || null,
           isAdministrativeMember: formData.isAdministrativeMember,
           administrativePosition: formData.isAdministrativeMember

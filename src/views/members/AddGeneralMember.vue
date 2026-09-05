@@ -69,6 +69,18 @@
                 />
               </div>
 
+              <!-- Location -->
+              <div class="col-md-6">
+                <label class="form-label fw-bold">مكان الإقامة *</label>
+                <input
+                  v-model="formData.location"
+                  type="text"
+                  class="form-control"
+                  placeholder="أدخل مكان الإقامة"
+                  required
+                />
+              </div>
+
               <!-- Is Administrative Member -->
               <div class="col-md-6">
                 <label class="form-label fw-bold">عضو إداري</label>
@@ -140,6 +152,7 @@ const formData = reactive({
   firstName: "",
   secondName: "",
   lastName: "",
+  location: "",
   phoneNumber: "",
   isAdministrativeMember: false,
   administrativePosition: "",
@@ -152,7 +165,13 @@ const submitForm = async () => {
   }
 
   // Validation
-  if (!formData.id.trim() || !formData.firstName.trim()) {
+  if (
+    !formData.id.trim() ||
+    !formData.firstName.trim() ||
+    !formData.secondName.trim() ||
+    !formData.lastName.trim() ||
+    !formData.location.trim()
+  ) {
     alertify.warning("الرجاء ملء الحقول الإلزامية");
     return;
   }
@@ -163,6 +182,7 @@ const submitForm = async () => {
       firstName: formData.firstName.trim(),
       secondName: formData.secondName.trim(),
       lastName: formData.lastName.trim(),
+      location: formData.location.trim(),
       phoneNumber: formData.phoneNumber.trim() || null,
       isAdministrativeMember: formData.isAdministrativeMember,
       administrativePosition: formData.isAdministrativeMember

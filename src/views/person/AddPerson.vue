@@ -766,6 +766,16 @@ const submitForm = async () => {
     return;
   }
 
+  if (!formData.secondName.trim()) {
+    alertify.warning("يرجى إدخال اسم الأب");
+    return;
+  }
+
+  if (!formData.thirdName.trim()) {
+    alertify.warning("يرجى إدخال الاسم الثالث / الجد");
+    return;
+  }
+
   if (!formData.lastName.trim()) {
     alertify.warning("يرجى إدخال اسم العائلة");
     return;
@@ -776,10 +786,31 @@ const submitForm = async () => {
     return;
   }
 
+  if (!formData.educationalLevel.trim()) {
+    alertify.warning("يرجى إدخال المستوى التعليمي");
+    return;
+  }
+
   if (formData.isOrphan) {
     if (formData.isNewGuardian) {
+      if (!formData.guardian.guardianId?.trim()) {
+        alertify.warning("يرجى إدخال الرقم الوطني للوصي");
+        return;
+      }
       if (!formData.guardian.firstName.trim()) {
-        alertify.warning("يرجى إدخال بيانات الوصي للشخص اليتيم");
+        alertify.warning("يرجى إدخال الاسم الأول للوصي");
+        return;
+      }
+      if (!formData.guardian.secondName?.trim()) {
+        alertify.warning("يرجى إدخال اسم الأب للوصي");
+        return;
+      }
+      if (!formData.guardian.thirdName?.trim()) {
+        alertify.warning("يرجى إدخال الاسم الثالث للوصي");
+        return;
+      }
+      if (!formData.guardian.lastName?.trim()) {
+        alertify.warning("يرجى إدخال اسم عائلة الوصي");
         return;
       }
       if (!formData.guardian.relationshipType) {
@@ -809,6 +840,15 @@ const submitForm = async () => {
     return;
   }
 
+  if (
+    formData.isPartOfFamily &&
+    !formData.isNewFamily &&
+    !formData.selectedFamilyId
+  ) {
+    alertify.warning("يرجى اختيار العائلة الموجودة");
+    return;
+  }
+
   alertify.confirm(
     "تأكيد الإضافة",
     "هل أنت متأكد من إضافة هذا الشخص؟",
@@ -823,14 +863,14 @@ const submitForm = async () => {
             try {
               // إنشاء payload للوصي بناءً على الـ schema المُقدم
               const guardianPayload = {
-                guardianId: formData.guardian.guardianId,
-                firstName: formData.guardian.firstName,
-                secondName: formData.guardian.secondName,
-                thirdName: formData.guardian.thirdName,
-                lastName: formData.guardian.lastName,
-                relationship: formData.guardian.relationship,
-                guardianJob: formData.guardian.guardianJob,
-                guardianPhoneNumber: formData.guardian.guardianPhoneNumber,
+                guardianId: formData.guardian.guardianId.trim(),
+                firstName: formData.guardian.firstName.trim(),
+                secondName: formData.guardian.secondName?.trim() || "",
+                thirdName: formData.guardian.thirdName?.trim() || "",
+                lastName: formData.guardian.lastName.trim(),
+                relationship: formData.guardian.relationship || "وصي",
+                guardianJob: formData.guardian.guardianJob?.trim() || "",
+                guardianPhoneNumber: formData.guardian.guardianPhoneNumber?.trim() || "",
               };
 
               console.log("Adding guardian first:", guardianPayload);
@@ -849,8 +889,7 @@ const submitForm = async () => {
 
               // Step 3: الحصول على guardianId من الاستجابة
               guardianId =
-                guardianResponse.data.guardianId ||
-                guardianResponse.data.id ||
+                guardianResponse.data?.guardianId ||
                 guardianPayload.guardianId;
 
               console.log("Guardian added successfully with ID:", guardianId);
@@ -858,16 +897,17 @@ const submitForm = async () => {
             } catch (guardianError) {
               console.error("Error adding guardian:", guardianError);
 
-              if (guardianError.response) {
-                const errorMessage =
-                  guardianError.response.data.message ||
-                  guardianError.response.statusText;
-                alertify.error(
-                  `حدث خطأ أثناء إضافة بيانات الوصي: ${errorMessage}`,
-                );
+              let errorMessage = "";
+              if (typeof guardianError.response?.data === "string" && guardianError.response.data.trim()) {
+                errorMessage = guardianError.response.data;
+              } else if (guardianError.response?.data?.message) {
+                errorMessage = guardianError.response.data.message;
+              } else if (guardianError.response?.status === 500) {
+                errorMessage = "الرقم الوطني للوصي مسجل مسبقاً أو غير صالح";
               } else {
-                alertify.error("حدث خطأ أثناء إضافة بيانات الوصي");
+                errorMessage = "يرجى التحقق من بيانات الوصي";
               }
+              alertify.error(`حدث خطأ أثناء إضافة بيانات الوصي: ${errorMessage}`);
               return; // إيقاف العملية إذا فشل إضافة الوصي
             }
           } else {
@@ -884,8 +924,8 @@ const submitForm = async () => {
           if (formData.isNewFamily) {
             // Create new family first
             const newFamilyData = {
-              name: formData.newFamilyName,
-              numberOfFamilyMembers: formData.numberOfFamilyMembers,
+              name: formData.newFamilyName.trim(),
+              numberOfFamilyMembers: formData.numberOfFamilyMembers || 1,
               isHouseOwned: formData.familyHouseOwned,
             };
 
@@ -900,23 +940,21 @@ const submitForm = async () => {
               },
             );
 
-            // جلب جميع العائلات للحصول على ID آخر عائلة
-            const allFamiliesResponse = await axios.get(FamilyAPI.value, {
-              headers: {
-                Authorization: `Bearer ${AUTH_TOKEN}`,
-              },
-            });
-
-            const allFamilies = allFamiliesResponse.data;
-
-            // الحصول على ID آخر عائلة (أحدث عائلة مُضافة)
-            if (allFamilies && allFamilies.length > 0) {
-              const sortedFamilies = allFamilies.sort(
-                (a, b) => b.familyId - a.familyId,
-              );
-              familyId = sortedFamilies[0].familyId;
+            // الحصول على familyId المرجع من السيرفر مباشرة
+            if (familyResponse.data?.familyId) {
+              familyId = familyResponse.data.familyId;
             } else {
-              familyId = familyResponse.data.familyId || familyResponse.data.id;
+              // احتياطي في حال لم يرجع السيرفر ID مباشرة
+              const allFamiliesResponse = await axios.get(FamilyAPI.value, {
+                headers: { Authorization: `Bearer ${AUTH_TOKEN}` },
+              });
+              const allFamilies = allFamiliesResponse.data;
+              if (allFamilies && allFamilies.length > 0) {
+                const sortedFamilies = allFamilies.sort(
+                  (a, b) => b.familyId - a.familyId,
+                );
+                familyId = sortedFamilies[0].familyId;
+              }
             }
 
             console.log("New family created with ID:", familyId);
@@ -925,11 +963,11 @@ const submitForm = async () => {
             );
           } else {
             // Use existing family
-            familyId = formData.selectedFamilyId;
+            familyId = Number(formData.selectedFamilyId) || 0;
 
             // Update the existing family's member count and house ownership
             const selectedFamily = selectedFamilyInfo.value;
-            if (selectedFamily) {
+            if (selectedFamily && familyId > 0) {
               const updatedFamilyData = {
                 name: selectedFamily.name,
                 numberOfFamilyMembers: selectedFamily.numberOfFamilyMembers + 1,
@@ -956,7 +994,7 @@ const submitForm = async () => {
           }
         }
 
-        // إضافة الأم كأرملة بعد إنشاء/اختيار العائلة
+        // إضافة الأم كأرملة بعد إنشاء/اختيار العائلة إذا كان الوصي أماً جديدة
         if (
           formData.isOrphan &&
           formData.isNewGuardian &&
@@ -964,26 +1002,26 @@ const submitForm = async () => {
         ) {
           try {
             const motherPayload = {
-              id: formData.guardian.guardianId,
+              id: formData.guardian.guardianId.trim(),
               gender: "أنثى",
-              firstName: formData.guardian.firstName,
-              secondName: formData.guardian.secondName,
-              thirdName: formData.guardian.thirdName,
-              lastName: formData.guardian.lastName,
-              phoneNumber: formData.guardian.guardianPhoneNumber || "",
+              firstName: formData.guardian.firstName.trim(),
+              secondName: formData.guardian.secondName?.trim() || "غير محدد",
+              thirdName: formData.guardian.thirdName?.trim() || "غير محدد",
+              lastName: formData.guardian.lastName.trim(),
+              phoneNumber: formData.guardian.guardianPhoneNumber?.trim() || null,
               educationalLevel: "غير محدد",
               isWidow: true,
               isOrphan: false,
-              job: formData.guardian.guardianJob || "",
+              job: formData.guardian.guardianJob?.trim() || null,
               isPartOfFamily: formData.isPartOfFamily,
-              numberOfFamilyMembers: formData.numberOfFamilyMembers,
-              isHouseOwned: formData.isHouseOwned,
+              numberOfFamilyMembers: formData.numberOfFamilyMembers || 1,
+              isHouseOwned: formData.isHouseOwned || false,
               assistances: [],
             };
 
             // إضافة familyId إذا كان الشخص جزءاً من عائلة
-            if (formData.isPartOfFamily && familyId) {
-              motherPayload.familyId = familyId;
+            if (formData.isPartOfFamily && familyId && Number(familyId) > 0) {
+              motherPayload.familyId = Number(familyId);
             }
 
             console.log("Adding mother as widow:", motherPayload);
@@ -999,19 +1037,15 @@ const submitForm = async () => {
             alertify.success("تم إضافة الأم كأرملة بنجاح");
           } catch (motherError) {
             console.error("Error adding mother as widow:", motherError);
-            // لا نوقف العملية، فقط نسجل الخطأ ونخبر المستخدم
-            if (motherError.response) {
-              const errorMessage =
-                motherError.response.data.message ||
-                motherError.response.statusText;
-              alertify.warning(
-                `تم إضافة الوصي ولكن حدث خطأ أثناء إضافة الأم كأرملة: ${errorMessage}`,
-              );
+            let motherMsg = "";
+            if (typeof motherError.response?.data === "string" && motherError.response.data.trim()) {
+              motherMsg = motherError.response.data;
+            } else if (motherError.response?.data?.message) {
+              motherMsg = motherError.response.data.message;
             } else {
-              alertify.warning(
-                "تم إضافة الوصي ولكن حدث خطأ أثناء إضافة الأم كأرملة",
-              );
+              motherMsg = "قد تكون الأم مسجلة مسبقاً";
             }
+            alertify.warning(`تم إضافة الوصي ولكن: ${motherMsg}`);
           }
         }
 
@@ -1019,29 +1053,29 @@ const submitForm = async () => {
         const payload = {
           id: formData.id.trim(),
           gender: formData.gender,
-          firstName: formData.firstName,
-          secondName: formData.secondName,
-          thirdName: formData.thirdName,
-          lastName: formData.lastName,
-          phoneNumber: formData.phoneNumber,
-          educationalLevel: formData.educationalLevel,
+          firstName: formData.firstName.trim(),
+          secondName: formData.secondName.trim(),
+          thirdName: formData.thirdName.trim(),
+          lastName: formData.lastName.trim(),
+          phoneNumber: formData.phoneNumber?.trim() || null,
+          educationalLevel: formData.educationalLevel.trim(),
           isWidow: formData.isWidow,
           isOrphan: formData.isOrphan,
-          job: formData.job,
+          job: formData.job?.trim() || null,
           isPartOfFamily: formData.isPartOfFamily,
-          numberOfFamilyMembers: formData.numberOfFamilyMembers,
-          isHouseOwned: formData.isHouseOwned,
-          assistances: formData.assistances,
+          numberOfFamilyMembers: formData.numberOfFamilyMembers || 1,
+          isHouseOwned: formData.isHouseOwned || false,
+          assistances: formData.assistances || [],
         };
 
-        // Add family ID if part of family
-        if (formData.isPartOfFamily) {
-          payload.familyId = familyId;
+        // Add family ID only if positive
+        if (formData.isPartOfFamily && familyId && Number(familyId) > 0) {
+          payload.familyId = Number(familyId);
         }
 
-        // Step 3: Add guardian ID if orphan
-        if (formData.isOrphan && guardianId) {
-          payload.guardianId = guardianId;
+        // Add guardian ID if orphan
+        if (formData.isOrphan && guardianId && guardianId.trim()) {
+          payload.guardianId = guardianId.trim();
         }
 
         console.log("Adding person with payload:", payload);
@@ -1055,34 +1089,40 @@ const submitForm = async () => {
         });
 
         console.log("Person added successfully:", personResponse.data);
-        alertify.success("تم إضافة الشخص بنجاح");
+        alertify.success("تم إضافة المستفيد بنجاح");
 
         // Navigate after a short delay to show success message
         setTimeout(() => {
           router.back();
-        }, 1500);
+        }, 1200);
       } catch (err) {
         console.error("Error:", err);
         console.log("Form data:", formData);
 
         if (err.response) {
-          if (
-            err.response.status === 409 ||
-            err.response.data.message?.includes("duplicate") ||
-            err.response.data.message?.includes("exists")
-          ) {
-            alertify.error("الرقم الوطني موجود مسبقاً. يرجى إدخال رقم مختلف.");
+          let errorMessage = "";
+          if (typeof err.response.data === "string" && err.response.data.trim()) {
+            errorMessage = err.response.data;
+          } else if (err.response.data?.message) {
+            errorMessage = err.response.data.message;
+          } else if (err.response.data?.title) {
+            errorMessage = err.response.data.title;
+          } else if (err.response.status === 409) {
+            errorMessage = "الرقم الوطني موجود مسبقاً. يرجى إدخال رقم مختلف.";
+          } else if (err.response.status === 500) {
+            errorMessage = "حدث خطأ في الخادم أثناء حفظ البيانات. يرجى التأكد من عدم تكرار الرقم الوطني وصحة البيانات.";
+          } else if (err.response.status === 400) {
+            errorMessage = "البيانات المدخلة غير صحيحة أو غير مكتملة.";
           } else {
-            const errorMessage =
-              err.response.data.message || err.response.statusText;
-            alertify.error(`فشل في إضافة الشخص: ${errorMessage}`);
+            errorMessage = "حدث خطأ أثناء إضافة الشخص.";
           }
+          alertify.error(`فشل في إضافة المستفيد: ${errorMessage}`);
         } else if (err.request) {
           alertify.error(
             "لا يمكن الاتصال بالخادم. يرجى التحقق من اتصال الإنترنت",
           );
         } else {
-          alertify.error("فشل في إرسال البيانات، تحقق من الاتصال أو التوكن.");
+          alertify.error("فشل في إرسال البيانات، تحقق من الاتصال أو تسجيل الدخول.");
         }
       }
     },

@@ -952,8 +952,10 @@ const submitForm = async () => {
         console.error("Error updating person:", error);
         if (error.response) {
           const errorMessage =
-            error.response.data.message || error.response.statusText;
-          alertify.error(`حدث خطأ أثناء تحديث بيانات الشخص: ${errorMessage}`);
+            typeof error.response.data === "string" && error.response.data.trim()
+              ? error.response.data
+              : (error.response.data?.message || "حدث خطأ أثناء حفظ التعديلات");
+          alertify.error(`فشل في تحديث بيانات المستفيد: ${errorMessage}`);
         } else if (error.request) {
           alertify.error(
             "لا يمكن الاتصال بالخادم. يرجى التحقق من اتصال الإنترنت",

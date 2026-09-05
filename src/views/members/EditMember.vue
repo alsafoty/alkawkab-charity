@@ -64,6 +64,16 @@
               </div>
 
               <div class="col-md-6">
+                <label class="form-label fw-bold">مكان الإقامة</label>
+                <input
+                  v-model="formData.location"
+                  type="text"
+                  class="form-control"
+                  placeholder="أدخل مكان الإقامة"
+                />
+              </div>
+
+              <div class="col-md-6">
                 <label class="form-label fw-bold">رسوم الانتساب</label>
                 <select v-model="formData.isMembershipPaid" class="form-select">
                   <option :value="true">مسددة</option>
@@ -128,6 +138,7 @@ const formData = reactive({
   firstName: "",
   secondName: "",
   lastName: "",
+  location: "",
   phoneNumber: "",
   isMembershipPaid: false,
   receiptNo: null,
@@ -167,6 +178,7 @@ const submitForm = async () => {
           firstName: formData.firstName?.trim() || formData.firstName,
           secondName: formData.secondName?.trim() || formData.secondName,
           lastName: formData.lastName?.trim() || formData.lastName,
+          location: formData.location?.trim() || formData.location || "",
           phoneNumber: formData.phoneNumber?.trim() || null,
           isMembershipPaid: formData.isMembershipPaid,
           receiptNo: formData.receiptNo || null,

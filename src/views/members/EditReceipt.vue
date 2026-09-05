@@ -131,10 +131,7 @@ alertify.set("notifier", "delay", 5);
 
 const route = useRoute();
 const router = useRouter();
-// Node.js Backend API for Receipts
-const API_BASE_URL = process.env.VUE_APP_NODEJS_API_BASE_URL + "/api";
-const ReceiptAPI = API_BASE_URL + "/Receipt";
-const AUTH_TOKEN = getAuthToken();
+const ReceiptAPI = `${getApiBaseUrl()}/Receipt`;
 
 const loading = ref(false);
 
@@ -148,22 +145,29 @@ const formData = reactive({
 });
 
 const fetchReceiptDetails = async () => {
+  const token = getAuthToken();
+  if (!token) {
+    alertify.error("الرجاء تسجيل الدخول أولاً");
+    return;
+  }
+
   loading.value = true;
   try {
     const response = await axios.get(`${ReceiptAPI}/${route.params.id}`, {
       headers: {
-        Authorization: `Bearer ${AUTH_TOKEN}`,
+        Authorization: `Bearer ${token}`,
       },
     });
 
-    // Format date if it exists
     const data = response.data.data || response.data;
-    if (data.paidDate) {
-      const date = new Date(data.paidDate);
-      data.paidDate = date.toISOString().split("T")[0];
+    if (data) {
+      data.receiptNo = data.receiptNo ?? data.receiptNO;
+      if (data.paidDate) {
+        const date = new Date(data.paidDate);
+        data.paidDate = date.toISOString().split("T")[0];
+      }
+      Object.assign(formData, data);
     }
-
-    Object.assign(formData, data);
   } catch (error) {
     console.error("Error fetching receipt details:", error);
     alertify.error("حدث خطأ أثناء جلب بيانات الإيصال");
@@ -174,7 +178,8 @@ const fetchReceiptDetails = async () => {
 };
 
 const submitForm = async () => {
-  if (!AUTH_TOKEN) {
+  const token = getAuthToken();
+  if (!token) {
     alertify.error("الرجاء تسجيل الدخول أولاً");
     return;
   }
@@ -194,7 +199,7 @@ const submitForm = async () => {
 
         await axios.put(`${ReceiptAPI}/${route.params.id}`, payload, {
           headers: {
-            Authorization: `Bearer ${AUTH_TOKEN}`,
+            Authorization: `Bearer ${token}`,
             "Content-Type": "application/json",
           },
         });
@@ -203,7 +208,9 @@ const submitForm = async () => {
         router.push(`/view-receipt/${route.params.id}`);
       } catch (error) {
         console.error("Error updating receipt:", error);
-        alertify.error("حدث خطأ أثناء تحديث البيانات");
+        const errorMsg =
+          error.response?.data?.message || "حدث خطأ أثناء تحديث البيانات";
+        alertify.error(errorMsg);
       }
     },
     function () {

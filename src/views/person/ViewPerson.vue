@@ -359,77 +359,55 @@
       <div class="print-section mb-3">
         <h4 class="section-title">المعلومات الشخصية</h4>
         <table class="print-info-table">
-          <tr>
-            <td><strong>الرقم الوطني:</strong></td>
-            <td>{{ personData.id }}</td>
-            <td><strong>الجنس:</strong></td>
-            <td>{{ personData.gender }}</td>
-          </tr>
-          <tr>
-            <td><strong>الاسم الكامل:</strong></td>
-            <td colspan="3">
-              {{ personData.firstName }} {{ personData.secondName }}
-              {{ personData.thirdName }} {{ personData.lastName }}
-            </td>
-          </tr>
-          <tr>
-            <td><strong>رقم الجوال:</strong></td>
-            <td>{{ personData.phoneNumber }}</td>
-            <td><strong>المستوى التعليمي:</strong></td>
-            <td>{{ personData.educationalLevel }}</td>
-          </tr>
-          <tr>
-            <td><strong>المهنة:</strong></td>
-            <td>{{ personData.job }}</td>
-            <td><strong>عدد أفراد العائلة:</strong></td>
-            <td>{{ actualFamilyMemberCount }}</td>
-          </tr>
+          <tbody>
+            <tr>
+              <td><strong>الرقم الوطني:</strong></td>
+              <td>{{ personData.id }}</td>
+              <td><strong>الجنس:</strong></td>
+              <td>{{ personData.gender }}</td>
+            </tr>
+            <tr>
+              <td><strong>الاسم الكامل:</strong></td>
+              <td colspan="3">
+                {{ personData.firstName }} {{ personData.secondName }}
+                {{ personData.thirdName }} {{ personData.lastName }}
+              </td>
+            </tr>
+            <tr>
+              <td><strong>رقم الجوال:</strong></td>
+              <td>{{ personData.phoneNumber }}</td>
+              <td><strong>المستوى التعليمي:</strong></td>
+              <td>{{ personData.educationalLevel }}</td>
+            </tr>
+            <tr>
+              <td><strong>المهنة:</strong></td>
+              <td>{{ personData.job }}</td>
+              <td><strong>عدد أفراد العائلة:</strong></td>
+              <td>{{ actualFamilyMemberCount }}</td>
+            </tr>
+          </tbody>
         </table>
       </div>
 
       <div class="print-section mb-3">
         <h4 class="section-title">الحالة</h4>
         <table class="print-info-table">
-          <tr>
-            <td><strong>أرمل/ة:</strong></td>
-            <td>{{ personData.isWidow ? "نعم" : "لا" }}</td>
-            <td><strong>يتيم/ة:</strong></td>
-            <td>{{ personData.isOrphan ? "نعم" : "لا" }}</td>
-          </tr>
-          <tr>
-            <td><strong>جزء من عائلة:</strong></td>
-            <td>{{ personData.isPartOfFamily ? "نعم" : "لا" }}</td>
-            <td><strong>يملك منزل:</strong></td>
-            <td>{{ personData.isHouseOwned ? "نعم" : "لا" }}</td>
-          </tr>
+          <tbody>
+            <tr>
+              <td><strong>أرمل/ة:</strong></td>
+              <td>{{ personData.isWidow ? "نعم" : "لا" }}</td>
+              <td><strong>يتيم/ة:</strong></td>
+              <td>{{ personData.isOrphan ? "نعم" : "لا" }}</td>
+            </tr>
+            <tr>
+              <td><strong>جزء من عائلة:</strong></td>
+              <td>{{ personData.isPartOfFamily ? "نعم" : "لا" }}</td>
+              <td><strong>يملك منزل:</strong></td>
+              <td>{{ personData.isHouseOwned ? "نعم" : "لا" }}</td>
+            </tr>
+          </tbody>
         </table>
       </div>
-
-      <!-- <div
-        v-if="personData.isPartOfFamily && getFamilyInfo()"
-        class="print-section mb-3"
-        display="none"
-      >
-        <h4 class="section-title">معلومات الأسرة</h4>
-        <table class="print-info-table">
-          <tr>
-            <td><strong>رقم الأسرة:</strong></td>
-            <td>{{ getFamilyInfo().familyId }}</td>
-            <td><strong>رب الأسرة:</strong></td>
-            <td>{{ getFamilyInfo().name }}</td>
-          </tr>
-        </table>
-        <div v-if="memberDetails && memberDetails.length > 0" class="mt-2">
-          <strong>أعضاء الأسرة:</strong>
-          <ul class="member-list">
-            <li v-for="(member, index) in memberDetails" :key="member.id">
-              {{ index + 1 }}. {{ member.firstName }} {{ member.secondName }}
-              {{ member.lastName }}
-              <span v-if="member.id === personData.id">(أنت)</span>
-            </li>
-          </ul>
-        </div>
-      </div> -->
 
       <div
         v-if="personData.isOrphan && guardianData"
@@ -437,23 +415,25 @@
       >
         <h4 class="section-title">معلومات الوصي</h4>
         <table class="print-info-table">
-          <tr>
-            <td><strong>الاسم الكامل:</strong></td>
-            <td colspan="3">
-              {{ guardianData.firstName }} {{ guardianData.secondName }}
-              {{ guardianData.thirdName }} {{ guardianData.lastName }}
-            </td>
-          </tr>
-          <tr>
-            <td><strong>صلة القرابة:</strong></td>
-            <td>{{ guardianData.relationship }}</td>
-            <td><strong>المهنة:</strong></td>
-            <td>{{ guardianData.guardianJob }}</td>
-          </tr>
-          <tr>
-            <td><strong>رقم الجوال:</strong></td>
-            <td colspan="3">{{ guardianData.guardianPhoneNumber }}</td>
-          </tr>
+          <tbody>
+            <tr>
+              <td><strong>الاسم الكامل:</strong></td>
+              <td colspan="3">
+                {{ guardianData.firstName }} {{ guardianData.secondName }}
+                {{ guardianData.thirdName }} {{ guardianData.lastName }}
+              </td>
+            </tr>
+            <tr>
+              <td><strong>صلة القرابة:</strong></td>
+              <td>{{ guardianData.relationship }}</td>
+              <td><strong>المهنة:</strong></td>
+              <td>{{ guardianData.guardianJob }}</td>
+            </tr>
+            <tr>
+              <td><strong>رقم الجوال:</strong></td>
+              <td colspan="3">{{ guardianData.guardianPhoneNumber }}</td>
+            </tr>
+          </tbody>
         </table>
       </div>
 

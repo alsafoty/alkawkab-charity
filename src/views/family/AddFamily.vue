@@ -678,7 +678,7 @@ const submitForm = async () => {
       isHouseOwned: formData.value.isHouseOwned,
     };
 
-    await axios.post(
+    const familyResponse = await axios.post(
       `${process.env.VUE_APP_API_BASE_URL}/api/Family`,
       familyData,
       {
@@ -690,7 +690,8 @@ const submitForm = async () => {
     );
 
     // 3. جلب معرف العائلة الجديدة
-    const familyId = await getLastFamilyId();
+    const familyId =
+      familyResponse.data?.familyId || (await getLastFamilyId());
     if (!familyId) {
       throw new Error("لم يتم العثور على معرف العائلة الجديدة!");
     }
