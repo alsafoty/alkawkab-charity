@@ -100,31 +100,35 @@
       <div class="print-section mb-3" v-if="memberData">
         <h4 class="section-title">المعلومات الأساسية</h4>
         <table class="print-info-table">
-          <tr>
-            <td><strong>الرقم الوطني:</strong></td>
-            <td>{{ memberData.id }}</td>
-            <td><strong>رقم الهاتف:</strong></td>
-            <td>{{ memberData.phoneNumber || "غير محدد" }}</td>
-          </tr>
-          <tr>
-            <td><strong>الاسم الكامل:</strong></td>
-            <td colspan="3">
-              {{ memberData.firstName }} {{ memberData.secondName }}
-              {{ memberData.lastName }}
-            </td>
-          </tr>
+          <tbody>
+            <tr>
+              <td><strong>الرقم الوطني:</strong></td>
+              <td>{{ memberData.id }}</td>
+              <td><strong>رقم الهاتف:</strong></td>
+              <td>{{ memberData.phoneNumber || "غير محدد" }}</td>
+            </tr>
+            <tr>
+              <td><strong>الاسم الكامل:</strong></td>
+              <td colspan="3">
+                {{ memberData.firstName }} {{ memberData.secondName }}
+                {{ memberData.lastName }}
+              </td>
+            </tr>
+          </tbody>
         </table>
       </div>
 
       <div class="print-section mb-3" v-if="memberData">
         <h4 class="section-title">معلومات العضوية الإدارية</h4>
         <table class="print-info-table">
-          <tr>
-            <td><strong>عضو إداري:</strong></td>
-            <td>{{ memberData.isAdministrativeMember ? "نعم" : "لا" }}</td>
-            <td><strong>المنصب الإداري:</strong></td>
-            <td>{{ memberData.administrativePosition || "لا يوجد" }}</td>
-          </tr>
+          <tbody>
+            <tr>
+              <td><strong>عضو إداري:</strong></td>
+              <td>{{ memberData.isAdministrativeMember ? "نعم" : "لا" }}</td>
+              <td><strong>المنصب الإداري:</strong></td>
+              <td>{{ memberData.administrativePosition || "لا يوجد" }}</td>
+            </tr>
+          </tbody>
         </table>
       </div>
     </div>

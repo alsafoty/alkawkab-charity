@@ -298,9 +298,12 @@ router.beforeEach((to, from, next) => {
   }
 
   if (to.matched.some((record) => record.meta.requiresAuth)) {
-    // This route requires auth, check if logged in
-    if (!isLoggedIn) {
+    // This route requires auth, check if logged in and token exists
+    const token = localStorage.getItem("token");
+    if (!isLoggedIn || !token) {
       // Not logged in, redirect to login page
+      localStorage.removeItem("isLoggedIn");
+      localStorage.removeItem("token");
       next({ name: "admin" });
     } else {
       // Logged in, proceed to route

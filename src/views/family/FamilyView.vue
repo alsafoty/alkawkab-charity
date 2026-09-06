@@ -205,7 +205,7 @@ const familyHeadsData = ref({}); // تخزين بيانات رؤساء الأس�
 const searchQuery = ref("");
 const sortBy = ref("familyId"); // الترتيب الافتراضي حسب رقم الأسرة
 const loading = ref(false);
-const AUTH_TOKEN = localStorage.getItem("token");
+const getAuthToken = () => localStorage.getItem("token") || "";
 const printArea = ref(null);
 const selectedFamilies = ref([]);
 
@@ -234,18 +234,38 @@ const toggleSelection = (id) => {
   }
 };
 
-const filteredFamilies = computed(() => {
-  let result = families.value;
+// دالة لتطبيع النصوص العربية (إزالة التشكيل وتوحيد الألف والتاء المربوطة والياء)
+const normalizeArabic = (text) => {
+  if (!text) return "";
+  return text
+    .toString()
+    .toLowerCase()
+    .replace(/[أإآ]/g, "ا")
+    .replace(/ة/g, "ه")
+    .replace(/ى/g, "ي")
+    .replace(/[\u064B-\u065F]/g, "") // إزالة حركات التشكيل
+    .trim();
+};
 
-  // تطبيق البحث
-  if (searchQuery.value) {
-    const query = searchQuery.value.toLowerCase();
+const filteredFamilies = computed(() => {
+  let result = families.value || [];
+
+  // تطبيق البحث فقط عند وجود نص بحث فعلي
+  const query = searchQuery.value ? normalizeArabic(searchQuery.value) : "";
+  if (query) {
     result = result.filter((family) => {
-      const headName = getHeadOfFamilyName(family).toLowerCase();
+      const headName = normalizeArabic(getHeadOfFamilyName(family));
+      const familyName = normalizeArabic(family.name || "");
+      const headId = (getHeadOfFamilyId(family) || "").toString().trim();
+      const headPhone = (getHeadOfFamilyPhone(family) || "").toString().trim();
+      const familyId = (family.familyId || "").toString().trim();
+
       return (
         headName.includes(query) ||
-        family.name.toLowerCase().includes(query) ||
-        family.familyId.toString().includes(query)
+        familyName.includes(query) ||
+        headId.includes(query) ||
+        headPhone.includes(query) ||
+        familyId.includes(query)
       );
     });
   }
@@ -256,8 +276,8 @@ const filteredFamilies = computed(() => {
     sorted.sort((a, b) => a.familyId - b.familyId);
   } else if (sortBy.value === "name") {
     sorted.sort((a, b) => {
-      const nameA = getHeadOfFamilyName(a).toLowerCase();
-      const nameB = getHeadOfFamilyName(b).toLowerCase();
+      const nameA = (getHeadOfFamilyName(a) || "").toLowerCase();
+      const nameB = (getHeadOfFamilyName(b) || "").toLowerCase();
       return nameA.localeCompare(nameB, "ar");
     });
   } else if (sortBy.value === "members") {
@@ -272,9 +292,10 @@ const filteredFamilies = computed(() => {
 // دالة لجلب بيانات شخص واحد
 const fetchPersonById = async (personId) => {
   try {
+    const token = getAuthToken();
     const response = await axios.get(`${API_BASE_URL}/Person/${personId}`, {
       headers: {
-        Authorization: `Bearer ${AUTH_TOKEN}`,
+        Authorization: `Bearer ${token}`,
       },
     });
     return response.data;
@@ -402,22 +423,36 @@ const printContent = () => {
 };
 
 const fetchFamilies = async () => {
+  const token = getAuthToken();
+  if (!token) {
+    alertify.warning("يرجى تسجيل الدخول أولاً للوصول إلى بيانات الأسر");
+    router.push("/admin");
+    return;
+  }
+
   loading.value = true;
   try {
     const response = await axios.get(`${API_BASE_URL}/Family`, {
       headers: {
-        Authorization: `Bearer ${AUTH_TOKEN}`,
+        Authorization: `Bearer ${token}`,
       },
     });
 
-    families.value = response.data;
-    console.log("Families:", response.data);
+    families.value = Array.isArray(response.data) ? response.data : [];
+    console.log("Families loaded:", families.value.length);
 
     // جلب بيانات رؤساء الأسر
     await fetchFamilyHeadsData();
   } catch (error) {
     console.error("Error fetching families:", error);
-    alertify.error("حدث خطأ أثناء جلب بيانات الأسر");
+    if (error.response?.status === 401) {
+      alertify.error("انتهت صلاحية الجلسة، يرجى تسجيل الدخول مجدداً");
+      localStorage.removeItem("isLoggedIn");
+      localStorage.removeItem("token");
+      router.push("/admin");
+    } else {
+      alertify.error("حدث خطأ أثناء جلب بيانات الأسر");
+    }
   } finally {
     loading.value = false;
   }
@@ -438,8 +473,10 @@ const deleteSelected = async () => {
     return;
   }
 
-  if (!AUTH_TOKEN) {
+  const token = getAuthToken();
+  if (!token) {
     alertify.error("الرجاء تسجيل الدخول أولاً");
+    router.push("/admin");
     return;
   }
 
@@ -455,7 +492,7 @@ const deleteSelected = async () => {
         try {
           await axios.delete(`${API_BASE_URL}/Family/${id}`, {
             headers: {
-              Authorization: `Bearer ${AUTH_TOKEN}`,
+              Authorization: `Bearer ${token}`,
               "Content-Type": "application/json",
             },
           });
@@ -490,9 +527,10 @@ const deleteFamily = async (id) => {
     async function () {
       // User clicked OK
       try {
+        const token = getAuthToken();
         await axios.delete(`${API_BASE_URL}/Family/${id}`, {
           headers: {
-            Authorization: `Bearer ${AUTH_TOKEN}`,
+            Authorization: `Bearer ${token}`,
             "Content-Type": "application/json",
           },
         });

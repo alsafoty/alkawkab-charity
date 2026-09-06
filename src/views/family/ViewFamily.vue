@@ -230,28 +230,30 @@
       <div class="print-section mb-3">
         <h4 class="section-title">معلومات رب الأسرة</h4>
         <table class="print-info-table-two-columns">
-          <tr>
-            <td><strong>الاسم الكامل:</strong></td>
-            <td colspan="3">{{ getHeadOfFamilyName() }}</td>
-          </tr>
-          <tr>
-            <td><strong>الرقم الوطني:</strong></td>
-            <td>{{ getHeadOfFamilyId() }}</td>
-            <td><strong>رقم الهاتف:</strong></td>
-            <td>{{ getHeadOfFamilyPhone() }}</td>
-          </tr>
-          <tr>
-            <td><strong>الوظيفة:</strong></td>
-            <td>{{ getHeadOfFamilyJob() }}</td>
-            <td><strong>المستوى التعليمي:</strong></td>
-            <td>{{ getHeadOfFamilyEducation() }}</td>
-          </tr>
-          <tr>
-            <td><strong>عدد أفراد الأسرة:</strong></td>
-            <td>{{ familyData.numberOfFamilyMembers || 1 }}</td>
-            <td><strong>حالة المنزل:</strong></td>
-            <td>{{ familyData.isHouseOwned ? "ملك" : "إيجار" }}</td>
-          </tr>
+          <tbody>
+            <tr>
+              <td><strong>الاسم الكامل:</strong></td>
+              <td colspan="3">{{ getHeadOfFamilyName() }}</td>
+            </tr>
+            <tr>
+              <td><strong>الرقم الوطني:</strong></td>
+              <td>{{ getHeadOfFamilyId() }}</td>
+              <td><strong>رقم الهاتف:</strong></td>
+              <td>{{ getHeadOfFamilyPhone() }}</td>
+            </tr>
+            <tr>
+              <td><strong>الوظيفة:</strong></td>
+              <td>{{ getHeadOfFamilyJob() }}</td>
+              <td><strong>المستوى التعليمي:</strong></td>
+              <td>{{ getHeadOfFamilyEducation() }}</td>
+            </tr>
+            <tr>
+              <td><strong>عدد أفراد الأسرة:</strong></td>
+              <td>{{ familyData.numberOfFamilyMembers || 1 }}</td>
+              <td><strong>حالة المنزل:</strong></td>
+              <td>{{ familyData.isHouseOwned ? "ملك" : "إيجار" }}</td>
+            </tr>
+          </tbody>
         </table>
       </div>
 
@@ -309,7 +311,7 @@ const assistanceTypes = ref([]);
 const loadingMembers = ref(false);
 const loadingAssistances = ref(false);
 const memberLoadError = ref(false);
-const AUTH_TOKEN = localStorage.getItem("token");
+const getAuthToken = () => localStorage.getItem("token") || "";
 const printArea = ref(null);
 
 // دالة للحصول على اسم نوع المساعدة
@@ -372,11 +374,12 @@ const viewAssistanceDetails = (assistanceId) => {
 // دالة لجلب أنواع المساعدات
 const fetchAssistanceTypes = async () => {
   try {
+    const token = getAuthToken();
     const response = await axios.get(
       `${process.env.VUE_APP_API_BASE_URL}/api/AssistanceType`,
       {
         headers: {
-          Authorization: `Bearer ${AUTH_TOKEN}`,
+          Authorization: `Bearer ${token}`,
         },
       },
     );
@@ -389,11 +392,12 @@ const fetchAssistanceTypes = async () => {
 // دالة لجلب تفاصيل شخص واحد باستخدام الرقم الوطني مباشرة
 const fetchPersonDetailsByNationalId = async (personId) => {
   try {
+    const token = getAuthToken();
     const response = await axios.get(
       `${process.env.VUE_APP_API_BASE_URL}/api/Person/${personId}`,
       {
         headers: {
-          Authorization: `Bearer ${AUTH_TOKEN}`,
+          Authorization: `Bearer ${token}`,
         },
       },
     );
@@ -407,11 +411,12 @@ const fetchPersonDetailsByNationalId = async (personId) => {
 // دالة لجلب بيانات المساعدة الواحدة
 const fetchAssistanceData = async (assistanceId) => {
   try {
+    const token = getAuthToken();
     const response = await axios.get(
       `${process.env.VUE_APP_API_BASE_URL}/api/Assistance/${assistanceId}`,
       {
         headers: {
-          Authorization: `Bearer ${AUTH_TOKEN}`,
+          Authorization: `Bearer ${token}`,
         },
       },
     );
@@ -631,11 +636,12 @@ onMounted(async () => {
     await fetchAssistanceTypes();
 
     // جلب بيانات العائلة
+    const token = getAuthToken();
     const response = await axios.get(
       `${process.env.VUE_APP_API_BASE_URL}/api/Family/${route.params.id}`,
       {
         headers: {
-          Authorization: `Bearer ${AUTH_TOKEN}`,
+          Authorization: `Bearer ${token}`,
         },
       },
     );

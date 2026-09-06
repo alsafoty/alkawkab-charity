@@ -85,24 +85,26 @@
       <div class="print-section mb-3" v-if="receiptData">
         <h4 class="section-title">معلومات الإيصال</h4>
         <table class="print-info-table">
-          <tr>
-            <td><strong>رقم الإيصال:</strong></td>
-            <td>{{ receiptData.receiptNo }}</td>
-            <td><strong>القيمة:</strong></td>
-            <td>{{ receiptData.value }} دينار</td>
-          </tr>
-          <tr>
-            <td><strong>السنة:</strong></td>
-            <td>{{ receiptData.year }}</td>
-            <td><strong>الشهر:</strong></td>
-            <td>{{ getMonthName(receiptData.month) }}</td>
-          </tr>
-          <tr>
-            <td><strong>تاريخ الدفع:</strong></td>
-            <td>{{ formatDate(receiptData.paidDate) }}</td>
-            <td><strong>رقم العضو الأساسي:</strong></td>
-            <td>{{ receiptData.basicMemberId }}</td>
-          </tr>
+          <tbody>
+            <tr>
+              <td><strong>رقم الإيصال:</strong></td>
+              <td>{{ receiptData.receiptNo }}</td>
+              <td><strong>القيمة:</strong></td>
+              <td>{{ receiptData.value }} دينار</td>
+            </tr>
+            <tr>
+              <td><strong>السنة:</strong></td>
+              <td>{{ receiptData.year }}</td>
+              <td><strong>الشهر:</strong></td>
+              <td>{{ getMonthName(receiptData.month) }}</td>
+            </tr>
+            <tr>
+              <td><strong>تاريخ الدفع:</strong></td>
+              <td>{{ formatDate(receiptData.paidDate) }}</td>
+              <td><strong>رقم العضو الأساسي:</strong></td>
+              <td>{{ receiptData.basicMemberId }}</td>
+            </tr>
+          </tbody>
         </table>
       </div>
     </div>
@@ -119,11 +121,10 @@ import { getApiBaseUrl, getAuthToken } from "@/utils/api";
 alertify.set("notifier", "position", "bottom-right");
 alertify.set("notifier", "delay", 5);
 
-// Node.js Backend API for Receipts
-const API_BASE_URL = process.env.VUE_APP_NODEJS_API_BASE_URL + "/api";
+// Backend API for Receipts
+const API_BASE_URL = getApiBaseUrl();
 const route = useRoute();
 const router = useRouter();
-const AUTH_TOKEN = getAuthToken();
 
 const receiptData = ref(null);
 const loading = ref(false);
@@ -160,17 +161,28 @@ const formatDate = (dateString) => {
 };
 
 const fetchReceiptDetails = async () => {
+  const token = getAuthToken();
+  if (!token) {
+    alertify.error("الرجاء تسجيل الدخول أولاً");
+    return;
+  }
+
   loading.value = true;
   try {
     const response = await axios.get(
       `${API_BASE_URL}/Receipt/${route.params.id}`,
       {
         headers: {
-          Authorization: `Bearer ${AUTH_TOKEN}`,
+          Authorization: `Bearer ${token}`,
         },
       },
     );
-    receiptData.value = response.data.data || response.data;
+    const data = response.data.data || response.data;
+    if (data) {
+      data.receiptNo = data.receiptNo ?? data.receiptNO;
+      data.receiptId = data.receiptNo;
+    }
+    receiptData.value = data;
   } catch (error) {
     console.error("Error fetching receipt details:", error);
     alertify.error("حدث خطأ أثناء جلب بيانات الإيصال");

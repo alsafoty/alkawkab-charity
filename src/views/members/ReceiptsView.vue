@@ -185,10 +185,7 @@ alertify.set("notifier", "position", "bottom-right");
 alertify.set("notifier", "delay", 5);
 
 const router = useRouter();
-// Node.js Backend API for Receipts
-const API_BASE_URL = process.env.VUE_APP_NODEJS_API_BASE_URL + "/api";
-const ReceiptAPI = API_BASE_URL + "/Receipt";
-const AUTH_TOKEN = getAuthToken();
+const ReceiptAPI = `${getApiBaseUrl()}/Receipt`;
 
 const loading = ref(false);
 const receipts = ref([]);
@@ -267,7 +264,8 @@ const formatDate = (dateString) => {
 
 // Fetch receipts
 const fetchReceipts = async () => {
-  if (!AUTH_TOKEN) {
+  const token = getAuthToken();
+  if (!token) {
     alertify.error("الرجاء تسجيل الدخول أولاً");
     return;
   }
@@ -276,10 +274,18 @@ const fetchReceipts = async () => {
   try {
     const response = await axios.get(ReceiptAPI, {
       headers: {
-        Authorization: `Bearer ${AUTH_TOKEN}`,
+        Authorization: `Bearer ${token}`,
       },
     });
-    receipts.value = response.data.data || response.data;
+    const rawData = response.data.data || response.data || [];
+    receipts.value = rawData.map((r) => {
+      const no = r.receiptNo ?? r.receiptNO;
+      return {
+        ...r,
+        receiptNo: no,
+        receiptId: no,
+      };
+    });
     console.log("Receipts fetched:", receipts.value);
   } catch (error) {
     console.error("Error fetching receipts:", error);
@@ -304,7 +310,8 @@ const deleteSelected = async () => {
     return;
   }
 
-  if (!AUTH_TOKEN) {
+  const token = getAuthToken();
+  if (!token) {
     alertify.error("الرجاء تسجيل الدخول أولاً");
     return;
   }
@@ -321,7 +328,7 @@ const deleteSelected = async () => {
         try {
           await axios.delete(`${ReceiptAPI}/${id}`, {
             headers: {
-              Authorization: `Bearer ${AUTH_TOKEN}`,
+              Authorization: `Bearer ${token}`,
             },
           });
           successCount++;
@@ -348,21 +355,29 @@ const deleteSelected = async () => {
 };
 
 const deleteReceipt = (id) => {
+  const token = getAuthToken();
+  if (!token) {
+    alertify.error("الرجاء تسجيل الدخول أولاً");
+    return;
+  }
+
   alertify.confirm(
     "تأكيد الحذف",
-    "هل أنت متأكد من حذف هذا الإيصال؟",
+    `هل أنت متأكد من حذف الإيصال رقم ${id}؟`,
     async function () {
       try {
         await axios.delete(`${ReceiptAPI}/${id}`, {
           headers: {
-            Authorization: `Bearer ${AUTH_TOKEN}`,
+            Authorization: `Bearer ${token}`,
           },
         });
         alertify.success("تم حذف الإيصال بنجاح");
         await fetchReceipts();
       } catch (error) {
         console.error("Error deleting receipt:", error);
-        alertify.error("حدث خطأ أثناء حذف الإيصال");
+        const errorMsg =
+          error.response?.data?.message || "حدث خطأ أثناء حذف الإيصال";
+        alertify.error(errorMsg);
       }
     },
     function () {

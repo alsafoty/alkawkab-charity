@@ -137,29 +137,31 @@
         <div class="print-section mb-4">
           <h5 class="print-section-title">المعلومات الأساسية</h5>
           <table class="print-info-table">
-            <tr>
-              <td class="label-cell">الرقم الوطني</td>
-              <td class="value-cell">{{ guardianData.guardianId }}</td>
-              <td class="label-cell">رقم الهاتف</td>
-              <td class="value-cell">
-                {{ guardianData.guardianPhoneNumber || "-" }}
-              </td>
-            </tr>
-            <tr>
-              <td class="label-cell">الاسم الكامل</td>
-              <td class="value-cell" colspan="3">
-                {{ guardianData.firstName }} {{ guardianData.secondName }}
-                {{ guardianData.thirdName }} {{ guardianData.lastName }}
-              </td>
-            </tr>
-            <tr>
-              <td class="label-cell">صلة القرابة</td>
-              <td class="value-cell">{{ guardianData.relationship }}</td>
-              <td class="label-cell">المهنة</td>
-              <td class="value-cell">
-                {{ guardianData.guardianJob || "-" }}
-              </td>
-            </tr>
+            <tbody>
+              <tr>
+                <td class="label-cell">الرقم الوطني</td>
+                <td class="value-cell">{{ guardianData.guardianId }}</td>
+                <td class="label-cell">رقم الهاتف</td>
+                <td class="value-cell">
+                  {{ guardianData.guardianPhoneNumber || "-" }}
+                </td>
+              </tr>
+              <tr>
+                <td class="label-cell">الاسم الكامل</td>
+                <td class="value-cell" colspan="3">
+                  {{ guardianData.firstName }} {{ guardianData.secondName }}
+                  {{ guardianData.thirdName }} {{ guardianData.lastName }}
+                </td>
+              </tr>
+              <tr>
+                <td class="label-cell">صلة القرابة</td>
+                <td class="value-cell">{{ guardianData.relationship }}</td>
+                <td class="label-cell">المهنة</td>
+                <td class="value-cell">
+                  {{ guardianData.guardianJob || "-" }}
+                </td>
+              </tr>
+            </tbody>
           </table>
         </div>
 

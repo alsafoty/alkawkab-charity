@@ -13,6 +13,10 @@ QUICK_REFERENCE.md
 .env
 .env.local
 .env.*.local
+.env.development
+
+# Lock files (original repo uses npm/package-lock.json)
+yarn.lock
 
 # Log files
 npm-debug.log*

@@ -147,7 +147,7 @@ alertify.set("notifier", "delay", 5);
 
 const API_BASE_URL = process.env.VUE_APP_API_BASE_URL + "/api";
 const router = useRouter();
-const AUTH_TOKEN = localStorage.getItem("token");
+const getAuthToken = () => localStorage.getItem("token") || "";
 
 const persons = ref([]);
 const searchQuery = ref("");
@@ -240,19 +240,33 @@ const printContent = () => {
 
 // Fetch persons data
 const fetchPersons = async () => {
+  const token = getAuthToken();
+  if (!token) {
+    alertify.warning("يرجى تسجيل الدخول أولاً");
+    router.push("/admin");
+    return;
+  }
+
   try {
     const response = await axios.get(`${API_BASE_URL}/Person`, {
       headers: {
-        Authorization: `Bearer ${AUTH_TOKEN}`,
+        Authorization: `Bearer ${token}`,
       },
     });
-    persons.value = response.data;
+    persons.value = response.data || [];
   } catch (error) {
     console.error("Error fetching persons:", error);
 
-    if (error.response) {
+    if (error.response?.status === 401) {
+      alertify.error("انتهت صلاحية الجلسة، يرجى تسجيل الدخول مجدداً");
+      localStorage.removeItem("isLoggedIn");
+      localStorage.removeItem("token");
+      router.push("/admin");
+    } else if (error.response) {
       const errorMessage =
-        error.response.data.message || error.response.statusText;
+        typeof error.response.data === "string"
+          ? error.response.data
+          : error.response.data?.message || error.response.statusText;
       alertify.error(`حدث خطأ أثناء جلب بيانات الأشخاص: ${errorMessage}`);
     } else if (error.request) {
       alertify.error("لا يمكن الاتصال بالخادم. يرجى التحقق من اتصال الإنترنت");
@@ -311,8 +325,10 @@ const deletePerson = async (id) => {
   }
 
   // Authentication check
-  if (!AUTH_TOKEN) {
+  const token = getAuthToken();
+  if (!token) {
     alertify.error("الرجاء تسجيل الدخول أولاً");
+    router.push("/admin");
     return;
   }
 
@@ -338,7 +354,7 @@ const deletePerson = async (id) => {
       try {
         await axios.delete(`${API_BASE_URL}/Person/${id}`, {
           headers: {
-            Authorization: `Bearer ${AUTH_TOKEN}`,
+            Authorization: `Bearer ${token}`,
           },
         });
 
@@ -363,8 +379,10 @@ const deletePerson = async (id) => {
             alertify.error("لا يمكن حذف هذا الشخص لأنه مرتبط ببيانات أخرى");
           } else {
             const errorMessage =
-              error.response.data.message || error.response.statusText;
-            alertify.error(`حدث خطأ أثناء حذف الشخص: ${errorMessage}`);
+              typeof error.response.data === "string" && error.response.data.trim()
+                ? error.response.data
+                : (error.response.data?.message || "حدث خطأ أثناء معالجة الطلب");
+            alertify.error(`فشل الحذف: ${errorMessage}`);
           }
         } else if (error.request) {
           alertify.error(
